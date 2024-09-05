@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Престиж</title>
+    <style>
+        body {
+            margin: 0; /* Убираем стандартные отступы */
+            padding: 0; /* Убираем стандартные отступы */
+        }
+
+        .container {
+            display: flex; /* Располагаем блоки по горизонтали */
+            align-items: center; /* Вертикальное выравнивание по центру */
+            padding: 10px; /* Внутренний отступ, чтобы блоки не прилипали к краю */
+        }
+
+        .block {
+            width: 250px; /* Ширина блоков */
+            height: 100px; /* Высота блоков */
+            border: 1px solid black; /* Граница блоков */
+            margin-right: 20px; /* Отступ между блоками */
+            display: flex; /* Используем flex для выравнивания содержимого */
+            align-items: center; /* Вертикальное выравнивание по центру */
+            justify-content: center; /* Горизонтальное выравнивание по центру */
+            text-align: center;
+            padding: 10px; /* Внутренний отступ */
+            box-sizing: border-box; /* Учитываем отступы и границы в ширине и высоте */
+        }
+
+        .block h2 {
+            white-space: normal; /* Разрешить перенос текста */
+            margin: 0; /* Удалить стандартные отступы h2 */
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="block" id="sales">
+        <a href="/prestige/sales"><h2>Продажи</h2></a>
+    </div>
+
+    <div class="block" id="acquire">
+        <h2>Поступления</h2>
+    </div>
+
+    <div class="block" id="productListManagement">
+        <a href="/prestige/productListManagement"><h2>Управление списком товаров</h2></a>
+    </div>
+</div>
+</body>
+</html>

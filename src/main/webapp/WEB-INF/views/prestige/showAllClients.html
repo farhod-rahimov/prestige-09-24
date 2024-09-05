@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru", xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Все клиенты</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center; /* Выравнивание текста в шапке по центру */
+        }
+        td:first-child, th:first-child {
+            border-left: none;
+        }
+        td:last-child, th:last-child {
+            border-right: none;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Список всех клиентов</h2>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Имя</th>
+        <th>Телефон</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>1</td>
+        <td>Иван Иванов</td>
+        <td>+7 912 345-67-89</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>Мария Петрова</td>
+        <td>+7 922 123-45-67</td>
+    </tr>
+    <tr>
+        <td>3</td>
+        <td>Алексей Смирнов</td>
+        <td>+7 933 987-65-43</td>
+    </tr>
+    <!-- Добавьте дополнительные строки по мере необходимости -->
+
+        <tr th:each="client : ${allClients}">
+
+            <td><a th:text="${client.getId()}"></a></td>
+            <td><a th:text="${client.getName()}"></a></td>
+            <td><a th:text="${client.getPhoneNumber()}"></a></td>
+
+        </tr>
+    </tbody>
+</table>
+
+</body>
+</html>
