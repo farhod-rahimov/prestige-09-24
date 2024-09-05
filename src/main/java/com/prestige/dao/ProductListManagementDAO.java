@@ -1,7 +1,9 @@
 package com.prestige.dao;
 
 import com.prestige.dao.mappers.ShowAllClientsMapper;
+import com.prestige.dao.mappers.ShowAllStoresMapper;
 import com.prestige.models.Client;
+import com.prestige.models.Store;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -18,10 +20,6 @@ public class ProductListManagementDAO {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public void addNewClient() {
-
-    }
-
     public List<Client> showAllClients() {
         return jdbcTemplate.query(
 
@@ -36,8 +34,48 @@ public class ProductListManagementDAO {
                 "ORDER BY (prestige_clients.name)", new ShowAllClientsMapper());
     }
 
-    public void saveNewClient(Client newClient) {
-        jdbcTemplate.update("INSERT INTO prestige_clients (name, phone_number) VALUES(?, ?)",
-                newClient.getName(), newClient.getPhoneNumber());
+    public boolean checkIfClientExists(Client client) {
+        String sql = "SELECT EXISTS (SELECT 1 FROM prestige_clients WHERE name = ? AND phone_number = ?)";
+
+        return jdbcTemplate.queryForObject(sql, Boolean.class, client.getName(), client.getPhoneNumber());
+    }
+
+    public boolean saveNewClient(Client newClient) {
+        if (!checkIfClientExists(newClient)) {
+            jdbcTemplate.update("INSERT INTO prestige_clients (name, phone_number) VALUES(?, ?)",
+                    newClient.getName(), newClient.getPhoneNumber());
+
+            return true;
+        }
+        return false;
+    }
+
+    public List<Store> showAllStores() {
+        return jdbcTemplate.query(
+            "SELECT " +
+
+                    "prestige_store_names.id, " +
+                    "prestige_store_names.store_name " +
+
+                "FROM prestige_store_names " +
+
+                "ORDER BY (prestige_store_names.store_name)",
+        new ShowAllStoresMapper());
+    }
+
+    public boolean checkIfStoreExists(Store store) {
+        String sql = "SELECT EXISTS (SELECT 1 FROM prestige_store_names WHERE store_name = ?)";
+
+        return jdbcTemplate.queryForObject(sql, Boolean.class, store.getStoreName());
+    }
+
+    public boolean saveNewStore(Store newStore) {
+        if (!checkIfStoreExists(newStore)) {
+            jdbcTemplate.update("INSERT INTO prestige_store_names (store_name) VALUES(?)",
+                    newStore.getStoreName());
+
+            return true;
+        }
+        return false;
     }
 }

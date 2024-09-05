@@ -44,6 +44,10 @@
         input[type="submit"]:hover {
             background-color: #45a049;
         }
+        .error-message {
+            color: red;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -51,6 +55,9 @@
 <h2>Добавление нового клиента</h2>
 
 <form th:method="POST" th:action="@{/prestige/productListManagement/addNewClient}" th:object="${newClient}">
+    <!-- Отображение сообщения об ошибке -->
+    <div th:if="${error}" class="error-message" th:text="${error}"></div>
+
     <label for="name">Имя:</label>
     <input type="text" th:field="*{name}" id="name" required>
     <br/>
