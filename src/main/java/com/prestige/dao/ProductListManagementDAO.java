@@ -2,9 +2,11 @@ package com.prestige.dao;
 
 import com.prestige.dao.mappers.ShowAllBrandsMapper;
 import com.prestige.dao.mappers.ShowAllClientsMapper;
+import com.prestige.dao.mappers.ShowAllProductNamesMapper;
 import com.prestige.dao.mappers.ShowAllStoresMapper;
 import com.prestige.models.Brand;
 import com.prestige.models.Client;
+import com.prestige.models.ProductName;
 import com.prestige.models.Store;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -104,6 +106,35 @@ public class ProductListManagementDAO {
         if (!checkIfBrandExists(brand)) {
             jdbcTemplate.update("INSERT INTO common_brand_names (brand_name) VALUES(?)",
                     brand.getBrandName());
+
+            return true;
+        }
+        return false;
+    }
+
+    public List<ProductName> showAllProductNames() {
+        return jdbcTemplate.query(
+                "SELECT " +
+
+                        "common_product_names.id, " +
+                        "common_product_names.product_name " +
+
+                        "FROM common_product_names " +
+
+                        "ORDER BY (common_product_names.product_name)",
+                new ShowAllProductNamesMapper());
+    }
+
+    public boolean checkIfProductNameExists(ProductName productName) {
+        String sql = "SELECT EXISTS (SELECT 1 FROM common_product_names WHERE product_name = ?)";
+
+        return jdbcTemplate.queryForObject(sql, Boolean.class, productName.getProductName());
+    }
+
+    public boolean saveNewProductName(ProductName productName) {
+        if (!checkIfProductNameExists(productName)) {
+            jdbcTemplate.update("INSERT INTO common_product_names (product_name) VALUES(?)",
+                    productName.getProductName());
 
             return true;
         }

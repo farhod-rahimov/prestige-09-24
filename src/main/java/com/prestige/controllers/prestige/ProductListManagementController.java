@@ -4,6 +4,7 @@ import com.prestige.dao.PrestigeSalesDAO;
 import com.prestige.dao.ProductListManagementDAO;
 import com.prestige.models.Brand;
 import com.prestige.models.Client;
+import com.prestige.models.ProductName;
 import com.prestige.models.Store;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -72,7 +73,7 @@ public class ProductListManagementController {
 
         if (bindingResult.hasErrors()) {
             // TODO: показать ошибку на странице
-            return addNewClientGet(model);
+            return addNewStoreGet(model);
         }
 
         if (!productListManagementDAO.saveNewStore(newStore)) {
@@ -100,7 +101,7 @@ public class ProductListManagementController {
 
         if (bindingResult.hasErrors()) {
             // TODO: показать ошибку на странице
-            return addNewClientGet(model);
+            return addNewBrandGet(model);
         }
 
         if (!productListManagementDAO.saveNewBrand(newBrand)) {
@@ -110,9 +111,31 @@ public class ProductListManagementController {
         return "redirect:/prestige/productListManagement/showAllBrands";
     }
 
-    @GetMapping("/showAllBrands")
-    public String showAllBrands(Model model) {
-        model.addAttribute("allBrands", productListManagementDAO.showAllBrands());
-        return "prestige/showAllBrands"; // return /prestige/showAllBrands.html
+    @GetMapping("/showAllProductNames")
+    public String showAllProductNames(Model model) {
+        model.addAttribute("allProductNames", productListManagementDAO.showAllProductNames());
+        return "prestige/showAllProductNames"; // return /prestige/showAllProductNames.html
+    }
+
+    @GetMapping("/addNewProductName")
+    public String addNewProductNameGet(Model model) {
+        model.addAttribute("newProductName", new ProductName());
+        return "prestige/addNewProductName"; // return /prestige/addNewProductName.html
+    }
+
+    @PostMapping("/addNewProductName")
+    public String addNewProductNamePost(@ModelAttribute("newProductName") ProductName newProductName,
+                                  BindingResult bindingResult, Model model) {
+
+        if (bindingResult.hasErrors()) {
+            // TODO: показать ошибку на странице
+            return addNewProductNameGet(model);
+        }
+
+        if (!productListManagementDAO.saveNewProductName(newProductName)) {
+            model.addAttribute("error", String.format("Название товара - %s уже существует", newProductName.getProductName()));
+            return addNewProductNameGet(model);
+        };
+        return "redirect:/prestige/productListManagement/showAllProductNames";
     }
 }
