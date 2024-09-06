@@ -19,6 +19,11 @@ public class ProductListManagementDAO {
 
     private final JdbcTemplate jdbcTemplate;
 
+    private String capitalizeString(String string) {
+        return string.substring(0, 1).toUpperCase() +
+                string.substring(1).toLowerCase();
+    }
+
     @Autowired
     public ProductListManagementDAO(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -45,6 +50,8 @@ public class ProductListManagementDAO {
     }
 
     public boolean saveNewClient(Client newClient) {
+        newClient.setName(capitalizeString(newClient.getName()));
+
         if (!checkIfClientExists(newClient)) {
             jdbcTemplate.update("INSERT INTO prestige_clients (name, phone_number) VALUES(?, ?)",
                     newClient.getName(), newClient.getPhoneNumber());
@@ -74,6 +81,8 @@ public class ProductListManagementDAO {
     }
 
     public boolean saveNewStore(Store newStore) {
+        newStore.setStoreName(newStore.getStoreName().toUpperCase());
+
         if (!checkIfStoreExists(newStore)) {
             jdbcTemplate.update("INSERT INTO prestige_store_names (store_name) VALUES(?)",
                     newStore.getStoreName());
@@ -103,6 +112,8 @@ public class ProductListManagementDAO {
     }
 
     public boolean saveNewBrand(Brand brand) {
+        brand.setBrandName(brand.getBrandName().toUpperCase());
+
         if (!checkIfBrandExists(brand)) {
             jdbcTemplate.update("INSERT INTO common_brand_names (brand_name) VALUES(?)",
                     brand.getBrandName());
@@ -132,6 +143,8 @@ public class ProductListManagementDAO {
     }
 
     public boolean saveNewProductName(ProductName productName) {
+        productName.setProductName(capitalizeString(productName.getProductName()));
+
         if (!checkIfProductNameExists(productName)) {
             jdbcTemplate.update("INSERT INTO common_product_names (product_name) VALUES(?)",
                     productName.getProductName());
