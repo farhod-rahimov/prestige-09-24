@@ -1,13 +1,7 @@
 package com.prestige.dao;
 
-import com.prestige.dao.mappers.ShowAllBrandsMapper;
-import com.prestige.dao.mappers.ShowAllClientsMapper;
-import com.prestige.dao.mappers.ShowAllProductNamesMapper;
-import com.prestige.dao.mappers.ShowAllStoresMapper;
-import com.prestige.models.Brand;
-import com.prestige.models.Client;
-import com.prestige.models.ProductName;
-import com.prestige.models.Store;
+import com.prestige.dao.mappers.*;
+import com.prestige.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -19,10 +13,7 @@ public class ProductListManagementDAO {
 
     private final JdbcTemplate jdbcTemplate;
 
-    private String capitalizeString(String string) {
-        return string.substring(0, 1).toUpperCase() +
-                string.substring(1).toLowerCase();
-    }
+    private final Utils utils = new Utils();
 
     @Autowired
     public ProductListManagementDAO(JdbcTemplate jdbcTemplate) {
@@ -50,7 +41,7 @@ public class ProductListManagementDAO {
     }
 
     public boolean saveNewClient(Client newClient) {
-        newClient.setName(capitalizeString(newClient.getName()));
+        newClient.setName(utils.capitalizeString(newClient.getName()));
 
         if (!checkIfClientExists(newClient)) {
             jdbcTemplate.update("INSERT INTO prestige_clients (name, phone_number) VALUES(?, ?)",
@@ -81,7 +72,7 @@ public class ProductListManagementDAO {
     }
 
     public boolean saveNewStore(Store newStore) {
-        newStore.setStoreName(newStore.getStoreName().toUpperCase());
+        newStore.setStoreName(utils.toUpperCase(newStore.getStoreName()));
 
         if (!checkIfStoreExists(newStore)) {
             jdbcTemplate.update("INSERT INTO prestige_store_names (store_name) VALUES(?)",
@@ -112,7 +103,7 @@ public class ProductListManagementDAO {
     }
 
     public boolean saveNewBrand(Brand brand) {
-        brand.setBrandName(brand.getBrandName().toUpperCase());
+        brand.setBrandName(utils.toUpperCase(brand.getBrandName()));
 
         if (!checkIfBrandExists(brand)) {
             jdbcTemplate.update("INSERT INTO common_brand_names (brand_name) VALUES(?)",
@@ -143,11 +134,62 @@ public class ProductListManagementDAO {
     }
 
     public boolean saveNewProductName(ProductName productName) {
-        productName.setProductName(capitalizeString(productName.getProductName()));
+        productName.setProductName(utils.capitalizeString(productName.getProductName()));
 
         if (!checkIfProductNameExists(productName)) {
             jdbcTemplate.update("INSERT INTO common_product_names (product_name) VALUES(?)",
                     productName.getProductName());
+
+            return true;
+        }
+        return false;
+    }
+
+    public List<Product> showAllProducts() {
+        return jdbcTemplate.query(
+                "SELECT " +
+
+                    "common_products.id, " +
+                    "common_product_names.id, " +
+                    "common_product_names.product_name, " +
+                    "common_products.car_model, " +
+                    "common_products.article_number, " +
+                    "common_brand_names.id, " +
+                    "common_brand_names.brand_name, " +
+                    "common_products.notes " +
+
+                "FROM common_products " +
+
+                "JOIN common_product_names ON common_products.product_name_id = common_product_names.id " +
+                "JOIN common_brand_names ON common_products.brand_name_id = common_brand_names.id " +
+
+                "order by (common_product_names.product_name)",
+                new ShowAllProductsMapper());
+    }
+
+    public boolean checkIfProductExists(Product product) {
+        String rawSql = "SELECT EXISTS (SELECT 1 FROM common_products WHERE " +
+                "common_products.product_name_id = %d AND " +
+                "common_products.article_number = '%s' AND " +
+                "common_products.brand_name_id = %d)";
+
+        String sql = String.format(rawSql, product.getProductName().getId(),
+                product.getArticleNumber(), product.getBrand().getId());
+
+        return jdbcTemplate.queryForObject(sql, Boolean.class);
+    }
+
+    public boolean saveNewProduct(Product product) {
+        utils.formatProductAttributes(product);
+
+        if (!checkIfProductExists(product)) {
+            String rawSql = "INSERT INTO common_products (product_name_id, car_model, article_number, brand_name_id, notes) " +
+                    "VALUES (%d, '%s', '%s', %d, '%s')";
+
+            String sql = String.format(rawSql, product.getProductName().getId(), product.getCarModel(),
+                    product.getArticleNumber(), product.getBrand().getId(), product.getNotes());
+
+            jdbcTemplate.update(sql);
 
             return true;
         }
