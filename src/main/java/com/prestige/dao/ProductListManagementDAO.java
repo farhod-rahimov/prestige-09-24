@@ -1,7 +1,9 @@
 package com.prestige.dao;
 
+import com.prestige.dao.mappers.ShowAllBrandsMapper;
 import com.prestige.dao.mappers.ShowAllClientsMapper;
 import com.prestige.dao.mappers.ShowAllStoresMapper;
+import com.prestige.models.Brand;
 import com.prestige.models.Client;
 import com.prestige.models.Store;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +75,35 @@ public class ProductListManagementDAO {
         if (!checkIfStoreExists(newStore)) {
             jdbcTemplate.update("INSERT INTO prestige_store_names (store_name) VALUES(?)",
                     newStore.getStoreName());
+
+            return true;
+        }
+        return false;
+    }
+
+    public List<Brand> showAllBrands() {
+        return jdbcTemplate.query(
+                "SELECT " +
+
+                        "common_brand_names.id, " +
+                        "common_brand_names.brand_name " +
+
+                        "FROM common_brand_names " +
+
+                        "ORDER BY (common_brand_names.brand_name)",
+                new ShowAllBrandsMapper());
+    }
+
+    public boolean checkIfBrandExists(Brand brand) {
+        String sql = "SELECT EXISTS (SELECT 1 FROM common_brand_names WHERE brand_name = ?)";
+
+        return jdbcTemplate.queryForObject(sql, Boolean.class, brand.getBrandName());
+    }
+
+    public boolean saveNewBrand(Brand brand) {
+        if (!checkIfBrandExists(brand)) {
+            jdbcTemplate.update("INSERT INTO common_brand_names (brand_name) VALUES(?)",
+                    brand.getBrandName());
 
             return true;
         }

@@ -2,6 +2,7 @@ package com.prestige.controllers.prestige;
 
 import com.prestige.dao.PrestigeSalesDAO;
 import com.prestige.dao.ProductListManagementDAO;
+import com.prestige.models.Brand;
 import com.prestige.models.Client;
 import com.prestige.models.Store;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,5 +86,33 @@ public class ProductListManagementController {
     public String showAllStores(Model model) {
         model.addAttribute("allStores", productListManagementDAO.showAllStores());
         return "prestige/showAllStores"; // return /prestige/showAllStores.html
+    }
+
+    @GetMapping("/addNewBrand")
+    public String addNewBrandGet(Model model) {
+        model.addAttribute("newBrand", new Brand());
+        return "prestige/addNewBrand"; // return /prestige/addNewBrand.html
+    }
+
+    @PostMapping("/addNewBrand")
+    public String addNewStorePost(@ModelAttribute("newBrand") Brand newBrand,
+                                  BindingResult bindingResult, Model model) {
+
+        if (bindingResult.hasErrors()) {
+            // TODO: показать ошибку на странице
+            return addNewClientGet(model);
+        }
+
+        if (!productListManagementDAO.saveNewBrand(newBrand)) {
+            model.addAttribute("error", String.format("Бренд - %s уже существует", newBrand.getBrandName()));
+            return addNewBrandGet(model);
+        };
+        return "redirect:/prestige/productListManagement/showAllBrands";
+    }
+
+    @GetMapping("/showAllBrands")
+    public String showAllBrands(Model model) {
+        model.addAttribute("allBrands", productListManagementDAO.showAllBrands());
+        return "prestige/showAllBrands"; // return /prestige/showAllBrands.html
     }
 }
