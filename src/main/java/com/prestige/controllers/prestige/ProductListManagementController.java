@@ -152,6 +152,11 @@ public class ProductListManagementController {
         return "prestige/addNewProduct"; // return /prestige/addNewProduct.html
     }
 
+    private void completeNewProduct(Product newProduct) {
+        newProduct.getProductName().setProductName(productListManagementDAO.getProductNameById(newProduct.getProductName().getId()));
+        newProduct.getBrand().setBrandName(productListManagementDAO.getBrandNameById(newProduct.getBrand().getId()));
+    }
+
     @PostMapping("/addNewProduct")
     public String addNewProductPost(@ModelAttribute("newProduct") Product newProduct,
                                         BindingResult bindingResult, Model model) {
@@ -160,6 +165,8 @@ public class ProductListManagementController {
             // TODO: показать ошибку на странице
             return addNewProductGet(model);
         }
+
+        completeNewProduct(newProduct);
 
         if (!productListManagementDAO.saveNewProduct(newProduct)) {
             model.addAttribute("error", String.format("Товар - %s | %s | %s | %s уже существует",

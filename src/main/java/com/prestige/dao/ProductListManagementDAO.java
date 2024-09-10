@@ -96,6 +96,12 @@ public class ProductListManagementDAO {
                 new ShowAllBrandsMapper());
     }
 
+    public String getBrandNameById(int id) {
+        String sql = "SELECT brand_name FROM common_brand_names WHERE id = ?";
+
+        return jdbcTemplate.queryForObject(sql, String.class, id);
+    }
+
     public boolean checkIfBrandExists(Brand brand) {
         String sql = "SELECT EXISTS (SELECT 1 FROM common_brand_names WHERE brand_name = ?)";
 
@@ -125,6 +131,12 @@ public class ProductListManagementDAO {
 
                         "ORDER BY (common_product_names.product_name)",
                 new ShowAllProductNamesMapper());
+    }
+
+    public String getProductNameById(int id) {
+        String sql = "SELECT product_name FROM common_product_names WHERE id = ?";
+
+        return jdbcTemplate.queryForObject(sql, String.class, id);
     }
 
     public boolean checkIfProductNameExists(ProductName productName) {
