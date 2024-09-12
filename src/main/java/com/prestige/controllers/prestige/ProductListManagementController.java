@@ -3,19 +3,21 @@ package com.prestige.controllers.prestige;
 import com.prestige.dao.PrestigeSalesDAO;
 import com.prestige.dao.ProductListManagementDAO;
 import com.prestige.models.*;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpSession;
+import java.util.Enumeration;
 import java.util.List;
 
 @Controller
 @RequestMapping("/prestige/productListManagement")
+@SessionAttributes("newPrestigeProduct") // Указываем, что объект "newPrestigeProduct" нужно сохранять в сессии
 public class ProductListManagementController {
 
     private final ProductListManagementDAO productListManagementDAO;
@@ -153,8 +155,17 @@ public class ProductListManagementController {
     }
 
     private void completeNewProduct(Product newProduct) {
-        newProduct.getProductName().setProductName(productListManagementDAO.getProductNameById(newProduct.getProductName().getId()));
-        newProduct.getBrand().setBrandName(productListManagementDAO.getBrandNameById(newProduct.getBrand().getId()));
+        if (newProduct.getProductName() != null && newProduct.getProductName().getId() != null &&
+            newProduct.getProductName().getProductName() == null) {
+
+            newProduct.getProductName().setProductName(productListManagementDAO.getProductNameById(newProduct.getProductName().getId()));
+        }
+
+        if (newProduct.getBrand() != null && newProduct.getBrand().getId() != null &&
+            newProduct.getBrand().getBrandName() == null) {
+
+            newProduct.getBrand().setBrandName(productListManagementDAO.getBrandNameById(newProduct.getBrand().getId()));
+        }
     }
 
     @PostMapping("/addNewProduct")
@@ -181,7 +192,155 @@ public class ProductListManagementController {
 
     @GetMapping("/showAllProducts")
     public String showAllProducts(Model model) {
+        model.addAttribute("showProductNameSelectionSection", true);
         model.addAttribute("allProducts", productListManagementDAO.showAllProducts());
         return "prestige/showAllProducts"; // return /prestige/showAllProducts.html
+    }
+
+
+    private void removeAllAttributesFromSession(HttpSession session) {
+        Enumeration<String> attributeNames = session.getAttributeNames();
+
+        while (attributeNames.hasMoreElements()) {
+            String attributeName = attributeNames.nextElement();
+            session.removeAttribute(attributeName);
+        }
+    }
+
+    @GetMapping("/addNewPrestigeProduct")
+    public String addNewPrestigeProductGet(HttpSession session, Model model) {
+
+        model.addAttribute("newPrestigeProduct", new RetailProduct());
+
+        removeAllAttributesFromSession(session);
+
+        model.addAttribute("allProductNames", productListManagementDAO.showAllProductNames());
+        model.addAttribute("showProductNameSelectionSection", true);
+
+        session.setAttribute("showProductNameSelectionSection", true);
+
+        return "prestige/addNewPrestigeProduct"; // return /prestige/addNewPrestigeProduct.html
+    }
+
+    private void completeNewRetailProduct(RetailProduct retailProduct) {
+        completeNewProduct(retailProduct.getProduct());
+
+        if (retailProduct.getStore() != null && retailProduct.getStore().getId() != null &&
+            retailProduct.getStore().getStoreName() == null) {
+
+            retailProduct.getStore().setStoreName(productListManagementDAO.getStoreNameById(retailProduct.getStore().getId()));
+        }
+    }
+
+    @PostMapping("/addNewPrestigeProduct")
+    public String addNewPrestigeProductPost(@ModelAttribute("newPrestigeProduct") RetailProduct newPrestigeProduct,
+                                    BindingResult bindingResult, Model model, HttpSession session) {
+
+        if (bindingResult.hasErrors()) {
+            FieldError fieldError = bindingResult.getFieldError();
+            String error = String.format("Введено некорректное значение - '%s' в последнем поле. " +
+                    "Пожалуйста укажите верное значение снова.", fieldError.getRejectedValue());
+            model.addAttribute("error", error);
+
+            return addNewPrestigeProductGet(session, model);
+        }
+
+        if (session.getAttribute("showProductNameSelectionSection") != null) {
+            model.addAttribute("showProductNameSelectionSection", true);
+            completeNewRetailProduct(newPrestigeProduct);
+
+            if (session.getAttribute("showCarModelSelectionSection") == null) {
+                model.addAttribute("allCarModels",
+                        productListManagementDAO.getCarModelsByProductNameId(newPrestigeProduct.getProduct().getProductName().getId()));
+
+                model.addAttribute("showCarModelSelectionSection", true);
+                session.setAttribute("showCarModelSelectionSection", true);
+                return "prestige/addNewPrestigeProduct";
+            }
+        }
+
+        if (session.getAttribute("showCarModelSelectionSection") != null) {
+            model.addAttribute("showCarModelSelectionSection", true);
+
+            if (session.getAttribute("showArticleNumberSelectionSection") == null) {
+                model.addAttribute("allArticleNumbers",
+                        productListManagementDAO.getArticleNumbersByProductNameIdAndCarModel(
+                                newPrestigeProduct.getProduct().getProductName().getId(),
+                                newPrestigeProduct.getProduct().getCarModel()));
+
+                model.addAttribute("showArticleNumberSelectionSection", true);
+                session.setAttribute("showArticleNumberSelectionSection", true);
+                return "prestige/addNewPrestigeProduct";
+            }
+        }
+
+        if (session.getAttribute("showArticleNumberSelectionSection") != null) {
+            model.addAttribute("showArticleNumberSelectionSection", true);
+
+            if (session.getAttribute("showBrandSelectionSection") == null) {
+                model.addAttribute("allBrands",
+                        productListManagementDAO.getBrandsByProductNameIdAndCarModelAndArticleNumber(
+                                newPrestigeProduct.getProduct().getProductName().getId(),
+                                newPrestigeProduct.getProduct().getCarModel(),
+                                newPrestigeProduct.getProduct().getArticleNumber()));
+
+                model.addAttribute("showBrandSelectionSection", true);
+                session.setAttribute("showBrandSelectionSection", true);
+                return "prestige/addNewPrestigeProduct";
+            }
+        }
+
+        if (session.getAttribute("showBrandSelectionSection") != null) {
+            model.addAttribute("showBrandSelectionSection", true);
+
+            if (session.getAttribute("showPriceSection") == null) {
+                model.addAttribute("showPriceSection", true);
+                session.setAttribute("showPriceSection", true);
+                return "prestige/addNewPrestigeProduct";
+            }
+        }
+
+        if (session.getAttribute("showPriceSection") != null) {
+            model.addAttribute("showPriceSection", true);
+
+            if (session.getAttribute("showQuantitySection") == null) {
+                model.addAttribute("showQuantitySection", true);
+                session.setAttribute("showQuantitySection", true);
+                return "prestige/addNewPrestigeProduct";
+            }
+        }
+
+        if (session.getAttribute("showQuantitySection") != null) {
+            model.addAttribute("showQuantitySection", true);
+
+            if (session.getAttribute("showStoreSelectionSection") == null) {
+                model.addAttribute("allStores", productListManagementDAO.showAllStores());
+
+                model.addAttribute("showStoreSelectionSection", true);
+                session.setAttribute("showStoreSelectionSection", true);
+                return "prestige/addNewPrestigeProduct";
+            }
+        }
+
+        if (session.getAttribute("showStoreSelectionSection") != null) {
+            model.addAttribute("showStoreSelectionSection", true);
+        }
+        return "prestige/addNewPrestigeProduct";
+
+//        if (!productListManagementDAO.saveNewProduct(newPrestigeProduct)) {
+//            model.addAttribute("error", String.format("Товар - %s | %s | %s | %s уже существует",
+//                    newPrestigeProduct.getProductName().getProductName(),
+//                    newPrestigeProduct.getCarModel(),
+//                    newPrestigeProduct.getArticleNumber(),
+//                    newPrestigeProduct.getBrand().getBrandName()));
+//            return addNewProductGet(model);
+//        };
+//        return "redirect:/prestige/productListManagement/showAllPrestigeProducts";
+    }
+
+    @GetMapping("/showAllPrestigeProducts")
+    public String showAllPrestigeProducts(Model model) {
+        model.addAttribute("allRetailProducts", productListManagementDAO.showAllProducts());
+        return "prestige/showAllPrestigeProducts"; // return /prestige/showAllPrestigeProducts.html
     }
 }

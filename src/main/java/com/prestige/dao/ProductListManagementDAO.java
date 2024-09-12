@@ -4,6 +4,7 @@ import com.prestige.dao.mappers.*;
 import com.prestige.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlReturnType;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -206,5 +207,45 @@ public class ProductListManagementDAO {
             return true;
         }
         return false;
+    }
+
+    public List<String> getCarModelsByProductNameId(int id) {
+        String sql = "SELECT car_model FROM common_products WHERE product_name_id = " + id;
+
+        return jdbcTemplate.queryForList(sql, String.class);
+    }
+
+    public List<String> getArticleNumbersByProductNameIdAndCarModel(int productNameId, String carModel) {
+        String sql = String.format("SELECT article_number FROM common_products WHERE product_name_id = %d AND car_model = '%s'", productNameId, carModel);
+
+        return jdbcTemplate.queryForList(sql, String.class);
+    }
+
+    public List<Brand> getBrandsByProductNameIdAndCarModelAndArticleNumber(int productNameId, String carModel, String articleNumber) {
+        return jdbcTemplate.query(
+                "SELECT " +
+                        "common_brand_names.id, " +
+                        "common_brand_names.brand_name " +
+                    "FROM " +
+                        "common_products " +
+                    "JOIN common_brand_names ON common_products.brand_name_id = common_brand_names.id " +
+                    "WHERE " +
+                        "common_products.product_name_id = " + productNameId + " AND " +
+                        "common_products.car_model = '" + carModel + "' AND " +
+                        "common_products.article_number = '" + articleNumber + "'" , new BrandMapper());
+    }
+
+    public String getStoreNameById(int id) {
+        String sql = String.format("SELECT store_name FROM prestige_store_names WHERE id = %d", id);
+
+        return jdbcTemplate.queryForObject(sql, String.class);
+    }
+
+    public void saveNewRetailProduct(RetailProduct retailProduct) {
+
+        String sql = "INSERT INTO prestige_products (date_time, product_id, price_dollar, stock_balance, store_name_id)" +
+                "VALUES (%s, %d, %s, %d, %d)";
+
+        // .....
     }
 }

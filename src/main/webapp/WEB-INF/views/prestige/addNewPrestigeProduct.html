@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru", xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оприходовать товар</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        select, input[type="text"], input[type="tel"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        input[type="submit"], .next-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        input[type="submit"]:hover, .next-button:hover {
+            background-color: #45a049;
+        }
+        .error-message {
+            color: red;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Оприходование нового товара</h2>
+
+<form th:method="POST" th:action="@{/prestige/productListManagement/addNewPrestigeProduct}" th:object="${newPrestigeProduct}">
+    <!-- Отображение сообщения об ошибке -->
+    <div th:if="${error}" class="error-message" th:text="${error}"></div>
+
+    <div th:if="${showProductNameSelectionSection != null}">
+        <!-- Секция выбора товара -->
+
+        <label for="productNameId">Название товара:</label>
+
+        <select th:if="${newPrestigeProduct.product != null and newPrestigeProduct.product.productName.productName != null}" required>
+            <option value="constant" selected th:text="${newPrestigeProduct.product.productName.productName}"></option>
+        </select>
+
+        <select th:unless="${newPrestigeProduct.product != null and newPrestigeProduct.product.productName.productName != null}" th:field="*{product.productName.id}" id="productNameId" required>
+            <option th:each="productName : ${allProductNames}" th:value="${productName.id}" th:text="${productName.productName}">
+                Выберите название товара
+            </option>
+
+        </select>
+        <br/>
+    </div>
+
+    <div th:if="${showCarModelSelectionSection != null}">
+        <!-- Секция выбора модели машины -->
+
+        <label for="carModel">Модель машины:</label>
+
+        <select th:if="${newPrestigeProduct.product != null and newPrestigeProduct.product.carModel != null}" required>
+            <option value="constant" selected th:text="${newPrestigeProduct.product.carModel}"></option>
+        </select>
+
+        <select th:unless="${newPrestigeProduct.product != null and newPrestigeProduct.product.carModel != null}" th:field="*{product.carModel}" id="carModel" required>
+            <option th:each="carModel : ${allCarModels}" th:value="${carModel}" th:text="${carModel}">Выберите модель машины</option>
+        </select>
+
+        <br/>
+    </div>
+
+    <div th:if="${showArticleNumberSelectionSection != null}">
+        <!-- Секция выбора артикула -->
+
+        <label for="articleNumber">Артикул:</label>
+
+        <select th:if="${newPrestigeProduct.product != null and newPrestigeProduct.product.articleNumber != null}" required>
+            <option value="constant" selected th:text="${newPrestigeProduct.product.articleNumber}"></option>
+        </select>
+
+        <select th:unless="${newPrestigeProduct.product != null and newPrestigeProduct.product.articleNumber != null}" th:field="*{product.articleNumber}" id="articleNumber" required>
+            <option th:each="articleNumber : ${allArticleNumbers}" th:value="${articleNumber}" th:text="${articleNumber}">Выбрать артикул</option>
+        </select>
+
+        <br/>
+    </div>
+
+    <div th:if="${showBrandSelectionSection != null}">
+        <label for="brandId">Бренд:</label>
+
+        <select th:if="${newPrestigeProduct.product != null and newPrestigeProduct.product.brand != null}" required>
+            <option value="constant" selected th:text="${newPrestigeProduct.product.brand.brandName}"></option>
+        </select>
+
+        <select th:unless="${newPrestigeProduct.product != null and newPrestigeProduct.product.brand != null}" th:field="*{product.brand.id}" id="brandId" required>
+            <option th:each="brand : ${allBrands}" th:value="${brand.id}" th:text="${brand.brandName}">Выберите бренд</option>
+        </select>
+
+        <br/>
+    </div>
+
+    <div th:if="${showPriceSection != null}">
+        <label for="price">Оптовая цена в долларах:</label>
+
+        <input th:if="${newPrestigeProduct.priceDollar}" type="text" th:field="*{priceDollar}" readonly>
+        <input th:unless="${newPrestigeProduct.priceDollar}" type="text" th:field="*{priceDollar}" id="price" required>
+
+        <br/>
+    </div>
+
+    <div th:if="${showQuantitySection != null}">
+        <label for="quantity">Кол-во:</label>
+
+        <input th:if="${newPrestigeProduct.stockBalance}" type="text" th:field="*{stockBalance}" readonly>
+        <input th:unless="${newPrestigeProduct.stockBalance}" type="text" th:field="*{stockBalance}" id="quantity" required>
+
+        <br/>
+    </div>
+
+    <div th:if="${showStoreSelectionSection != null}">
+        <label for="storeId">Поставщик:</label>
+
+        <select th:if="${newPrestigeProduct.store != null}" required>
+            <option value="constant" selected th:text="${newPrestigeProduct.store.storeName}"></option>
+        </select>
+
+        <select th:unless="${newPrestigeProduct.store != null}" th:field="*{store.id}" id="storeId" required>
+            <option th:each="store : ${allStores}" th:value="${store.id}" th:text="${store.storeName}">Выберите поставщика</option>
+        </select>
+
+        <br/>
+    </div>
+
+    <button th:if="${showStoreSelectionSection != null}" type="submit" class="next-button">Сохранить</button>
+    <button th:unless="${showStoreSelectionSection != null}" type="submit" class="next-button">Далее</button>
+</form>
+
+</body>
+</html>
