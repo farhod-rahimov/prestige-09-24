@@ -273,7 +273,7 @@ public class ProductListManagementDAO {
                         "common_products.article_number, " +
                         "common_brand_names.brand_name, " +
                         "common_products.notes, " +
-                        "AVG(prestige_products.price_dollar), " +
+                        "ROUND(AVG(prestige_products.price_dollar), 2), " +
                         "SUM(prestige_products.stock_balance) " +
 
                     "FROM prestige_products " +

@@ -15,7 +15,7 @@ public class ShowAllPrestigeProductsMapper implements RowMapper<RetailProduct> {
         Brand brand = new Brand(null, rs.getString(4));
 
         Product product = new Product(null, productName, rs.getString(2),
-                rs.getString(3), brand, rs.getString(4));
+                rs.getString(3), brand, rs.getString(5));
 
         return new RetailProduct(null, null, product, rs.getBigDecimal(6),
                 rs.getInt(7), null);

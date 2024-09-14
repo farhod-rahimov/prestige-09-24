@@ -27,8 +27,4 @@ public class RetailProduct {
     private Integer stockBalance;
 
     private Store store;
-
-    public BigDecimal getPriceDollarFormatted() {
-        return priceDollar.setScale(2, RoundingMode.HALF_UP);
-    }
 }
