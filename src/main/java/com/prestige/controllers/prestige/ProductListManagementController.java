@@ -166,6 +166,14 @@ public class ProductListManagementController {
 
             newProduct.getBrand().setBrandName(productListManagementDAO.getBrandNameById(newProduct.getBrand().getId()));
         }
+
+        if (newProduct.getId() == null && newProduct.getProductName() != null &&
+            newProduct.getCarModel() != null && newProduct.getArticleNumber() != null &&
+            newProduct.getBrand() != null) {
+
+            newProduct.setId(productListManagementDAO.getCommonProductsId(newProduct.getBrand().getId(),
+                    newProduct.getProductName().getId(), newProduct.getCarModel(), newProduct.getArticleNumber()));
+        }
     }
 
     @PostMapping("/addNewProduct")
@@ -325,22 +333,15 @@ public class ProductListManagementController {
         if (session.getAttribute("showStoreSelectionSection") != null) {
             model.addAttribute("showStoreSelectionSection", true);
         }
-        return "prestige/addNewPrestigeProduct";
 
-//        if (!productListManagementDAO.saveNewProduct(newPrestigeProduct)) {
-//            model.addAttribute("error", String.format("Товар - %s | %s | %s | %s уже существует",
-//                    newPrestigeProduct.getProductName().getProductName(),
-//                    newPrestigeProduct.getCarModel(),
-//                    newPrestigeProduct.getArticleNumber(),
-//                    newPrestigeProduct.getBrand().getBrandName()));
-//            return addNewProductGet(model);
-//        };
-//        return "redirect:/prestige/productListManagement/showAllPrestigeProducts";
+        productListManagementDAO.saveNewRetailProduct(newPrestigeProduct);
+
+        return "redirect:/prestige/productListManagement/showAllPrestigeProducts";
     }
 
     @GetMapping("/showAllPrestigeProducts")
     public String showAllPrestigeProducts(Model model) {
-        model.addAttribute("allRetailProducts", productListManagementDAO.showAllProducts());
+        model.addAttribute("allPrestigeProducts", productListManagementDAO.showAllPrestigeProducts());
         return "prestige/showAllPrestigeProducts"; // return /prestige/showAllPrestigeProducts.html
     }
 }

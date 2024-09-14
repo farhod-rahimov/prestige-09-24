@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlReturnType;
 import org.springframework.stereotype.Component;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 @Component
@@ -243,9 +244,45 @@ public class ProductListManagementDAO {
 
     public void saveNewRetailProduct(RetailProduct retailProduct) {
 
-        String sql = "INSERT INTO prestige_products (date_time, product_id, price_dollar, stock_balance, store_name_id)" +
-                "VALUES (%s, %d, %s, %d, %d)";
+        String rawSql = "INSERT INTO prestige_products (date_time, product_id, price_dollar, stock_balance, store_name_id) " +
+                "VALUES ('%s', %d, %s, %d, %d)";
 
-        // .....
+        String sql = String.format(rawSql, new Timestamp(System.currentTimeMillis()), retailProduct.getProduct().getId(),
+                retailProduct.getPriceDollar(), retailProduct.getStockBalance(), retailProduct.getStore().getId());
+
+        jdbcTemplate.update(sql);
     }
+
+   public Integer getCommonProductsId(int brandNameId, int productNameId, String carModel, String articleNumber) {
+       String rawSql = "SELECT id FROM common_products WHERE " +
+               "brand_name_id = %d AND " +
+               "product_name_id = %d AND " +
+               "car_model = '%s' AND " +
+               "article_number = '%s'";
+
+       String sql = String.format(rawSql, brandNameId, productNameId, carModel, articleNumber);
+
+       return jdbcTemplate.queryForObject(sql, Integer.class);
+   }
+
+   public List<RetailProduct> showAllPrestigeProducts() {
+        return jdbcTemplate.query(
+                "SELECT " +
+                        "common_product_names.product_name, " +
+                        "common_products.car_model, " +
+                        "common_products.article_number, " +
+                        "common_brand_names.brand_name, " +
+                        "common_products.notes, " +
+                        "AVG(prestige_products.price_dollar), " +
+                        "SUM(prestige_products.stock_balance) " +
+
+                    "FROM prestige_products " +
+
+                    "JOIN common_products ON common_products.id = prestige_products.product_id " +
+                    "JOIN common_product_names ON common_product_names.id = common_products.product_name_id " +
+                    "JOIN common_brand_names ON common_brand_names.id = common_products.brand_name_id " +
+
+                    "GROUP BY(common_product_names.product_name, common_products.car_model, common_products.article_number, " +
+                            "common_brand_names.brand_name, common_products.notes)", new ShowAllPrestigeProductsMapper());
+   }
 }

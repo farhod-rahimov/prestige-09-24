@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 
 
@@ -26,4 +27,8 @@ public class RetailProduct {
     private Integer stockBalance;
 
     private Store store;
+
+    public BigDecimal getPriceDollarFormatted() {
+        return priceDollar.setScale(2, RoundingMode.HALF_UP);
+    }
 }
