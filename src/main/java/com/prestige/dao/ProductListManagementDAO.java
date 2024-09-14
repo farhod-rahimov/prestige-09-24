@@ -285,4 +285,8 @@ public class ProductListManagementDAO {
                     "GROUP BY(common_product_names.product_name, common_products.car_model, common_products.article_number, " +
                             "common_brand_names.brand_name, common_products.notes)", new ShowAllPrestigeProductsMapper());
    }
+
+   public void updateSettings(String key, String value) {
+       jdbcTemplate.update("UPDATE prestige_settings SET settings_value = ? WHERE settings_name = ?", value, key);
+   }
 }

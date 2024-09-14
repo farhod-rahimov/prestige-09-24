@@ -27,4 +27,13 @@ public class RetailProduct {
     private Integer stockBalance;
 
     private Store store;
+
+    public BigDecimal getConvertedPriceToSmn(BigDecimal magicValue, BigDecimal exchangeRate) {
+        BigDecimal hundred = new BigDecimal("100");
+
+        // (100 + magicValue) / 100) * exchangeRate
+        BigDecimal convertedPriceToSmn = priceDollar.multiply(hundred.add(magicValue).divide(hundred)).multiply(exchangeRate);
+
+        return convertedPriceToSmn.setScale(0, RoundingMode.HALF_UP);
+    }
 }

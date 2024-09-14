@@ -91,3 +91,8 @@ create table if not exists prestige_all_sales(
 	sold_price_smn numeric(15, 4) not null,
 	basket_id int references prestige_baskets(id) not null
 );
+
+create table if not exists prestige_settings(
+    settings_name varchar(100) not null,
+    settings_value varchar(100) not null
+);

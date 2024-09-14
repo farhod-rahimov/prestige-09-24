@@ -12,6 +12,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
+import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -22,9 +24,12 @@ public class ProductListManagementController {
 
     private final ProductListManagementDAO productListManagementDAO;
 
+    private final Settings settings;
+
     @Autowired
-    public ProductListManagementController(ProductListManagementDAO productListManagementDAO) {
+    public ProductListManagementController(ProductListManagementDAO productListManagementDAO, Settings settings) {
         this.productListManagementDAO = productListManagementDAO;
+        this.settings = settings;
     }
 
     @GetMapping()
@@ -206,11 +211,13 @@ public class ProductListManagementController {
     }
 
 
-    private void removeAllAttributesFromSession(HttpSession session) {
-        Enumeration<String> attributeNames = session.getAttributeNames();
+    private void removeAttributesFromSession(HttpSession session) {
+        List<String> attributeNames = Arrays.asList("showProductNameSelectionSection",
+                "showCarModelSelectionSection", "showArticleNumberSelectionSection",
+                "showBrandSelectionSection", "showPriceSection", "showQuantitySection",
+                "showStoreSelectionSection");
 
-        while (attributeNames.hasMoreElements()) {
-            String attributeName = attributeNames.nextElement();
+        for (String attributeName : attributeNames) {
             session.removeAttribute(attributeName);
         }
     }
@@ -220,7 +227,7 @@ public class ProductListManagementController {
 
         model.addAttribute("newPrestigeProduct", new RetailProduct());
 
-        removeAllAttributesFromSession(session);
+        removeAttributesFromSession(session);
 
         model.addAttribute("allProductNames", productListManagementDAO.showAllProductNames());
         model.addAttribute("showProductNameSelectionSection", true);
@@ -340,7 +347,22 @@ public class ProductListManagementController {
     }
 
     @GetMapping("/showAllPrestigeProducts")
-    public String showAllPrestigeProducts(Model model) {
+    public String showAllPrestigeProducts(@RequestParam(name = "magicValue", required = false) String magicValue,
+                                          @RequestParam(name = "exchangeRate", required = false) String exchangeRate,
+                                          Model model) {
+
+        if (magicValue != null && !magicValue.equals(settings.getValueByKey("magicValue"))) {
+            productListManagementDAO.updateSettings("magicValue", magicValue);
+            settings.setValueByKey("magicValue", magicValue);
+        }
+        model.addAttribute("magicValue", settings.getValueByKey("magicValue"));
+
+        if (exchangeRate != null && !exchangeRate.equals(settings.getValueByKey("exchangeRate"))) {
+            productListManagementDAO.updateSettings("exchangeRate", exchangeRate);
+            settings.setValueByKey("exchangeRate", exchangeRate);
+        }
+        model.addAttribute("exchangeRate", settings.getValueByKey("exchangeRate"));
+
         model.addAttribute("allPrestigeProducts", productListManagementDAO.showAllPrestigeProducts());
         return "prestige/showAllPrestigeProducts"; // return /prestige/showAllPrestigeProducts.html
     }
