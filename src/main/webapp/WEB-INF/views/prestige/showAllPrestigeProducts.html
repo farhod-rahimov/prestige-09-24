@@ -84,10 +84,10 @@
         <th>Модель машины</th>
         <th>Артикул</th>
         <th>Бренд</th>
-        <th>(INNER)</th>
         <th>Розничная цена</th>
         <th>Остаток</th>
         <th>Комментарий</th>
+        <th>(INNER)</th>
     </tr>
     </thead>
     <tbody>
@@ -97,10 +97,10 @@
             <td><a th:text="${prestigeProduct.getProduct().getCarModel()}"></a></td>
             <td><a th:text="${prestigeProduct.getProduct().getArticleNumber()}"></a></td>
             <td><a th:text="${prestigeProduct.getProduct().getBrand().getBrandName()}"></a></td>
-            <td><a th:text="${prestigeProduct.getPriceDollar()}"></a></td>
             <td><a th:text="${prestigeProduct.getConvertedPriceToSmn(magicValue, exchangeRate) + ' смн'}"></a></td>
             <td><a th:text="${prestigeProduct.getStockBalance()}"></a></td>
             <td><a th:text="${prestigeProduct.getProduct().getNotes()}"></a></td>
+            <td><a th:text="${prestigeProduct.getPriceDollar()}"></a></td>
         </tr>
     </tbody>
 </table>
