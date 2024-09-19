@@ -2,6 +2,7 @@ package com.prestige.controllers.prestige;
 
 import com.prestige.dao.PrestigeSalesDAO;
 import com.prestige.dao.ProductListManagementDAO;
+import com.prestige.dao.Utils;
 import com.prestige.models.*;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,23 +14,28 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 
 @Controller
 @RequestMapping("/prestige/productListManagement")
-@SessionAttributes("newPrestigeProduct") // Указываем, что объект "newPrestigeProduct" нужно сохранять в сессии
+@SessionAttributes({"newPrestigeProduct", "newPrestigeBasket"}) // Указываем, что объекты  нужно сохранять в сессии
 public class ProductListManagementController {
 
     private final ProductListManagementDAO productListManagementDAO;
 
     private final Settings settings;
 
+    private final Utils utils;
+
     @Autowired
-    public ProductListManagementController(ProductListManagementDAO productListManagementDAO, Settings settings) {
+    public ProductListManagementController(ProductListManagementDAO productListManagementDAO, Settings settings,
+                                           Utils utils) {
         this.productListManagementDAO = productListManagementDAO;
         this.settings = settings;
+        this.utils = utils;
     }
 
     @GetMapping()
@@ -225,7 +231,9 @@ public class ProductListManagementController {
     @GetMapping("/addNewPrestigeProduct")
     public String addNewPrestigeProductGet(HttpSession session, Model model) {
 
+        // заменяем объект newPrestigeProduct в Модели и Сессии, т.к там может быть старый объект
         model.addAttribute("newPrestigeProduct", new RetailProduct());
+        session.setAttribute("newPrestigeProduct", model.getAttribute("newPrestigeProduct"));
 
         removeAttributesFromSession(session);
 
@@ -365,5 +373,80 @@ public class ProductListManagementController {
 
         model.addAttribute("allPrestigeProducts", productListManagementDAO.showAllPrestigeProducts());
         return "prestige/showAllPrestigeProducts"; // return /prestige/showAllPrestigeProducts.html
+    }
+
+    @GetMapping("/addNewPrestigeBasket")
+    public String addNewPrestigeBasketGet(Model model, HttpSession session) {
+        Basket basket = new Basket();
+        basket.setCreatedDateTime(utils.getCurrentTimeStamp());
+        basket.setLastChangedDateTime(basket.getCreatedDateTime());
+
+        // заменяем объект newPrestigeProduct в Модели и Сессии, т.к там может быть старый объект
+        model.addAttribute("newPrestigeProduct", new RetailProduct());
+        session.setAttribute("newPrestigeProduct", model.getAttribute("newPrestigeProduct"));
+
+        model.addAttribute("newPrestigeBasket", basket);
+        model.addAttribute("allClients", productListManagementDAO.showAllClients());
+        return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
+    }
+
+    private void completeBasket(Basket newPrestigeBasket) {
+        Client client = newPrestigeBasket.getClient();
+
+        if (client != null && client.getName() == null) {
+            client.setName(productListManagementDAO.getClientNameById(client.getId()));
+        }
+
+        if (client != null && client.getPhoneNumber() == null) {
+            client.setPhoneNumber(productListManagementDAO.getClientPhoneNumberById(client.getId()));
+        }
+    }
+
+    @PostMapping("/addNewPrestigeBasket")
+    public String addNewPrestigeBasketGet(@ModelAttribute("newPrestigeBasket") Basket newPrestigeBasket,
+                                    @ModelAttribute("newPrestigeProduct") RetailProduct newPrestigeProduct,
+                                    BindingResult bindingResult, Model model) {
+
+        if (bindingResult.hasErrors()) {
+            // TODO: показать ошибку на странице
+            return addNewProductGet(model);
+        }
+
+        completeNewProduct(newPrestigeProduct.getProduct());
+
+        if (newPrestigeProduct.getProduct().getProductName().getId() == null) {
+            model.addAttribute("allProductsNames", productListManagementDAO.showAllProductNames());
+        }
+        else if (newPrestigeProduct.getProduct().getCarModel() == null) {
+            model.addAttribute("allCarModels", productListManagementDAO.getCarModelsByProductNameId(
+                    newPrestigeProduct.getProduct().getProductName().getId()));
+        }
+        else if (newPrestigeProduct.getProduct().getArticleNumber() == null) {
+            model.addAttribute("allArticleNumbers", productListManagementDAO.getArticleNumbersByProductNameIdAndCarModel(
+                    newPrestigeProduct.getProduct().getProductName().getId(),  newPrestigeProduct.getProduct().getCarModel()));
+        }
+
+//        completeNewProduct(newProduct);
+//
+//        if (!productListManagementDAO.saveNewProduct(newProduct)) {
+//            model.addAttribute("error", String.format("Товар - %s | %s | %s | %s уже существует",
+//                    newProduct.getProductName().getProductName(),
+//                    newProduct.getCarModel(),
+//                    newProduct.getArticleNumber(),
+//                    newProduct.getBrand().getBrandName()));
+//            return addNewProductGet(model);
+//        };
+
+        completeBasket(newPrestigeBasket);
+        newPrestigeBasket.setLastChangedDateTime(utils.getCurrentTimeStamp());
+        return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
+//        return "redirect:/prestige/productListManagement/showAllPrestigeBaskets";
+    }
+
+    @GetMapping("/showAllPrestigeBaskets")
+    public String showAllPrestigeBaskets(Model model) {
+//        model.addAttribute("showProductNameSelectionSection", true);
+//        model.addAttribute("allProducts", productListManagementDAO.showAllProducts());
+        return "prestige/showAllPrestigeBaskets"; // return /prestige/showAllPrestigeBaskets.html
     }
 }

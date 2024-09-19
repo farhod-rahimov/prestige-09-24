@@ -44,6 +44,7 @@ public class ProductListManagementDAO {
 
     public boolean saveNewClient(Client newClient) {
         newClient.setName(utils.capitalizeString(newClient.getName()));
+        newClient.setPhoneNumber(newClient.getPhoneNumber().replaceAll("[- ]", "")); // удалить все "-" и " "
 
         if (!checkIfClientExists(newClient)) {
             jdbcTemplate.update("INSERT INTO prestige_clients (name, phone_number) VALUES(?, ?)",
@@ -289,4 +290,16 @@ public class ProductListManagementDAO {
    public void updateSettings(String key, String value) {
        jdbcTemplate.update("UPDATE prestige_settings SET settings_value = ? WHERE settings_name = ?", value, key);
    }
+
+   public String getClientNameById(int id) {
+       String sql = String.format("SELECT name FROM prestige_clients WHERE id = %d", id);
+
+       return jdbcTemplate.queryForObject(sql, String.class);
+   }
+
+    public String getClientPhoneNumberById(int id) {
+        String sql = String.format("SELECT phone_number FROM prestige_clients WHERE id = %d", id);
+
+        return jdbcTemplate.queryForObject(sql, String.class);
+    }
 }

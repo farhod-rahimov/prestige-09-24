@@ -1,7 +1,11 @@
 package com.prestige.dao;
 
 import com.prestige.models.Product;
+import org.springframework.stereotype.Component;
 
+import java.sql.Timestamp;
+
+@Component
 public class Utils {
 
     public String capitalizeString(String string) {
@@ -26,5 +30,9 @@ public class Utils {
     public void formatProductAttributes(Product product) {
         product.setCarModel(toUpperCase(product.getCarModel()));
         product.setArticleNumber(formatArticleNumber(product.getArticleNumber()));
+    }
+
+    public Timestamp getCurrentTimeStamp() {
+        return new Timestamp(System.currentTimeMillis());
     }
 }

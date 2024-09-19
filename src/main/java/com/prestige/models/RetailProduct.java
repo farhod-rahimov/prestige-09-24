@@ -13,7 +13,6 @@ import java.sql.Timestamp;
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor
 public class RetailProduct {
 
     private Integer id;
@@ -27,6 +26,11 @@ public class RetailProduct {
     private Integer stockBalance;
 
     private Store store;
+
+    public RetailProduct() {
+        product = new Product();
+        product.setProductName(new ProductName());
+    }
 
     public BigDecimal getConvertedPriceToSmn(BigDecimal magicValue, BigDecimal exchangeRate) {
         BigDecimal hundred = new BigDecimal("100");

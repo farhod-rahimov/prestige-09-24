@@ -24,7 +24,8 @@ public class PrestigeSalesDAO {
             "SELECT " +
 
                     "prestige_baskets.id, " +
-                    "prestige_baskets.date_time, " +
+                    "prestige_baskets.created_date_time, " +
+                    "prestige_baskets.last_changed_date_time, " +
                     "prestige_clients.id, " +
                     "prestige_clients.name, " +
                     "prestige_clients.phone_number, " +

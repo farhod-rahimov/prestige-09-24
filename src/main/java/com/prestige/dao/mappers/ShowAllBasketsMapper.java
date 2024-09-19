@@ -12,11 +12,11 @@ public class ShowAllBasketsMapper implements RowMapper<Basket> {
     @Override
     public Basket mapRow(ResultSet rs, int rowNum) throws SQLException {
 
-        Client client = new Client(rs.getInt(3), rs.getString(4),
-                rs.getString(5));
+        Client client = new Client(rs.getInt(4), rs.getString(5),
+                rs.getString(6));
 
         Basket basket = new Basket(rs.getInt(1), rs.getTimestamp(2),
-                client, rs.getBigDecimal(6));
+                                    rs.getTimestamp(3), client, rs.getBigDecimal(7));
 
         return basket;
     }
