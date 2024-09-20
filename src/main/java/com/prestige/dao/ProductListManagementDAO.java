@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlReturnType;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -274,7 +275,11 @@ public class ProductListManagementDAO {
                         "common_products.article_number, " +
                         "common_brand_names.brand_name, " +
                         "common_products.notes, " +
-                        "ROUND(AVG(prestige_products.price_dollar), 2), " +
+
+                        // средневзвешенная цена
+                        "ROUND(SUM(prestige_products.price_dollar * prestige_products.stock_balance) / " +
+                              "SUM(prestige_products.stock_balance), 2), " +
+
                         "SUM(prestige_products.stock_balance) " +
 
                     "FROM prestige_products " +
@@ -301,5 +306,17 @@ public class ProductListManagementDAO {
         String sql = String.format("SELECT phone_number FROM prestige_clients WHERE id = %d", id);
 
         return jdbcTemplate.queryForObject(sql, String.class);
+    }
+
+    public BigDecimal getWACCPriceByProductId(Integer productId) {
+        return jdbcTemplate.queryForObject(
+                "SELECT " +
+                        "ROUND(SUM(price_dollar * stock_balance) / SUM(stock_balance), 2) " +
+
+                    "FROM prestige_products " +
+
+                    "WHERE product_id = " + productId + " " +
+
+                    "GROUP BY(product_id)", BigDecimal.class);
     }
 }

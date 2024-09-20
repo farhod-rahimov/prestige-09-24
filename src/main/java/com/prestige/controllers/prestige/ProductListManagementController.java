@@ -21,7 +21,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/prestige/productListManagement")
-@SessionAttributes({"newPrestigeProduct", "newPrestigeBasket"}) // Указываем, что объекты  нужно сохранять в сессии
+@SessionAttributes({"newPrestigeProduct", "newPrestigeSaleUnit"}) // Указываем, что объекты  нужно сохранять в сессии
 public class ProductListManagementController {
 
     private final ProductListManagementDAO productListManagementDAO;
@@ -377,15 +377,11 @@ public class ProductListManagementController {
 
     @GetMapping("/addNewPrestigeBasket")
     public String addNewPrestigeBasketGet(Model model, HttpSession session) {
-        Basket basket = new Basket();
-        basket.setCreatedDateTime(utils.getCurrentTimeStamp());
-        basket.setLastChangedDateTime(basket.getCreatedDateTime());
 
-        // заменяем объект newPrestigeProduct в Модели и Сессии, т.к там может быть старый объект
-        model.addAttribute("newPrestigeProduct", new RetailProduct());
-        session.setAttribute("newPrestigeProduct", model.getAttribute("newPrestigeProduct"));
+        // заменяем объект newPrestigeSaleUnit в Модели и Сессии, т.к там может быть старый объект
+        model.addAttribute("newPrestigeSaleUnit", new RetailSaleUnit());
+        session.setAttribute("newPrestigeSaleUnit", model.getAttribute("newPrestigeSaleUnit"));
 
-        model.addAttribute("newPrestigeBasket", basket);
         model.addAttribute("allClients", productListManagementDAO.showAllClients());
         return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
     }
@@ -403,28 +399,50 @@ public class ProductListManagementController {
     }
 
     @PostMapping("/addNewPrestigeBasket")
-    public String addNewPrestigeBasketGet(@ModelAttribute("newPrestigeBasket") Basket newPrestigeBasket,
-                                    @ModelAttribute("newPrestigeProduct") RetailProduct newPrestigeProduct,
-                                    BindingResult bindingResult, Model model) {
+    public String addNewPrestigeBasketGet(@ModelAttribute("newPrestigeSaleUnit") RetailSaleUnit newPrestigeSaleUnit,
+                                        BindingResult bindingResult, Model model) {
 
         if (bindingResult.hasErrors()) {
             // TODO: показать ошибку на странице
             return addNewProductGet(model);
         }
 
-        completeNewProduct(newPrestigeProduct.getProduct());
+        model.addAttribute("magicValue", settings.getValueByKey("magicValue"));
+        model.addAttribute("exchangeRate", settings.getValueByKey("exchangeRate"));
 
-        if (newPrestigeProduct.getProduct().getProductName().getId() == null) {
+        RetailProduct prestigeProduct = newPrestigeSaleUnit.getRetailProduct();
+        completeNewProduct(prestigeProduct.getProduct());
+
+        if (prestigeProduct.getProduct().getProductName().getId() == null) {
             model.addAttribute("allProductsNames", productListManagementDAO.showAllProductNames());
         }
-        else if (newPrestigeProduct.getProduct().getCarModel() == null) {
+        else if (prestigeProduct.getProduct().getCarModel() == null) {
             model.addAttribute("allCarModels", productListManagementDAO.getCarModelsByProductNameId(
-                    newPrestigeProduct.getProduct().getProductName().getId()));
+                    prestigeProduct.getProduct().getProductName().getId()));
         }
-        else if (newPrestigeProduct.getProduct().getArticleNumber() == null) {
+        else if (prestigeProduct.getProduct().getArticleNumber() == null) {
             model.addAttribute("allArticleNumbers", productListManagementDAO.getArticleNumbersByProductNameIdAndCarModel(
-                    newPrestigeProduct.getProduct().getProductName().getId(),  newPrestigeProduct.getProduct().getCarModel()));
+                    prestigeProduct.getProduct().getProductName().getId(),  prestigeProduct.getProduct().getCarModel()));
         }
+        else if (prestigeProduct.getProduct().getBrand() == null) {
+            model.addAttribute("allBrands", productListManagementDAO.getBrandsByProductNameIdAndCarModelAndArticleNumber(
+                prestigeProduct.getProduct().getProductName().getId(), prestigeProduct.getProduct().getCarModel(),
+                    prestigeProduct.getProduct().getArticleNumber()));
+        }
+        else if (prestigeProduct.getPriceDollar() == null) {
+            newPrestigeSaleUnit.getRetailProduct().setPriceDollar(productListManagementDAO.getWACCPriceByProductId(
+                    newPrestigeSaleUnit.getRetailProduct().getProduct().getId()));
+
+            // set default soldPriceSmn
+            BigDecimal magicValue = new BigDecimal(settings.getValueByKey("magicValue"));
+            BigDecimal exchangeRate = new BigDecimal(settings.getValueByKey("exchangeRate"));
+            BigDecimal soldPriceSmn = newPrestigeSaleUnit.getRetailProduct().getConvertedPriceToSmn(magicValue, exchangeRate);
+            newPrestigeSaleUnit.setSoldPriceSmn(soldPriceSmn);
+        }
+        else if (newPrestigeSaleUnit.getTotalSumSmn() == null) {
+            newPrestigeSaleUnit.setTotalSumSmn(newPrestigeSaleUnit.getSoldPriceSmn().multiply(new BigDecimal(newPrestigeSaleUnit.getQuantity())));
+        }
+
 
 //        completeNewProduct(newProduct);
 //
@@ -437,8 +455,8 @@ public class ProductListManagementController {
 //            return addNewProductGet(model);
 //        };
 
-        completeBasket(newPrestigeBasket);
-        newPrestigeBasket.setLastChangedDateTime(utils.getCurrentTimeStamp());
+        completeBasket(newPrestigeSaleUnit.getBasket());
+        newPrestigeSaleUnit.getBasket().setLastChangedDateTime(utils.getCurrentTimeStamp());
         return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
 //        return "redirect:/prestige/productListManagement/showAllPrestigeBaskets";
     }

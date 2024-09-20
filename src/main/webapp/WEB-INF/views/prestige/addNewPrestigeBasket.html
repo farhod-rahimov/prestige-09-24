@@ -72,117 +72,168 @@
 
 <h2>Добавление новой корзины</h2>
 
-<form th:method="POST" th:action="@{/prestige/productListManagement/addNewPrestigeBasket}" th:object="${newPrestigeBasket}">
+<form th:method="POST" th:action="@{/prestige/productListManagement/addNewPrestigeBasket}" th:object="${newPrestigeSaleUnit}">
     <!-- Отображение сообщения об ошибке -->
     <div th:if="${error}" class="error-message" th:text="${error}"></div>
 
     <!-- Поле для выбора клиента -->
     <label for="clientId">Клиент:</label>
-    <select th:if="${newPrestigeBasket.client != null and newPrestigeBasket.client.name != null}" required>
-        <option value="constant" selected th:text="${newPrestigeBasket.client.name}"></option>
+    <select th:if="${newPrestigeSaleUnit.basket.client != null and newPrestigeSaleUnit.basket.client.name != null}" required>
+        <option value="constant" selected th:text="${newPrestigeSaleUnit.basket.client.name}"></option>
     </select>
-    <select th:unless="${newPrestigeBasket.client != null and newPrestigeBasket.client.name != null}" th:field="*{client.id}" id="clientId" required>
+    <select th:unless="${newPrestigeSaleUnit.basket.client != null and newPrestigeSaleUnit.basket.client.name != null}" th:field="*{basket.client.id}" id="clientId" required>
         <option th:each="client : ${allClients}" th:value="${client.id}" th:text="${client.name}">
             Выберите покупателя
         </option>
     </select>
     <br/>
 
-    <input th:unless="${newPrestigeBasket.client != null and newPrestigeBasket.client.name != null}" type="submit" value="Сохранить клиента">
-
-</form>
-
-<form th:if="${newPrestigeBasket.client != null and newPrestigeBasket.client.name != null}"
-      th:method="POST" th:action="@{/prestige/productListManagement/addNewPrestigeBasket}" th:object="${newPrestigeProduct}">
-
-    <!-- Отображение сообщения об ошибке -->
-    <div th:if="${error}" class="error-message" th:text="${error}"></div>
-
     <!-- Таблица для выбора продуктов и редактирования корзины -->
-    <table>
+    <table th:if="${newPrestigeSaleUnit.basket.client.name != null}">
         <thead>
         <tr>
             <th>Имя продукта</th>
             <th>Модель машины</th>
             <th>Артикул</th>
-            <!--            <th>Бренд</th>-->
-<!--            <th>Цена</th>-->
-<!--            <th>Остаток</th>-->
-<!--            <th>Комментарий</th>-->
+            <th>Бренд</th>
+            <th>Кол-во</th>
+            <th>Цена</th>
+            <th>Сумма</th>
+            <th>Остаток</th>
+            <th>(INNER SMN)</th>
+            <th>(INNER)</th>
+            <!--            <th>Комментарий</th>-->
         </tr>
         </thead>
         <tbody>
         <tr>
             <!-- Выбор имени продукта -->
             <td>
-                <select th:if="${newPrestigeProduct.product.productName.id != null}" required>
-                    <option value="constant" selected th:text="${newPrestigeProduct.product.productName.productName}"></option>
+                <select th:if="${newPrestigeSaleUnit.retailProduct.product.productName.id != null}" required>
+                    <option value="constant" selected th:text="${newPrestigeSaleUnit.retailProduct.product.productName.productName}"></option>
                 </select>
 
-                <select th:unless="${newPrestigeProduct.product.productName.id != null}" th:field="*{product.productName.id}" required>
+                <select th:unless="${newPrestigeSaleUnit.retailProduct.product.productName.id != null}" th:field="*{retailProduct.product.productName.id}" required>
                     <option th:each="productName : ${allProductsNames}" th:value="${productName.id}" th:text="${productName.productName}">
                     </option>
                 </select>
             </td>
 
             <!-- Выбор модели машины -->
-            <td th:if="${newPrestigeProduct.product.productName.id != null}">
-                <select th:if="${newPrestigeProduct.product.carModel != null}" required>
-                    <option value="constant" selected th:text="${newPrestigeProduct.product.carModel}"></option>
+            <td th:if="${newPrestigeSaleUnit.retailProduct.product.productName.id != null}">
+                <select th:if="${newPrestigeSaleUnit.retailProduct.product.carModel != null}" required>
+                    <option value="constant" selected th:text="${newPrestigeSaleUnit.retailProduct.product.carModel}"></option>
                 </select>
 
-                <select th:unless="${newPrestigeProduct.product.carModel != null}" th:field="*{product.carModel}" required>
+                <select th:unless="${newPrestigeSaleUnit.retailProduct.product.carModel != null}" th:field="*{retailProduct.product.carModel}" required>
                     <option th:each="carModel : ${allCarModels}" th:value="${carModel}" th:text="${carModel}">
                     </option>
                 </select>
             </td>
-            <td th:unless="${newPrestigeProduct.product.productName.id != null}" style="text-align: center;">
+            <td th:unless="${newPrestigeSaleUnit.retailProduct.product.productName.id != null}" style="text-align: center;">
                 <a><b>...</b></a>
             </td>
 
             <!-- Выбор артикула -->
-            <td th:if="${newPrestigeProduct.product.carModel != null and newPrestigeProduct.product.articleNumber == null}">
-                <select th:if="${newPrestigeProduct.product.articleNumber != null}" required>
-                    <option value="constant" selected th:text="${newPrestigeProduct.product.articleNumber}"></option>
+            <td th:if="${newPrestigeSaleUnit.retailProduct.product.carModel != null}">
+                <select th:if="${newPrestigeSaleUnit.retailProduct.product.articleNumber != null}" required>
+                    <option value="constant" selected th:text="${newPrestigeSaleUnit.retailProduct.product.articleNumber}"></option>
                 </select>
 
-                <select th:unless="${newPrestigeProduct.product.articleNumber != null}" th:field="*{product.articleNumber}" required>
+                <select th:unless="${newPrestigeSaleUnit.retailProduct.product.articleNumber != null}" th:field="*{retailProduct.product.articleNumber}" required>
                     <option th:each="articleNumber : ${allArticleNumbers}" th:value="${articleNumber}" th:text="${articleNumber}">
                     </option>
                 </select>
             </td>
-            <td th:unless="${newPrestigeProduct.product.carModel != null and newPrestigeProduct.product.articleNumber == null}"
-                style="text-align: center;">
+            <td th:unless="${newPrestigeSaleUnit.retailProduct.product.carModel != null}" style="text-align: center;">
                 <a><b>...</b></a>
             </td>
 
             <!-- Выбор бренда -->
-<!--            <td>-->
-<!--                <select th:field="*{products.brand}" required>-->
-<!--                    <option th:each="brand : ${productList}" th:value="${brand.brandName}" th:text="${brand.brandName}">-->
-<!--                    </option>-->
-<!--                </select>-->
+            <td th:if="${newPrestigeSaleUnit.retailProduct.product.articleNumber != null}">
+                <select th:if="${newPrestigeSaleUnit.retailProduct.product.brand != null}" required>
+                    <option value="constant" selected th:text="${newPrestigeSaleUnit.retailProduct.product.brand.brandName}"></option>
+                </select>
+
+                <select th:unless="${newPrestigeSaleUnit.retailProduct.product.brand != null}" th:field="*{retailProduct.product.brand.id}" required>
+                    <option th:each="brand : ${allBrands}" th:value="${brand.id}" th:text="${brand.brandName}">
+                    </option>
+                </select>
+            </td>
+            <td th:unless="${newPrestigeSaleUnit.retailProduct.product.articleNumber != null}" style="text-align: center;">
+                <a><b>...</b></a>
+            </td>
+
+            <!-- Ввод кол-ва -->
+            <td th:if="${newPrestigeSaleUnit.retailProduct.product.brand != null}">
+                <input th:if="${newPrestigeSaleUnit.quantity == null}" type="number" th:field="*{quantity}" required>
+                <a th:unless="${newPrestigeSaleUnit.quantity == null}" th:text="${newPrestigeSaleUnit.getQuantity()}"></a>
+            </td>
+            <td th:unless="${newPrestigeSaleUnit.retailProduct.product.brand != null}" style="text-align: center;">
+                <a><b>...</b></a>
+            </td>
+
+            <!-- Ввод цены -->
+            <td th:if="${newPrestigeSaleUnit.quantity != null}">
+                <input th:if="${newPrestigeSaleUnit.totalSumSmn == null}" type="number" name="soldPriceSmn" id="soldPriceSmn" th:field="*{soldPriceSmn}" required>
+                <a th:unless="${newPrestigeSaleUnit.totalSumSmn == null}" th:text="${newPrestigeSaleUnit.getSoldPriceSmn()}"></a>
+            </td>
+            <td th:unless="${newPrestigeSaleUnit.quantity != null}" style="text-align: center;">
+                <a><b>...</b></a>
+            </td>
+
+            <!-- Показать сумму -->
+            <td th:if="${newPrestigeSaleUnit.totalSumSmn != null}">
+                <a th:text="${newPrestigeSaleUnit.getTotalSumSmn()}"></a>
+            </td>
+            <td th:unless="${newPrestigeSaleUnit.totalSumSmn != null}" style="text-align: center;">
+                <a><b>...</b></a>
+            </td>
+
+            <!-- Показать остаток -->
+<!--            <td th:if="${newPrestigeSaleUnit.getRetailProduct().getStockBalance() != null}">-->
+<!--                <a th:text="${newPrestigeSaleUnit.getRetailProduct().getStockBalance()}"></a>-->
 <!--            </td>-->
+<!--            <td th:unless="${newPrestigeSaleUnit.totalSumSmn != null}" style="text-align: center;">-->
+<!--                <a><b>...</b></a>-->
+<!--            </td>-->
+
+<!--             Показать цену в смн-->
+            <td th:if="${newPrestigeSaleUnit.retailProduct.priceDollar != null}">
+                <a th:text="${newPrestigeSaleUnit.getRetailProduct().getConvertedPriceToSmn(magicValue, exchangeRate)}"></a>
+            </td>
+            <td th:unless="${newPrestigeSaleUnit.retailProduct.priceDollar != null}" style="text-align: center;">
+                <a><b>...</b></a>
+            </td>
+
+<!--             Показать цену в долл-->
+            <td th:if="${newPrestigeSaleUnit.retailProduct.priceDollar != null}">
+                <a th:text="${newPrestigeSaleUnit.getRetailProduct().getPriceDollar()}"></a>
+            </td>
+            <td th:unless="${newPrestigeSaleUnit.retailProduct.priceDollar != null}" style="text-align: center;">
+                <a><b>...</b></a>
+            </td>
 
             <!-- Поле для редактирования цены -->
-<!--            <td>-->
-<!--                <input type="number" th:field="*{products.priceDollar}" step="0.01">-->
-<!--            </td>-->
+            <!--            <td>-->
+            <!--                <input type="number" th:field="*{products.priceDollar}" step="0.01">-->
+            <!--            </td>-->
 
             <!-- Поле для отображения остатка -->
-<!--            <td>-->
-<!--                <span th:text="${product.stockBalance}"></span>-->
-<!--            </td>-->
+            <!--            <td>-->
+            <!--                <span th:text="${product.stockBalance}"></span>-->
+            <!--            </td>-->
 
             <!-- Поле для отображения комментария -->
-<!--            <td>-->
-<!--                <span th:text="${product.notes}"></span>-->
-<!--            </td>-->
+            <!--            <td>-->
+            <!--                <span th:text="${product.notes}"></span>-->
+            <!--            </td>-->
         </tr>
         </tbody>
     </table>
 
-    <input type="submit" value="Далее">
+    <input th:if="${newPrestigeSaleUnit.retailProduct.product.productName.id == null}" type="submit" value="Сохранить клиента">
+    <input th:unless="${newPrestigeSaleUnit.retailProduct.product.productName.id == null}" type="submit" value="Далее">
 <!--    <input type="submit" value="Сохранить корзину">-->
 </form>
 
