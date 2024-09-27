@@ -32,7 +32,8 @@ create table if not exists sklad_products (
 	price_won numeric(15, 4) default 0,
 	price_dollar numeric(15, 4) default 0,
 	margin_percentage int default 0,
-	store_name_id int references sklad_store_names(id) not null
+	store_name_id int references sklad_store_names(id) not null,
+	date_time timestamp not null
 );
 
 create table if not exists prestige_store_names (
@@ -45,7 +46,8 @@ create table if not exists prestige_products (
 	product_id int references common_products(id) not null,
 	price_dollar numeric(15, 4) default 0,
 	stock_balance int default 0,
-	store_name_id int references prestige_store_names(id) not null
+	store_name_id int references prestige_store_names(id) not null,
+	date_time timestamp not null
 );
 
 -- sales
@@ -66,7 +68,7 @@ create table if not exists sklad_baskets (
 );
 
 create table if not exists sklad_all_sales (
-	product_id int references sklad_products(id) not null,
+	product_id int references common_products(id) not null,
     quantity int not null,
     sold_price_dollar numeric(15, 4) not null,
 	basket_id int references sklad_baskets(id) not null
@@ -88,7 +90,7 @@ create table if not exists prestige_baskets (
 );
 
 create table if not exists prestige_all_sales(
-	product_id int references prestige_products(id) not null,
+	product_id int references common_products(id) not null,
 	quantity int not null,
 	sold_price_smn numeric(15, 4) not null,
 	basket_id int references prestige_baskets(id) not null

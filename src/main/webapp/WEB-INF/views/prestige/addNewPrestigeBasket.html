@@ -16,8 +16,9 @@
             padding: 20px;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            max-width: 1000px;
+            max-width: 100%;
             margin: 0 auto;
+            box-sizing: border-box;
         }
         label {
             display: block;
@@ -32,7 +33,7 @@
             border-radius: 5px;
             box-sizing: border-box;
         }
-        input[type="submit"] {
+        input[type="submit"], button[type="submit"] {
             background-color: #4CAF50;
             color: white;
             padding: 10px 15px;
@@ -41,7 +42,7 @@
             cursor: pointer;
             width: 100%;
         }
-        input[type="submit"]:hover {
+        input[type="submit"]:hover, button[type="submit"]:hover {
             background-color: #45a049;
         }
         .error-message {
@@ -89,7 +90,7 @@
     <br/>
 
     <!-- Таблица для выбора продуктов и редактирования корзины -->
-    <table th:if="${newPrestigeSaleUnit.basket.client.name != null}">
+    <table>
         <thead>
         <tr>
             <th>Имя продукта</th>
@@ -99,16 +100,17 @@
             <th>Кол-во</th>
             <th>Цена</th>
             <th>Сумма</th>
-            <th>Остаток</th>
+            <th th:if="${newPrestigeSaleUnit.isSaved == false}">Остаток до сохранения карзины</th>
+            <th th:unless="${newPrestigeSaleUnit.isSaved == false}">Остаток после сохранения карзины</th>
             <th>(INNER SMN)</th>
             <th>(INNER)</th>
-            <!--            <th>Комментарий</th>-->
+            <th>Комментарий</th>
         </tr>
         </thead>
         <tbody>
         <tr>
             <!-- Выбор имени продукта -->
-            <td>
+            <td th:if="${newPrestigeSaleUnit.basket.client.id != null}">
                 <select th:if="${newPrestigeSaleUnit.retailProduct.product.productName.id != null}" required>
                     <option value="constant" selected th:text="${newPrestigeSaleUnit.retailProduct.product.productName.productName}"></option>
                 </select>
@@ -117,6 +119,9 @@
                     <option th:each="productName : ${allProductsNames}" th:value="${productName.id}" th:text="${productName.productName}">
                     </option>
                 </select>
+            </td>
+            <td th:unless="${newPrestigeSaleUnit.basket.client.id != null}" style="text-align: center;">
+                <a><b>...</b></a>
             </td>
 
             <!-- Выбор модели машины -->
@@ -165,38 +170,50 @@
             </td>
 
             <!-- Ввод кол-ва -->
-            <td th:if="${newPrestigeSaleUnit.retailProduct.product.brand != null}">
-                <input th:if="${newPrestigeSaleUnit.quantity == null}" type="number" th:field="*{quantity}" required>
-                <a th:unless="${newPrestigeSaleUnit.quantity == null}" th:text="${newPrestigeSaleUnit.getQuantity()}"></a>
+            <td th:if="${newPrestigeSaleUnit.retailProduct.product.brand != null and
+                         newPrestigeSaleUnit.retailProduct.product.brand.id != null}">
+                <input type="number" th:field="*{quantity}" required>
             </td>
-            <td th:unless="${newPrestigeSaleUnit.retailProduct.product.brand != null}" style="text-align: center;">
+            <td th:unless="${newPrestigeSaleUnit.retailProduct.product.brand != null and
+                             newPrestigeSaleUnit.retailProduct.product.brand.id != null}" style="text-align: center;">
                 <a><b>...</b></a>
             </td>
 
             <!-- Ввод цены -->
-            <td th:if="${newPrestigeSaleUnit.quantity != null}">
-                <input th:if="${newPrestigeSaleUnit.totalSumSmn == null}" type="number" name="soldPriceSmn" id="soldPriceSmn" th:field="*{soldPriceSmn}" required>
-                <a th:unless="${newPrestigeSaleUnit.totalSumSmn == null}" th:text="${newPrestigeSaleUnit.getSoldPriceSmn()}"></a>
+            <td th:if="${newPrestigeSaleUnit.retailProduct.product.brand != null and
+                         newPrestigeSaleUnit.retailProduct.product.brand.id != null}">
+
+                <div style="display: flex; align-items: center;">
+                    <input type="number" name="soldPriceSmn" id="soldPriceSmn" th:field="*{soldPriceSmn}" required>
+                    <span style="margin-left: 5px;">смн</span>
+                </div>
+
             </td>
-            <td th:unless="${newPrestigeSaleUnit.quantity != null}" style="text-align: center;">
+            <td th:unless="${newPrestigeSaleUnit.retailProduct.product.brand != null and
+                         newPrestigeSaleUnit.retailProduct.product.brand.id != null}">
                 <a><b>...</b></a>
             </td>
 
             <!-- Показать сумму -->
             <td th:if="${newPrestigeSaleUnit.totalSumSmn != null}">
-                <a th:text="${newPrestigeSaleUnit.getTotalSumSmn()}"></a>
+
+                <div style="display: flex; align-items: center;">
+                    <a th:text="${newPrestigeSaleUnit.getTotalSumSmn()}"></a>
+                    <span style="margin-left: 5px;">смн</span>
+                </div>
+
             </td>
             <td th:unless="${newPrestigeSaleUnit.totalSumSmn != null}" style="text-align: center;">
                 <a><b>...</b></a>
             </td>
 
             <!-- Показать остаток -->
-<!--            <td th:if="${newPrestigeSaleUnit.getRetailProduct().getStockBalance() != null}">-->
-<!--                <a th:text="${newPrestigeSaleUnit.getRetailProduct().getStockBalance()}"></a>-->
-<!--            </td>-->
-<!--            <td th:unless="${newPrestigeSaleUnit.totalSumSmn != null}" style="text-align: center;">-->
-<!--                <a><b>...</b></a>-->
-<!--            </td>-->
+            <td th:if="${newPrestigeSaleUnit.getRetailProduct().getStockBalance() != null}">
+                <a th:text="${newPrestigeSaleUnit.getRetailProduct().getStockBalance()}"></a>
+            </td>
+            <td th:unless="${newPrestigeSaleUnit.getRetailProduct().getStockBalance() != null}" style="text-align: center;">
+                <a><b>...</b></a>
+            </td>
 
 <!--             Показать цену в смн-->
             <td th:if="${newPrestigeSaleUnit.retailProduct.priceDollar != null}">
@@ -214,27 +231,23 @@
                 <a><b>...</b></a>
             </td>
 
-            <!-- Поле для редактирования цены -->
-            <!--            <td>-->
-            <!--                <input type="number" th:field="*{products.priceDollar}" step="0.01">-->
-            <!--            </td>-->
-
-            <!-- Поле для отображения остатка -->
-            <!--            <td>-->
-            <!--                <span th:text="${product.stockBalance}"></span>-->
-            <!--            </td>-->
-
-            <!-- Поле для отображения комментария -->
-            <!--            <td>-->
-            <!--                <span th:text="${product.notes}"></span>-->
-            <!--            </td>-->
+<!--             Поле для отображения комментария -->
+            <td th:if="${newPrestigeSaleUnit.retailProduct.product.notes != null}">
+                <span th:text="${newPrestigeSaleUnit.retailProduct.product.notes}"></span>
+            </td>
+            <td th:unless="${newPrestigeSaleUnit.retailProduct.product.notes != null}" style="text-align: center;">
+                <span><b>...</b></span>
+            </td>
         </tr>
         </tbody>
     </table>
 
-    <input th:if="${newPrestigeSaleUnit.retailProduct.product.productName.id == null}" type="submit" value="Сохранить клиента">
-    <input th:unless="${newPrestigeSaleUnit.retailProduct.product.productName.id == null}" type="submit" value="Далее">
-<!--    <input type="submit" value="Сохранить корзину">-->
+    <div th:if="${newPrestigeSaleUnit.totalSumSmn == null}">
+        <button type="submit" name="action" value="next">Далее</button>
+    </div>
+    <div th:unless="${newPrestigeSaleUnit.totalSumSmn == null}">
+        <button type="submit" name="action" value="save">Обновить и Сохранить карзину</button>
+    </div>
 </form>
 
 </body>

@@ -22,11 +22,14 @@ public class RetailSaleUnit {
 
     private BigDecimal totalSumSmn;
 
+    private Boolean isSaved;
+
     public RetailSaleUnit() {
         basket = new Basket();
         basket.setCreatedDateTime(new Timestamp(System.currentTimeMillis()));
         basket.setLastChangedDateTime(basket.getCreatedDateTime());
 
         retailProduct = new RetailProduct();
+        isSaved = false;
     }
 }

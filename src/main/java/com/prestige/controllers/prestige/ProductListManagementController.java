@@ -182,8 +182,12 @@ public class ProductListManagementController {
             newProduct.getCarModel() != null && newProduct.getArticleNumber() != null &&
             newProduct.getBrand() != null) {
 
-            newProduct.setId(productListManagementDAO.getCommonProductsId(newProduct.getBrand().getId(),
+            newProduct.setId(productListManagementDAO.getCommonProductId(newProduct.getBrand().getId(),
                     newProduct.getProductName().getId(), newProduct.getCarModel(), newProduct.getArticleNumber()));
+
+            if (newProduct.getNotes() == null) {
+                newProduct.setNotes(productListManagementDAO.getCommonProductNotesById(newProduct.getId()));
+            }
         }
     }
 
@@ -195,8 +199,6 @@ public class ProductListManagementController {
             // TODO: показать ошибку на странице
             return addNewProductGet(model);
         }
-
-        completeNewProduct(newProduct);
 
         if (!productListManagementDAO.saveNewProduct(newProduct)) {
             model.addAttribute("error", String.format("Товар - %s | %s | %s | %s уже существует",
@@ -398,9 +400,20 @@ public class ProductListManagementController {
         }
     }
 
+    private void updatePrestigeSaleUnit(RetailSaleUnit newPrestigeSaleUnit) {
+
+        if (newPrestigeSaleUnit.getSoldPriceSmn() != null && newPrestigeSaleUnit.getQuantity() != null) {
+            newPrestigeSaleUnit.setTotalSumSmn(newPrestigeSaleUnit.getSoldPriceSmn().multiply(new BigDecimal(newPrestigeSaleUnit.getQuantity())));
+        }
+
+        // set stock balance
+        newPrestigeSaleUnit.getRetailProduct().setStockBalance(productListManagementDAO.getTotalStockBalanceByProductId(
+                newPrestigeSaleUnit.getRetailProduct().getProduct().getId()));
+    }
+
     @PostMapping("/addNewPrestigeBasket")
     public String addNewPrestigeBasketGet(@ModelAttribute("newPrestigeSaleUnit") RetailSaleUnit newPrestigeSaleUnit,
-                                        BindingResult bindingResult, Model model) {
+                                        BindingResult bindingResult, Model model, @RequestParam("action") String action) {
 
         if (bindingResult.hasErrors()) {
             // TODO: показать ошибку на странице
@@ -412,6 +425,7 @@ public class ProductListManagementController {
 
         RetailProduct prestigeProduct = newPrestigeSaleUnit.getRetailProduct();
         completeNewProduct(prestigeProduct.getProduct());
+        completeBasket(newPrestigeSaleUnit.getBasket());
 
         if (prestigeProduct.getProduct().getProductName().getId() == null) {
             model.addAttribute("allProductsNames", productListManagementDAO.showAllProductNames());
@@ -438,24 +452,23 @@ public class ProductListManagementController {
             BigDecimal exchangeRate = new BigDecimal(settings.getValueByKey("exchangeRate"));
             BigDecimal soldPriceSmn = newPrestigeSaleUnit.getRetailProduct().getConvertedPriceToSmn(magicValue, exchangeRate);
             newPrestigeSaleUnit.setSoldPriceSmn(soldPriceSmn);
+
+            updatePrestigeSaleUnit(newPrestigeSaleUnit);
         }
-        else if (newPrestigeSaleUnit.getTotalSumSmn() == null) {
-            newPrestigeSaleUnit.setTotalSumSmn(newPrestigeSaleUnit.getSoldPriceSmn().multiply(new BigDecimal(newPrestigeSaleUnit.getQuantity())));
+        else {
+
+            if (action.equals("save")) {
+
+                if (newPrestigeSaleUnit.getIsSaved()) {
+                    productListManagementDAO.updateNewPrestigeBasket(newPrestigeSaleUnit);
+                }
+                else {
+                    productListManagementDAO.saveNewPrestigeBasket(newPrestigeSaleUnit);
+                }
+            }
+            updatePrestigeSaleUnit(newPrestigeSaleUnit);
         }
 
-
-//        completeNewProduct(newProduct);
-//
-//        if (!productListManagementDAO.saveNewProduct(newProduct)) {
-//            model.addAttribute("error", String.format("Товар - %s | %s | %s | %s уже существует",
-//                    newProduct.getProductName().getProductName(),
-//                    newProduct.getCarModel(),
-//                    newProduct.getArticleNumber(),
-//                    newProduct.getBrand().getBrandName()));
-//            return addNewProductGet(model);
-//        };
-
-        completeBasket(newPrestigeSaleUnit.getBasket());
         newPrestigeSaleUnit.getBasket().setLastChangedDateTime(utils.getCurrentTimeStamp());
         return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
 //        return "redirect:/prestige/productListManagement/showAllPrestigeBaskets";
