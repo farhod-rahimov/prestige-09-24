@@ -1,10 +1,8 @@
 package com.prestige.controllers.prestige;
 
-import com.prestige.dao.PrestigeSalesDAO;
 import com.prestige.dao.ProductListManagementDAO;
 import com.prestige.dao.Utils;
 import com.prestige.models.*;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,14 +12,11 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 @Controller
 @RequestMapping("/prestige/productListManagement")
-@SessionAttributes({"newPrestigeProduct", "newPrestigeSaleUnit"}) // Указываем, что объекты  нужно сохранять в сессии
+@SessionAttributes({"newPrestigeProduct", "newPrestigeSaleUnit", "newPrestigeSaleUnitList"}) // Указываем, что объекты  нужно сохранять в сессии
 public class ProductListManagementController {
 
     private final ProductListManagementDAO productListManagementDAO;
@@ -380,9 +375,11 @@ public class ProductListManagementController {
     @GetMapping("/addNewPrestigeBasket")
     public String addNewPrestigeBasketGet(Model model, HttpSession session) {
 
-        // заменяем объект newPrestigeSaleUnit в Модели и Сессии, т.к там может быть старый объект
+        // заменяем объект newPrestigeSaleUnit и newPrestigeSaleUnitList в Модели и Сессии, т.к там может быть старый объект
         model.addAttribute("newPrestigeSaleUnit", new RetailSaleUnit());
+        model.addAttribute("newPrestigeSaleUnitList", new LinkedList<RetailSaleUnit>());
         session.setAttribute("newPrestigeSaleUnit", model.getAttribute("newPrestigeSaleUnit"));
+        session.setAttribute("newPrestigeSaleUnitList", model.getAttribute("newPrestigeSaleUnitList"));
 
         model.addAttribute("allClients", productListManagementDAO.showAllClients());
         return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
@@ -409,11 +406,28 @@ public class ProductListManagementController {
         // set stock balance
         newPrestigeSaleUnit.getRetailProduct().setStockBalance(productListManagementDAO.getTotalStockBalanceByProductId(
                 newPrestigeSaleUnit.getRetailProduct().getProduct().getId()));
+
+        newPrestigeSaleUnit.getBasket().setLastChangedDateTime(utils.getCurrentTimeStamp());
+    }
+
+    private void saveNewPrestigeSaleUnit(RetailSaleUnit newPrestigeSaleUnit, List<RetailSaleUnit> newPrestigeSaleUnitList,
+                                         String action) {
+
+        // TODO: save and update newPrestigeSaleUnitList
+        if (newPrestigeSaleUnit.getIsSaved()) {
+            productListManagementDAO.updateNewPrestigeSaleUnit(newPrestigeSaleUnit);
+        }
+        else {
+            productListManagementDAO.saveNewPrestigeSaleUnit(newPrestigeSaleUnit);
+            newPrestigeSaleUnitList.add(newPrestigeSaleUnit);
+        }
+        updatePrestigeSaleUnit(newPrestigeSaleUnit);
     }
 
     @PostMapping("/addNewPrestigeBasket")
     public String addNewPrestigeBasketGet(@ModelAttribute("newPrestigeSaleUnit") RetailSaleUnit newPrestigeSaleUnit,
-                                        BindingResult bindingResult, Model model, @RequestParam("action") String action) {
+                                          @ModelAttribute("newPrestigeSaleUnitList") List<RetailSaleUnit> newPrestigeSaleUnitList,
+                                          HttpSession session, BindingResult bindingResult, Model model, @RequestParam("action") String action) {
 
         if (bindingResult.hasErrors()) {
             // TODO: показать ошибку на странице
@@ -455,21 +469,27 @@ public class ProductListManagementController {
 
             updatePrestigeSaleUnit(newPrestigeSaleUnit);
         }
+        else if (action.equals("save")) {
+            saveNewPrestigeSaleUnit(newPrestigeSaleUnit, newPrestigeSaleUnitList, action);
+            model.addAttribute("shouldCreateNewPrestigeSaleUnit", true);
+        }
+        else if (action.equals("add")) {
+            saveNewPrestigeSaleUnit(newPrestigeSaleUnit, newPrestigeSaleUnitList, action);
+
+            RetailSaleUnit retailSaleUnit = new RetailSaleUnit();
+            retailSaleUnit.setBasket(newPrestigeSaleUnit.getBasket());
+
+            model.addAttribute("newPrestigeSaleUnit", retailSaleUnit);
+            session.setAttribute("newPrestigeSaleUnit", model.getAttribute("newPrestigeSaleUnit"));
+
+            model.addAttribute("allProductsNames", productListManagementDAO.showAllProductNames());
+
+            return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
+        }
         else {
-
-            if (action.equals("save")) {
-
-                if (newPrestigeSaleUnit.getIsSaved()) {
-                    productListManagementDAO.updateNewPrestigeBasket(newPrestigeSaleUnit);
-                }
-                else {
-                    productListManagementDAO.saveNewPrestigeBasket(newPrestigeSaleUnit);
-                }
-            }
             updatePrestigeSaleUnit(newPrestigeSaleUnit);
         }
 
-        newPrestigeSaleUnit.getBasket().setLastChangedDateTime(utils.getCurrentTimeStamp());
         return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
 //        return "redirect:/prestige/productListManagement/showAllPrestigeBaskets";
     }

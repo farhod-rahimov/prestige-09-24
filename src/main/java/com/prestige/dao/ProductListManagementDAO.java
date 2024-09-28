@@ -361,7 +361,7 @@ public class ProductListManagementDAO {
         newBasket.setId(keyHolder.getKey().intValue());
     }
 
-    public void saveNewPrestigeBasket(RetailSaleUnit newPrestigeSaleUnit) {
+    public void saveNewPrestigeSaleUnit(RetailSaleUnit newPrestigeSaleUnit) {
         saveNewPrestigeBasket(newPrestigeSaleUnit.getBasket());
 
         String sql = String.format("INSERT INTO prestige_all_sales (product_id, quantity, sold_price_smn, basket_id) " +
@@ -372,7 +372,7 @@ public class ProductListManagementDAO {
         newPrestigeSaleUnit.setIsSaved(true);
     }
 
-    public void updateNewPrestigeBasket(RetailSaleUnit newPrestigeSaleUnit) {
+    public void updateNewPrestigeSaleUnit(RetailSaleUnit newPrestigeSaleUnit) {
         String sql = String.format("UPDATE prestige_all_sales SET quantity = %d, sold_price_smn = '%s' " +
                 "WHERE product_id = %d AND basket_id = %d", newPrestigeSaleUnit.getQuantity(), newPrestigeSaleUnit.getSoldPriceSmn(),
                 newPrestigeSaleUnit.getRetailProduct().getProduct().getId(), newPrestigeSaleUnit.getBasket().getId());

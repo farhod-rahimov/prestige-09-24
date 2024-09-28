@@ -100,15 +100,29 @@
             <th>Кол-во</th>
             <th>Цена</th>
             <th>Сумма</th>
-            <th th:if="${newPrestigeSaleUnit.isSaved == false}">Остаток до сохранения карзины</th>
-            <th th:unless="${newPrestigeSaleUnit.isSaved == false}">Остаток после сохранения карзины</th>
+            <th>Остаток после вычета товаров в корзине</th>
             <th>(INNER SMN)</th>
             <th>(INNER)</th>
             <th>Комментарий</th>
         </tr>
         </thead>
         <tbody>
-        <tr>
+
+        <tr th:each="saleUnit : ${newPrestigeSaleUnitList}">
+            <td><a th:text="${saleUnit.getRetailProduct().getProduct().getProductName().getProductName()}"></a></td>
+            <td><a th:text="${saleUnit.getRetailProduct().getProduct().getCarModel()}"></a></td>
+            <td><a th:text="${saleUnit.getRetailProduct().getProduct().getArticleNumber()}"></a></td>
+            <td><a th:text="${saleUnit.getRetailProduct().getProduct().getBrand().getBrandName()}"></a></td>
+            <td><a th:text="${saleUnit.getQuantity()}"></a></td>
+            <td><a th:text="${saleUnit.getSoldPriceSmn() + ' смн'}"></a></td>
+            <td><a th:text="${saleUnit.getTotalSumSmn() + ' смн'}"></a></td>
+            <td><a th:text="${saleUnit.getRetailProduct().getStockBalance()}"></a></td>
+            <td><a th:text="${saleUnit.getRetailProduct().getConvertedPriceToSmn(magicValue, exchangeRate)}"></a></td>
+            <td><a th:text="${saleUnit.getRetailProduct().getPriceDollar()}"></a></td>
+            <td><a th:text="${saleUnit.getRetailProduct().getProduct().getNotes()}"></a></td>
+        </tr>
+
+        <tr th:if="${shouldCreateNewPrestigeSaleUnit == null or shouldCreateNewPrestigeSaleUnit == false}">
             <!-- Выбор имени продукта -->
             <td th:if="${newPrestigeSaleUnit.basket.client.id != null}">
                 <select th:if="${newPrestigeSaleUnit.retailProduct.product.productName.id != null}" required>
@@ -246,6 +260,7 @@
         <button type="submit" name="action" value="next">Далее</button>
     </div>
     <div th:unless="${newPrestigeSaleUnit.totalSumSmn == null}">
+        <button type="submit" name="action" value="add" style="margin-bottom: 10px;">Добавить новый товар</button>
         <button type="submit" name="action" value="save">Обновить и Сохранить карзину</button>
     </div>
 </form>
