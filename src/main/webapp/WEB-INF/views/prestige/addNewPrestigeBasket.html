@@ -256,12 +256,18 @@
         </tbody>
     </table>
 
-    <div th:if="${newPrestigeSaleUnit.totalSumSmn == null}">
-        <button type="submit" name="action" value="next">Далее</button>
-    </div>
-    <div th:unless="${newPrestigeSaleUnit.totalSumSmn == null}">
+    <div th:if="${newPrestigeSaleUnit.totalSumSmn != null or (shouldCreateNewPrestigeSaleUnit != null and shouldCreateNewPrestigeSaleUnit == true)}">
         <button type="submit" name="action" value="add" style="margin-bottom: 10px;">Добавить новый товар</button>
-        <button type="submit" name="action" value="save">Обновить и Сохранить карзину</button>
+    </div>
+    <div th:if="${newPrestigeSaleUnit.totalSumSmn != null}">
+        <button type="submit" name="action" value="save" style="margin-bottom: 10px;">Обновить и Сохранить карзину</button>
+    </div>
+    <div th:if="${newPrestigeSaleUnit.totalSumSmn == null and (shouldCreateNewPrestigeSaleUnit == null or shouldCreateNewPrestigeSaleUnit == false)}">
+        <button type="submit" name="action" value="next" style="margin-bottom: 10px;">Далее</button>
+    </div>
+    <div th:if="${newPrestigeSaleUnit.basket.client != null and newPrestigeSaleUnit.basket.client.name != null and
+                (shouldCreateNewPrestigeSaleUnit == null or shouldCreateNewPrestigeSaleUnit == false)}">
+        <button type="submit" name="action" value="reset" style="margin-bottom: 10px;">Сбросить</button>
     </div>
 </form>
 

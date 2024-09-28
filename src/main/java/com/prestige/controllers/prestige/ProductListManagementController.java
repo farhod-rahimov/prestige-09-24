@@ -410,11 +410,38 @@ public class ProductListManagementController {
         newPrestigeSaleUnit.getBasket().setLastChangedDateTime(utils.getCurrentTimeStamp());
     }
 
-    private void saveNewPrestigeSaleUnit(RetailSaleUnit newPrestigeSaleUnit, List<RetailSaleUnit> newPrestigeSaleUnitList,
-                                         String action) {
+    private boolean isSaleUnitAlreadyInTheBasket(List<RetailSaleUnit> newPrestigeSaleUnitList, RetailSaleUnit newPrestigeSaleUnit) {
 
-        // TODO: save and update newPrestigeSaleUnitList
+        for (RetailSaleUnit unit : newPrestigeSaleUnitList) {
+
+            if (unit.getRetailProduct().getProduct().getId() == newPrestigeSaleUnit.getRetailProduct().getProduct().getId())  {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void saveNewPrestigeSaleUnit(RetailSaleUnit newPrestigeSaleUnit, List<RetailSaleUnit> newPrestigeSaleUnitList,
+                                         Model model, String action) {
+
+        boolean isSaleUnitAlreadyInTheBasket = isSaleUnitAlreadyInTheBasket(newPrestigeSaleUnitList, newPrestigeSaleUnit);
+
+        if (action.equals("save") || (isSaleUnitAlreadyInTheBasket && newPrestigeSaleUnit.getIsSaved() == false)) {
+            model.addAttribute("shouldCreateNewPrestigeSaleUnit", true);
+
+            if (isSaleUnitAlreadyInTheBasket && newPrestigeSaleUnit.getIsSaved() == false) {
+                newPrestigeSaleUnit.setIsSaved(true); // because already saved another unit
+                Product product = newPrestigeSaleUnit.getRetailProduct().getProduct();
+                String error = String.format("Продукт '%s' | '%s' | '%s' | '%s' уже есть в корзине",
+                        product.getProductName().getProductName(), product.getCarModel(), product.getArticleNumber(),
+                        product.getBrand().getBrandName());
+                model.addAttribute("error", error);
+                return;
+            }
+        }
+
         if (newPrestigeSaleUnit.getIsSaved()) {
+            // TODO: save and update newPrestigeSaleUnitList
             productListManagementDAO.updateNewPrestigeSaleUnit(newPrestigeSaleUnit);
         }
         else {
@@ -422,6 +449,16 @@ public class ProductListManagementController {
             newPrestigeSaleUnitList.add(newPrestigeSaleUnit);
         }
         updatePrestigeSaleUnit(newPrestigeSaleUnit);
+    }
+
+    private void createNewPrestigeSaleUnit(RetailSaleUnit oldPrestigeSaleUnit, Model model, HttpSession session) {
+        RetailSaleUnit retailSaleUnit = new RetailSaleUnit();
+        retailSaleUnit.setBasket(oldPrestigeSaleUnit.getBasket());
+
+        model.addAttribute("newPrestigeSaleUnit", retailSaleUnit);
+        session.setAttribute("newPrestigeSaleUnit", model.getAttribute("newPrestigeSaleUnit"));
+
+        model.addAttribute("allProductsNames", productListManagementDAO.showAllProductNames());
     }
 
     @PostMapping("/addNewPrestigeBasket")
@@ -441,7 +478,13 @@ public class ProductListManagementController {
         completeNewProduct(prestigeProduct.getProduct());
         completeBasket(newPrestigeSaleUnit.getBasket());
 
-        if (prestigeProduct.getProduct().getProductName().getId() == null) {
+        if (action.equals("reset")) {
+            model.addAttribute("shouldCreateNewPrestigeSaleUnit", true);
+            createNewPrestigeSaleUnit(newPrestigeSaleUnit, model, session);
+            model.addAttribute("shouldCreateNewPrestigeSaleUnit", true);
+            newPrestigeSaleUnit.getBasket().setLastChangedDateTime(utils.getCurrentTimeStamp());
+        }
+        else if (prestigeProduct.getProduct().getProductName().getId() == null) {
             model.addAttribute("allProductsNames", productListManagementDAO.showAllProductNames());
         }
         else if (prestigeProduct.getProduct().getCarModel() == null) {
@@ -470,20 +513,11 @@ public class ProductListManagementController {
             updatePrestigeSaleUnit(newPrestigeSaleUnit);
         }
         else if (action.equals("save")) {
-            saveNewPrestigeSaleUnit(newPrestigeSaleUnit, newPrestigeSaleUnitList, action);
-            model.addAttribute("shouldCreateNewPrestigeSaleUnit", true);
+            saveNewPrestigeSaleUnit(newPrestigeSaleUnit, newPrestigeSaleUnitList, model, action);
         }
         else if (action.equals("add")) {
-            saveNewPrestigeSaleUnit(newPrestigeSaleUnit, newPrestigeSaleUnitList, action);
-
-            RetailSaleUnit retailSaleUnit = new RetailSaleUnit();
-            retailSaleUnit.setBasket(newPrestigeSaleUnit.getBasket());
-
-            model.addAttribute("newPrestigeSaleUnit", retailSaleUnit);
-            session.setAttribute("newPrestigeSaleUnit", model.getAttribute("newPrestigeSaleUnit"));
-
-            model.addAttribute("allProductsNames", productListManagementDAO.showAllProductNames());
-
+            saveNewPrestigeSaleUnit(newPrestigeSaleUnit, newPrestigeSaleUnitList, model, action);
+            createNewPrestigeSaleUnit(newPrestigeSaleUnit, model, session);
             return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
         }
         else {
