@@ -12,8 +12,6 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 public class RetailSaleUnit {
 
-    private Basket basket;
-
     private RetailProduct retailProduct;
 
     private Integer quantity;
@@ -25,10 +23,6 @@ public class RetailSaleUnit {
     private Boolean isSaved;
 
     public RetailSaleUnit() {
-        basket = new Basket();
-        basket.setCreatedDateTime(new Timestamp(System.currentTimeMillis()));
-        basket.setLastChangedDateTime(basket.getCreatedDateTime());
-
         retailProduct = new RetailProduct();
         isSaved = false;
     }

@@ -16,7 +16,7 @@ public class ShowAllBasketsMapper implements RowMapper<Basket> {
                 rs.getString(6));
 
         Basket basket = new Basket(rs.getInt(1), rs.getTimestamp(2),
-                                    rs.getTimestamp(3), client, rs.getBigDecimal(7));
+                                    rs.getTimestamp(3), client, rs.getBigDecimal(7), null);
 
         return basket;
     }

@@ -3,6 +3,7 @@ package com.prestige.dao;
 import com.prestige.dao.mappers.*;
 import com.prestige.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlReturnType;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -361,22 +363,38 @@ public class ProductListManagementDAO {
         newBasket.setId(keyHolder.getKey().intValue());
     }
 
-    public void saveNewPrestigeSaleUnit(RetailSaleUnit newPrestigeSaleUnit) {
-        saveNewPrestigeBasket(newPrestigeSaleUnit.getBasket());
+    public void saveNewPrestigeSaleUnit(Basket newBasket, RetailSaleUnit newPrestigeSaleUnit) {
+
+        if (newBasket.getId() == null) {
+            saveNewPrestigeBasket(newBasket);
+        }
 
         String sql = String.format("INSERT INTO prestige_all_sales (product_id, quantity, sold_price_smn, basket_id) " +
                 "VALUES (%d, %d, '%s', %d)", newPrestigeSaleUnit.getRetailProduct().getProduct().getId(), newPrestigeSaleUnit.getQuantity(),
-                newPrestigeSaleUnit.getSoldPriceSmn(), newPrestigeSaleUnit.getBasket().getId());
+                newPrestigeSaleUnit.getSoldPriceSmn(), newBasket.getId());
 
         jdbcTemplate.update(sql);
         newPrestigeSaleUnit.setIsSaved(true);
     }
 
-    public void updateNewPrestigeSaleUnit(RetailSaleUnit newPrestigeSaleUnit) {
-        String sql = String.format("UPDATE prestige_all_sales SET quantity = %d, sold_price_smn = '%s' " +
-                "WHERE product_id = %d AND basket_id = %d", newPrestigeSaleUnit.getQuantity(), newPrestigeSaleUnit.getSoldPriceSmn(),
-                newPrestigeSaleUnit.getRetailProduct().getProduct().getId(), newPrestigeSaleUnit.getBasket().getId());
+    public void updateNewPrestigeSaleUnitList(Basket newBasket, List<RetailSaleUnit> newPrestigeSaleUnitList) {
+        String sql = "UPDATE prestige_all_sales SET quantity = ?, sold_price_smn = ? " +
+                     "WHERE product_id = ? AND basket_id = ?";
 
-        jdbcTemplate.update(sql);
+        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                RetailSaleUnit entity = newPrestigeSaleUnitList.get(i);
+                ps.setInt(1, entity.getQuantity());
+                ps.setBigDecimal(2, entity.getSoldPriceSmn());
+                ps.setInt(3, entity.getRetailProduct().getProduct().getId());
+                ps.setInt(4, newBasket.getId());
+            }
+
+            @Override
+            public int getBatchSize() {
+                return newPrestigeSaleUnitList.size() - 1; // because last element is new
+            }
+        });
     }
 }
