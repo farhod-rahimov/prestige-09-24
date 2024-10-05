@@ -68,6 +68,17 @@
             color: white;
             text-align: center;
         }
+        .delete-btn {
+            background-color: #ff4c4c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .delete-btn:hover {
+            background-color: #ff3333;
+        }
     </style>
 </head>
 <body>
@@ -107,6 +118,7 @@
             <th>(INNER SMN)</th>
             <th>(INNER)</th>
             <th>Комментарий</th>
+            <th></th>
         </tr>
         </thead>
 
@@ -133,6 +145,15 @@
             <td th:if="${saleUnit.isSaved == true}"><a th:text="${saleUnit.getRetailProduct().getConvertedPriceToSmn(magicValue, exchangeRate)}"></a></td>
             <td th:if="${saleUnit.isSaved == true}"><a th:text="${saleUnit.getRetailProduct().getPriceDollar()}"></a></td>
             <td th:if="${saleUnit.isSaved == true}"><a th:text="${saleUnit.getRetailProduct().getProduct().getNotes()}"></a></td>
+
+            <!-- Кнопка удаления -->
+            <td th:if="${saleUnit.isSaved == true}">
+                <a th:href="@{/prestige/productListManagement/deletePrestigeSaleUnit(removeIndex=${newBasket.retailSaleUnitList.size() - 1})}"
+                   style="text-align: center;">
+
+                    <img th:src="@{/images/delete.png}" alt="Удалить" style="width: 20px; height: 20px;">
+                </a>
+            </td>
         </tr>
 
         <tr th:if="${shouldCreateNewPrestigeSaleUnit == null or shouldCreateNewPrestigeSaleUnit == false}">
@@ -288,6 +309,13 @@
             </td>
             <td th:unless="${newPrestigeSaleUnit.retailProduct.product.notes != null}" style="text-align: center;">
                 <span><b>...</b></span>
+            </td>
+
+            <!-- Кнопка удаления -->
+            <td th:if="${newBasket.client != null and newBasket.client.id != null}" style="text-align: center;">
+                <a th:href="@{/prestige/productListManagement/deletePrestigeSaleUnit(removeIndex=${newBasket.retailSaleUnitList.size() - 1})}">
+                    <img th:src="@{/images/delete.png}" alt="Удалить" style="width: 20px; height: 20px;">
+                </a>
             </td>
         </tr>
         </tbody>

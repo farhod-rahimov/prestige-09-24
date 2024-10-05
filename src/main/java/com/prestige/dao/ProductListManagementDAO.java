@@ -397,4 +397,11 @@ public class ProductListManagementDAO {
             }
         });
     }
+
+    public void removePrestigeSaleUnitFromBasket(RetailSaleUnit removePrestigeSaleUnit, Basket newBasket) {
+        String sql = String.format("DELETE FROM prestige_all_sales WHERE product_id = %d AND basket_id = %d",
+                removePrestigeSaleUnit.getRetailProduct().getProduct().getId(), newBasket.getId());
+
+        jdbcTemplate.update(sql);
+    }
 }

@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
@@ -474,9 +475,8 @@ public class ProductListManagementController {
     }
 
     @PostMapping("/addNewPrestigeBasket")
-    public String addNewPrestigeBasketGet(@ModelAttribute("newBasket") Basket newBasket,
-                                          @RequestParam("action") String action,
-                                          HttpSession session, BindingResult bindingResult, Model model) {
+    public String addNewPrestigeBasketGet(@ModelAttribute("newBasket") Basket newBasket, BindingResult bindingResult,
+                                          @RequestParam("action") String action, HttpSession session,  Model model) {
 
         List<RetailSaleUnit> newPrestigeSaleUnitList = newBasket.getRetailSaleUnitList();
         RetailSaleUnit newPrestigeSaleUnit = newPrestigeSaleUnitList.get(newPrestigeSaleUnitList.size() - 1);
@@ -540,6 +540,39 @@ public class ProductListManagementController {
         newBasket.setLastChangedDateTime(utils.getCurrentTimeStamp());
         model.addAttribute("newPrestigeSaleUnit", newPrestigeSaleUnit);
 
+        return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
+    }
+
+    @GetMapping("/deletePrestigeSaleUnit")
+    public String addNewPrestigeBasketGet(@RequestParam("removeIndex") int removeIndex, Model model) {
+
+        Basket newBasket = (Basket)model.getAttribute("newBasket");
+        List<RetailSaleUnit> newPrestigeSaleUnitList = newBasket.getRetailSaleUnitList();
+        RetailSaleUnit newPrestigeSaleUnit = newPrestigeSaleUnitList.get(newPrestigeSaleUnitList.size() - 1);
+
+        if (removeIndex > newPrestigeSaleUnitList.size() - 1) {
+            String error = String.format("Неверный порядковый номер. Товара №%d нет в текущей корзине." +
+                    "Пожалуйста, нажмите 'Обновить и сохранить корзину'", removeIndex + 1);
+            model.addAttribute("error", error);
+        }
+        else if (removeIndex == newPrestigeSaleUnitList.size() - 1) {
+            newPrestigeSaleUnitList.remove(removeIndex);
+            newPrestigeSaleUnitList.add(new RetailSaleUnit());
+            model.addAttribute("shouldCreateNewPrestigeSaleUnit", true);
+        }
+        else {
+            productListManagementDAO.removePrestigeSaleUnitFromBasket(newPrestigeSaleUnitList.get(removeIndex), newBasket);
+            newPrestigeSaleUnitList.remove(removeIndex);
+
+            if (newPrestigeSaleUnit.getRetailProduct().getProduct().getId() == null) {
+                model.addAttribute("allProductsNames", productListManagementDAO.showAllProductNames());
+            }
+        }
+
+        model.addAttribute("magicValue", settings.getValueByKey("magicValue"));
+        model.addAttribute("exchangeRate", settings.getValueByKey("exchangeRate"));
+
+        model.addAttribute("newPrestigeSaleUnit", newPrestigeSaleUnit);
         return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
     }
 
