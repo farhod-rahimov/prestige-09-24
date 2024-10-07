@@ -136,9 +136,8 @@
             <td th:if="${saleUnit.isSaved == true}"><a th:text="${saleUnit.getRetailProduct().getProduct().getNotes()}"></a></td>
 
             <!-- Кнопка удаления -->
-            <td th:if="${saleUnit.isSaved == true}">
-                <a th:href="@{/prestige/productListManagement/deletePrestigeSaleUnit(removeIndex=${newBasket.retailSaleUnitList.size() - 1})}"
-                   style="text-align: center;">
+            <td th:if="${saleUnit.isSaved == true}" style="text-align: center;">
+                <a th:href="@{/prestige/productListManagement/deletePrestigeSaleUnit(removeIndex=${stat.index})}">
 
                     <img th:src="@{/images/delete.png}" alt="Удалить" style="width: 20px; height: 20px;">
                 </a>
@@ -199,10 +198,10 @@
             <td th:if="${newPrestigeSaleUnit.retailProduct.product.articleNumber != null}">
                 <!-- Выбор бренда -->
 
-                <select th:if="${newPrestigeSaleUnit.retailProduct.product.brand != null}" required>
+                <select th:if="${newPrestigeSaleUnit.retailProduct.product.brand != null and newPrestigeSaleUnit.retailProduct.product.brand.id != null}" required>
                     <option value="constant" selected th:text="${newPrestigeSaleUnit.retailProduct.product.brand.brandName}"></option>
                 </select>
-                <select th:unless="${newPrestigeSaleUnit.retailProduct.product.brand != null}"
+                <select th:unless="${newPrestigeSaleUnit.retailProduct.product.brand != null and newPrestigeSaleUnit.retailProduct.product.brand.id != null}"
                         th:field="*{retailSaleUnitList[__*{retailSaleUnitList.size() - 1}__].retailProduct.product.brand.id}" required>
 
                     <option th:each="brand : ${allBrands}" th:value="${brand.id}" th:text="${brand.brandName}">

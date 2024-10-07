@@ -474,32 +474,10 @@ public class ProductListManagementController {
         }
     }
 
-    @PostMapping("/addNewPrestigeBasket")
-    public String addNewPrestigeBasketGet(@ModelAttribute("newBasket") Basket newBasket, BindingResult bindingResult,
-                                          @RequestParam("action") String action, HttpSession session,  Model model) {
-
-        List<RetailSaleUnit> newPrestigeSaleUnitList = newBasket.getRetailSaleUnitList();
-        RetailSaleUnit newPrestigeSaleUnit = newPrestigeSaleUnitList.get(newPrestigeSaleUnitList.size() - 1);
+    private void findNextStep(RetailSaleUnit newPrestigeSaleUnit, Model model) {
         RetailProduct prestigeProduct = newPrestigeSaleUnit.getRetailProduct();
 
-        model.addAttribute("magicValue", settings.getValueByKey("magicValue"));
-        model.addAttribute("exchangeRate", settings.getValueByKey("exchangeRate"));
-
-        completeBasket(newBasket);
-        completeNewProduct(prestigeProduct.getProduct());
-
-        if (action.equals("reset")) {
-            newPrestigeSaleUnitList.remove(newPrestigeSaleUnitList.size() - 1);
-            newPrestigeSaleUnit = createNewPrestigeSaleUnit(newPrestigeSaleUnitList, model, session);
-        }
-        else if (action.equals("save") || (action.equals("add") && newPrestigeSaleUnit.getTotalSumSmn() != null)) {
-            newPrestigeSaleUnit = saveNewPrestigeSaleUnit(newBasket, model, session, action);
-        }
-        else if (action.equals("update")) {
-            updateNewPrestigeSaleUnitList(newBasket, newPrestigeSaleUnitList);
-            model.addAttribute("shouldCreateNewPrestigeSaleUnit", true);
-        }
-        else if (prestigeProduct.getProduct().getProductName().getId() == null) {
+        if (prestigeProduct.getProduct().getProductName().getId() == null) {
             model.addAttribute("allProductsNames", productListManagementDAO.showAllProductNames());
         }
         else if (prestigeProduct.getProduct().getCarModel() == null) {
@@ -510,7 +488,7 @@ public class ProductListManagementController {
             model.addAttribute("allArticleNumbers", productListManagementDAO.getArticleNumbersByProductNameIdAndCarModel(
                     prestigeProduct.getProduct().getProductName().getId(),  prestigeProduct.getProduct().getCarModel()));
         }
-        else if (prestigeProduct.getProduct().getBrand() == null) {
+        else if (prestigeProduct.getProduct().getBrand() == null || (prestigeProduct.getProduct().getBrand().getId() == null)) {
             model.addAttribute("allBrands", productListManagementDAO.getBrandsByProductNameIdAndCarModelAndArticleNumber(
                     prestigeProduct.getProduct().getProductName().getId(), prestigeProduct.getProduct().getCarModel(),
                     prestigeProduct.getProduct().getArticleNumber()));
@@ -536,15 +514,44 @@ public class ProductListManagementController {
             // set total sum
             setRetailSaleUnitTotalSumSmn(newPrestigeSaleUnit);
         }
+    }
 
-        newBasket.setLastChangedDateTime(utils.getCurrentTimeStamp());
+    @PostMapping("/addNewPrestigeBasket")
+    public String addNewPrestigeBasketGet(@ModelAttribute("newBasket") Basket newBasket, BindingResult bindingResult,
+                                          @RequestParam("action") String action, HttpSession session,  Model model) {
+
+        List<RetailSaleUnit> newPrestigeSaleUnitList = newBasket.getRetailSaleUnitList();
+        RetailSaleUnit newPrestigeSaleUnit = newPrestigeSaleUnitList.get(newPrestigeSaleUnitList.size() - 1);
+
+        completeBasket(newBasket);
+        completeNewProduct(newPrestigeSaleUnit.getRetailProduct().getProduct());
+
+        if (action.equals("reset")) {
+            newPrestigeSaleUnitList.remove(newPrestigeSaleUnitList.size() - 1);
+            newPrestigeSaleUnit = createNewPrestigeSaleUnit(newPrestigeSaleUnitList, model, session);
+        }
+        else if (action.equals("save") || (action.equals("add") && newPrestigeSaleUnit.getTotalSumSmn() != null)) {
+            newPrestigeSaleUnit = saveNewPrestigeSaleUnit(newBasket, model, session, action);
+        }
+        else if (action.equals("update")) {
+            updateNewPrestigeSaleUnitList(newBasket, newPrestigeSaleUnitList);
+            model.addAttribute("shouldCreateNewPrestigeSaleUnit", true);
+        }
+        else {
+            findNextStep(newPrestigeSaleUnit, model);
+        }
+
+        model.addAttribute("magicValue", settings.getValueByKey("magicValue"));
+        model.addAttribute("exchangeRate", settings.getValueByKey("exchangeRate"));
         model.addAttribute("newPrestigeSaleUnit", newPrestigeSaleUnit);
+
+        newBasket.updateLastChangedDateTime();
 
         return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
     }
 
     @GetMapping("/deletePrestigeSaleUnit")
-    public String addNewPrestigeBasketGet(@RequestParam("removeIndex") int removeIndex, Model model) {
+    public String deletePrestigeSaleUnitGet(@RequestParam("removeIndex") int removeIndex, Model model) {
 
         Basket newBasket = (Basket)model.getAttribute("newBasket");
         List<RetailSaleUnit> newPrestigeSaleUnitList = newBasket.getRetailSaleUnitList();
@@ -563,16 +570,15 @@ public class ProductListManagementController {
         else {
             productListManagementDAO.removePrestigeSaleUnitFromBasket(newPrestigeSaleUnitList.get(removeIndex), newBasket);
             newPrestigeSaleUnitList.remove(removeIndex);
-
-            if (newPrestigeSaleUnit.getRetailProduct().getProduct().getId() == null) {
-                model.addAttribute("allProductsNames", productListManagementDAO.showAllProductNames());
-            }
+            findNextStep(newPrestigeSaleUnit, model);
         }
 
         model.addAttribute("magicValue", settings.getValueByKey("magicValue"));
         model.addAttribute("exchangeRate", settings.getValueByKey("exchangeRate"));
-
         model.addAttribute("newPrestigeSaleUnit", newPrestigeSaleUnit);
+
+        newBasket.updateLastChangedDateTime();
+
         return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
     }
 

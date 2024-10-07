@@ -31,8 +31,4 @@ public class Utils {
         product.setCarModel(toUpperCase(product.getCarModel()));
         product.setArticleNumber(formatArticleNumber(product.getArticleNumber()));
     }
-
-    public Timestamp getCurrentTimeStamp() {
-        return new Timestamp(System.currentTimeMillis());
-    }
 }

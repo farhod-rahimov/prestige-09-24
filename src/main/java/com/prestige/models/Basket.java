@@ -48,4 +48,8 @@ public class Basket {
     public String getLastChangedDateTimeFormatted() {
         return getDateTimeFormatted(lastChangedDateTime);
     }
+
+    public void updateLastChangedDateTime() {
+        setLastChangedDateTime(new Timestamp(System.currentTimeMillis()));
+    }
 }
