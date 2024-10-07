@@ -78,17 +78,25 @@
     <!-- Отображение сообщения об ошибке -->
     <div th:if="${error}" class="error-message" th:text="${error}"></div>
 
-    <!-- Поле для выбора клиента -->
-    <label for="clientId">Клиент:</label>
-    <select th:if="${newBasket.client != null and newBasket.client.name != null}" required>
-        <option value="constant" selected th:text="${newBasket.client.name}"></option>
-    </select>
-    <select th:unless="${newBasket.client != null and newBasket.client.name != null}"
-            th:field="*{client.id}" id="clientId" required>
-        <option th:each="client : ${allClients}" th:value="${client.id}" th:text="${client.name}">
-            Выберите покупателя
-        </option>
-    </select>
+    <table style="width: 20%; border-collapse: collapse">
+        <thead>
+            <tr>
+                <th>Клиент</th>
+                <th>Итого</th>
+
+            </tr>
+            <tr>
+                <td style="padding: 10px; width: 100px; height: 50px;">
+                    <a th:if="${newBasket.client != null and newBasket.client.name != null}" th:text="${newBasket.client.name}"></a>
+                    <select th:unless="${newBasket.client != null and newBasket.client.name != null}"
+                            th:field="*{client.id}" id="clientId" required>
+                        <option th:each="client : ${allClients}" th:value="${client.id}" th:text="${client.name}"></option>
+                    </select>
+                </td>
+                <td style="padding: 10px; width: 100px; height: 50px;" th:text="${newBasket.getTotalSum()} + ' смн'"></td>
+            </tr>
+        </thead>
+    </table>
 
     <table>
         <!-- Таблица для выбора продуктов и редактирования корзины -->

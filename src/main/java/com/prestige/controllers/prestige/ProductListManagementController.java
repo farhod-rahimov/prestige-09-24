@@ -545,7 +545,7 @@ public class ProductListManagementController {
         model.addAttribute("exchangeRate", settings.getValueByKey("exchangeRate"));
         model.addAttribute("newPrestigeSaleUnit", newPrestigeSaleUnit);
 
-        newBasket.updateLastChangedDateTime();
+        newBasket.update();
 
         return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
     }
@@ -556,6 +556,9 @@ public class ProductListManagementController {
         Basket newBasket = (Basket)model.getAttribute("newBasket");
         List<RetailSaleUnit> newPrestigeSaleUnitList = newBasket.getRetailSaleUnitList();
         RetailSaleUnit newPrestigeSaleUnit = newPrestigeSaleUnitList.get(newPrestigeSaleUnitList.size() - 1);
+
+        boolean shouldCreateNewPrestigeSaleUnit = (removeIndex == newPrestigeSaleUnitList.size() - 1) ||
+                newPrestigeSaleUnit.getRetailProduct().getProduct().getProductName().getId() == null;
 
         if (removeIndex > newPrestigeSaleUnitList.size() - 1) {
             String error = String.format("Неверный порядковый номер. Товара №%d нет в текущей корзине." +
@@ -570,14 +573,20 @@ public class ProductListManagementController {
         else {
             productListManagementDAO.removePrestigeSaleUnitFromBasket(newPrestigeSaleUnitList.get(removeIndex), newBasket);
             newPrestigeSaleUnitList.remove(removeIndex);
-            findNextStep(newPrestigeSaleUnit, model);
+
+            if (shouldCreateNewPrestigeSaleUnit) {
+                model.addAttribute("shouldCreateNewPrestigeSaleUnit", true);
+            }
+            else {
+                findNextStep(newPrestigeSaleUnit, model);
+            }
         }
 
         model.addAttribute("magicValue", settings.getValueByKey("magicValue"));
         model.addAttribute("exchangeRate", settings.getValueByKey("exchangeRate"));
         model.addAttribute("newPrestigeSaleUnit", newPrestigeSaleUnit);
 
-        newBasket.updateLastChangedDateTime();
+        newBasket.update();
 
         return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
     }

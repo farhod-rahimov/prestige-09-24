@@ -33,6 +33,7 @@ public class Basket {
         setCreatedDateTime(new Timestamp(System.currentTimeMillis()));
         setLastChangedDateTime(getCreatedDateTime());
 
+        totalSum = new BigDecimal(0);
         retailSaleUnitList = new LinkedList<>();
     }
 
@@ -49,7 +50,16 @@ public class Basket {
         return getDateTimeFormatted(lastChangedDateTime);
     }
 
-    public void updateLastChangedDateTime() {
+    public void update() {
+        totalSum = new BigDecimal(0);
+
+        for (int i = 0; i < retailSaleUnitList.size() - 1; i++) {
+            totalSum = totalSum.add(retailSaleUnitList.get(i).getTotalSumSmn());
+        }
+
+        if (retailSaleUnitList.get(retailSaleUnitList.size() - 1).getIsSaved() == true) {
+            totalSum = totalSum.add(retailSaleUnitList.get(retailSaleUnitList.size() - 1).getTotalSumSmn());
+        }
         setLastChangedDateTime(new Timestamp(System.currentTimeMillis()));
     }
 }
