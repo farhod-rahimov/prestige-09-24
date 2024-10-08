@@ -10,6 +10,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 
 @Getter
@@ -26,6 +27,8 @@ public class Basket {
     private Client client;
 
     private BigDecimal totalSum;
+
+    private int totalSumHash;
 
     private List<RetailSaleUnit> retailSaleUnitList;
 
@@ -52,9 +55,12 @@ public class Basket {
 
     public void update() {
         totalSum = new BigDecimal(0);
+        totalSumHash = 0;
 
         for (int i = 0; i < retailSaleUnitList.size() - 1; i++) {
             totalSum = totalSum.add(retailSaleUnitList.get(i).getTotalSumSmn());
+            totalSumHash += Objects.hash(retailSaleUnitList.get(i).getRetailProduct().getProduct().getId(),
+                    retailSaleUnitList.get(i).getQuantity(), retailSaleUnitList.get(i).getSoldPriceSmn());
         }
 
         if (retailSaleUnitList.get(retailSaleUnitList.size() - 1).getIsSaved() == true) {

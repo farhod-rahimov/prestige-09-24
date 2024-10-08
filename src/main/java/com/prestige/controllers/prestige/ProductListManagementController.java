@@ -13,6 +13,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 @Controller
@@ -401,17 +402,12 @@ public class ProductListManagementController {
         }
     }
 
-    private void setRetailSaleUnitTotalSumSmn(RetailSaleUnit newPrestigeSaleUnit) {
-        newPrestigeSaleUnit.setTotalSumSmn(newPrestigeSaleUnit.getSoldPriceSmn().multiply(new BigDecimal(newPrestigeSaleUnit.getQuantity())));
-    }
-
     private void setRetailSaleUnitStockBalance(RetailSaleUnit newPrestigeSaleUnit) {
         newPrestigeSaleUnit.getRetailProduct().setStockBalance(productListManagementDAO.getTotalStockBalanceByProductId(
                     newPrestigeSaleUnit.getRetailProduct().getProduct().getId()));
     }
 
     private void updateRetailSaleUnit(RetailSaleUnit newPrestigeSaleUnit) {
-        setRetailSaleUnitTotalSumSmn(newPrestigeSaleUnit);
         setRetailSaleUnitStockBalance(newPrestigeSaleUnit);
     }
 
@@ -466,11 +462,37 @@ public class ProductListManagementController {
         return newPrestigeSaleUnit;
     }
 
-    void updateNewPrestigeSaleUnitList(Basket newBasket, List<RetailSaleUnit> newPrestigeSaleUnitList) {
-        productListManagementDAO.updateNewPrestigeSaleUnitList(newBasket, newPrestigeSaleUnitList);
+    void setPricesForDesiredTotalSum(Basket newBasket, List<RetailSaleUnit> newPrestigeSaleUnitList, BigDecimal desiredTotalSum) {
+        BigDecimal multiplier = desiredTotalSum.divide(newBasket.getTotalSum(), 10, RoundingMode.HALF_UP);
 
         for (int i = 0; i < newPrestigeSaleUnitList.size() - 1; i++) {
-            updateRetailSaleUnit(newPrestigeSaleUnitList.get(i));
+            RetailSaleUnit unit = newPrestigeSaleUnitList.get(i);
+            unit.setSoldPriceSmn(unit.getSoldPriceSmn().multiply(multiplier).setScale(2, RoundingMode.HALF_UP));
+        }
+    }
+
+    void updateNewPrestigeSaleUnitList(Basket newBasket, List<RetailSaleUnit> newPrestigeSaleUnitList, BigDecimal desiredTotalSum) {
+
+        Basket tmpBasket = new Basket();
+        tmpBasket.setRetailSaleUnitList(newPrestigeSaleUnitList);
+        tmpBasket.update(); // calculate hash
+
+        boolean shouldUpdateList = false;
+
+        if (tmpBasket.getTotalSumHash() == newBasket.getTotalSumHash() &&
+                desiredTotalSum.equals(newBasket.getTotalSum()) == false) {
+
+            // products, its prices and quantities are same. desiredTotalSum differs from basket`s totalSum
+            setPricesForDesiredTotalSum(newBasket, newPrestigeSaleUnitList, desiredTotalSum);
+            shouldUpdateList = true;
+        }
+
+        if ((tmpBasket.getTotalSumHash() != newBasket.getTotalSumHash()) || shouldUpdateList) {
+            productListManagementDAO.updateNewPrestigeSaleUnitList(newBasket, newPrestigeSaleUnitList);
+
+            for (int i = 0; i < newPrestigeSaleUnitList.size() - 1; i++) {
+                updateRetailSaleUnit(newPrestigeSaleUnitList.get(i));
+            }
         }
     }
 
@@ -510,15 +532,13 @@ public class ProductListManagementController {
             // set updated stockBalance
             newPrestigeSaleUnit.getRetailProduct().setStockBalance(newPrestigeSaleUnit.getRetailProduct().getStockBalance() -
                     newPrestigeSaleUnit.getQuantity());
-
-            // set total sum
-            setRetailSaleUnitTotalSumSmn(newPrestigeSaleUnit);
         }
     }
 
     @PostMapping("/addNewPrestigeBasket")
     public String addNewPrestigeBasketGet(@ModelAttribute("newBasket") Basket newBasket, BindingResult bindingResult,
-                                          @RequestParam("action") String action, HttpSession session,  Model model) {
+                                          @RequestParam("action") String action, HttpSession session,  Model model,
+                                          @RequestParam(name = "desiredTotalSum", required = false) BigDecimal desiredTotalSum) {
 
         List<RetailSaleUnit> newPrestigeSaleUnitList = newBasket.getRetailSaleUnitList();
         RetailSaleUnit newPrestigeSaleUnit = newPrestigeSaleUnitList.get(newPrestigeSaleUnitList.size() - 1);
@@ -534,7 +554,7 @@ public class ProductListManagementController {
             newPrestigeSaleUnit = saveNewPrestigeSaleUnit(newBasket, model, session, action);
         }
         else if (action.equals("update")) {
-            updateNewPrestigeSaleUnitList(newBasket, newPrestigeSaleUnitList);
+            updateNewPrestigeSaleUnitList(newBasket, newPrestigeSaleUnitList, desiredTotalSum);
             model.addAttribute("shouldCreateNewPrestigeSaleUnit", true);
         }
         else {

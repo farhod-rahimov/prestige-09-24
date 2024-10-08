@@ -86,14 +86,19 @@
 
             </tr>
             <tr>
-                <td style="padding: 10px; width: 100px; height: 50px;">
+                <td>
                     <a th:if="${newBasket.client != null and newBasket.client.name != null}" th:text="${newBasket.client.name}"></a>
                     <select th:unless="${newBasket.client != null and newBasket.client.name != null}"
                             th:field="*{client.id}" id="clientId" required>
                         <option th:each="client : ${allClients}" th:value="${client.id}" th:text="${client.name}"></option>
                     </select>
                 </td>
-                <td style="padding: 10px; width: 100px; height: 50px;" th:text="${newBasket.getTotalSum()} + ' смн'"></td>
+                <td>
+                    <div style="display: flex; align-items: center;">
+                        <input type="number" step="0.01" th:name="desiredTotalSum" th:value="*{totalSum}">
+                        <span style="margin-left: 5px;">смн</span>
+                    </div>
+                </td>
             </tr>
         </thead>
     </table>
@@ -130,10 +135,10 @@
 
 
             <td th:if="${saleUnit.isSaved == true}">
-                <input type="number" th:field="*{retailSaleUnitList[__${stat.index}__].quantity}" required>
+                <input type="number" step="0.01" th:field="*{retailSaleUnitList[__${stat.index}__].quantity}" required>
             </td>
             <td th:if="${saleUnit.isSaved == true}">
-                <input type="number" th:field="*{retailSaleUnitList[__${stat.index}__].soldPriceSmn}" required>
+                <input type="number" step="0.01" th:field="*{retailSaleUnitList[__${stat.index}__].soldPriceSmn}" required>
             </td>
 
             <td th:if="${saleUnit.isSaved == true}"><a th:text="${saleUnit.getTotalSumSmn() + ' смн'}"></a></td>
@@ -236,7 +241,7 @@
                 <!-- Ввод цены -->
 
                 <div style="display: flex; align-items: center;">
-                    <input type="number" th:field="*{retailSaleUnitList[__*{retailSaleUnitList.size() - 1}__].soldPriceSmn}" required>
+                    <input type="number" step="0.01" th:field="*{retailSaleUnitList[__*{retailSaleUnitList.size() - 1}__].soldPriceSmn}" required>
                     <span style="margin-left: 5px;">смн</span>
                 </div>
             </td>
@@ -245,7 +250,7 @@
                 <a><b>...</b></a>
             </td>
 
-            <td th:if="${newPrestigeSaleUnit.totalSumSmn != null}">
+            <td th:if="${newPrestigeSaleUnit.getTotalSumSmn() != null}">
                 <!-- Показать сумму -->
 
                 <div style="display: flex; align-items: center;">
@@ -253,7 +258,7 @@
                     <span style="margin-left: 5px;">смн</span>
                 </div>
             </td>
-            <td th:unless="${newPrestigeSaleUnit.totalSumSmn != null}" style="text-align: center;">
+            <td th:unless="${newPrestigeSaleUnit.getTotalSumSmn() != null}" style="text-align: center;">
                 <a><b>...</b></a>
             </td>
 
@@ -321,10 +326,10 @@
         <button type="submit" name="action" value="add" style="margin-bottom: 10px;">Добавить новый товар</button>
         <button type="submit" name="action" value="update" style="margin-bottom: 10px;">Обновить и сохранить корзину</button>
     </div>
-    <div th:if="${newPrestigeSaleUnit.totalSumSmn != null}">
+    <div th:if="${newPrestigeSaleUnit.getTotalSumSmn() != null}">
         <button type="submit" name="action" value="save" style="margin-bottom: 10px;">Сохранить новый товар</button>
     </div>
-    <div th:if="${newPrestigeSaleUnit.totalSumSmn == null and (shouldCreateNewPrestigeSaleUnit == null or shouldCreateNewPrestigeSaleUnit == false)}">
+    <div th:if="${newPrestigeSaleUnit.getTotalSumSmn() == null and (shouldCreateNewPrestigeSaleUnit == null or shouldCreateNewPrestigeSaleUnit == false)}">
         <button type="submit" name="action" value="next" style="margin-bottom: 10px;">Далее</button>
     </div>
     <div th:if="${newBasket.client != null and newBasket.client.name != null and
