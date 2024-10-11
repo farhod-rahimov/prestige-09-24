@@ -239,7 +239,7 @@ public class ProductListManagementDAO {
         return whereSql + "1 = 1 ";
     }
 
-    private List<ProductName> showAllProductNamesInternal(RetailProductSearchFilter filter) {
+    public List<ProductName> showAllPrestigeProductNames(RetailProductSearchFilter filter) {
         List<Object> bindings = new ArrayList<>();
 
         String sql =    "SELECT cpn.id, cpn.product_name " +
@@ -259,11 +259,12 @@ public class ProductListManagementDAO {
     }
 
     public List<ProductName> showAllProductNames() {
-        return showAllProductNamesInternal(null);
-    }
+        String sql =    "SELECT cpn.id, cpn.product_name " +
+                        "FROM common_product_names cpn " +
+                        "GROUP BY (cpn.id, cpn.product_name) " +
+                        "ORDER BY (cpn.product_name)";
 
-    public List<ProductName> showAllProductNames(RetailProductSearchFilter filter) {
-        return showAllProductNamesInternal(filter);
+        return jdbcTemplate.query(sql, new ShowAllProductNamesMapper());
     }
 
     public String getProductNameById(int id) {

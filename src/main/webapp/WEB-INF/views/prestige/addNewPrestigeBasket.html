@@ -117,11 +117,17 @@
                         </select>
                     </div>
                 </td>
-                <td th:if="${newBasket.client != null and newBasket.client.name != null}">
+                <td th:unless="${newBasket.client != null and newBasket.client.name != null}" style="text-align: center;">
+                    <a><b>...</b></a>
+                </td>
+                <td th:if="${newBasket.client != null and newBasket.client.phoneNumber != null}">
                     <div style="display: flex; align-items: center;">
                         <input type="number" step="0.01" th:name="desiredTotalSum" th:value="*{totalSum}">
                         <span style="margin-left: 5px;">смн</span>
                     </div>
+                </td>
+                <td th:unless="${newBasket.client != null and newBasket.client.phoneNumber != null}" style="text-align: center;">
+                    <a><b>...</b></a>
                 </td>
             </tr>
         </tbody>
