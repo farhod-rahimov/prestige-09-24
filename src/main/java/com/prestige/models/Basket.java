@@ -1,8 +1,9 @@
 package com.prestige.models;
 
+import com.prestige.models.searchFilters.ClientSearchFilter;
+import com.prestige.models.searchFilters.RetailProductSearchFilter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -30,14 +31,26 @@ public class Basket {
 
     private int totalSumHash;
 
+    private BasketSelectType newItemSelectType;
+
     private List<RetailSaleUnit> retailSaleUnitList;
+
+    private RetailProductSearchFilter productSearchFilter;
+
+    private ClientSearchFilter clientSearchFilter;
+
+    public boolean shouldCreateNewPrestigeSaleUnit;
 
     public Basket() {
         setCreatedDateTime(new Timestamp(System.currentTimeMillis()));
         setLastChangedDateTime(getCreatedDateTime());
 
         totalSum = new BigDecimal(0);
+        newItemSelectType = BasketSelectType.LIST;
         retailSaleUnitList = new LinkedList<>();
+        productSearchFilter = new RetailProductSearchFilter();
+        clientSearchFilter = new ClientSearchFilter();
+        shouldCreateNewPrestigeSaleUnit = false;
     }
 
     private String getDateTimeFormatted(Timestamp dateTime) {
@@ -67,5 +80,21 @@ public class Basket {
             totalSum = totalSum.add(retailSaleUnitList.get(retailSaleUnitList.size() - 1).getTotalSumSmn());
         }
         setLastChangedDateTime(new Timestamp(System.currentTimeMillis()));
+    }
+
+    public void resetNewItemSelectType() {
+        newItemSelectType = BasketSelectType.LIST;
+    }
+
+    public void resetProductSearchFilter() {
+        productSearchFilter.reset();
+    }
+
+    public void resetClientSearchFilter() {
+        clientSearchFilter.reset();
+    }
+
+    public boolean isClientSelectionDone() {
+        return client != null && client.isAllFieldsSet();
     }
 }

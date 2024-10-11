@@ -16,4 +16,8 @@ public class Client {
     private String name;
 
     private String phoneNumber;
+
+    public boolean isAllFieldsSet() {
+        return id != null && name != null && phoneNumber != null;
+    }
 }

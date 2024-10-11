@@ -82,28 +82,49 @@
     <!-- Отображение сообщения об ошибке -->
     <div th:if="${error}" class="error-message" th:text="${error}"></div>
 
-    <table style="width: 20%; border-collapse: collapse">
+    <table style="width: 35%; border-collapse: collapse">
         <thead>
             <tr>
-                <th>Клиент</th>
-                <th>Итого</th>
+                <th colspan="2">Клиент</th>
+                <th rowspan="2">Итого</th>
             </tr>
             <tr>
+                <th>Имя</th>
+                <th>Телефон</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
                 <td>
-                    <a th:if="${newBasket.client != null and newBasket.client.name != null}" th:text="${newBasket.client.name}"></a>
-                    <select th:unless="${newBasket.client != null and newBasket.client.name != null}"
-                            th:field="*{client.id}" id="clientId" required>
-                        <option th:each="client : ${allClients}" th:value="${client.id}" th:text="${client.name}"></option>
-                    </select>
+                    <div th:if="${newBasket.client != null and newBasket.client.name != null}">
+                        <a th:text="${newBasket.client.name}"></a>
+                    </div>
+                    <div th:unless="${newBasket.client != null and newBasket.client.name != null}">
+                        <select th:field="*{client.name}" id="clientName" required>
+                            <option value="" th:placeholder="true">Выберите имя клиента</option>
+                            <option th:each="name : ${allClientNames}" th:value="${name}" th:text="${name}"></option>
+                        </select>
+                    </div>
                 </td>
-                <td>
+                <td th:if="${newBasket.client != null and newBasket.client.name != null}">
+                    <div th:if="${newBasket.client != null and newBasket.client.phoneNumber != null}">
+                        <a th:text="${newBasket.client.phoneNumber}"></a>
+                    </div>
+                    <div th:unless="${newBasket.client != null and newBasket.client.phoneNumber != null}">
+                        <select th:field="*{client.phoneNumber}" id="clientPhoneNumber" required>
+                            <option value="" th:placeholder="true">Выберите номер телефона</option>
+                            <option th:each="phoneNumber : ${allClientPhoneNumbers}" th:value="${phoneNumber}" th:text="${phoneNumber}"></option>
+                        </select>
+                    </div>
+                </td>
+                <td th:if="${newBasket.client != null and newBasket.client.name != null}">
                     <div style="display: flex; align-items: center;">
                         <input type="number" step="0.01" th:name="desiredTotalSum" th:value="*{totalSum}">
                         <span style="margin-left: 5px;">смн</span>
                     </div>
                 </td>
             </tr>
-        </thead>
+        </tbody>
     </table>
 
     <div class="table-container">
@@ -130,73 +151,113 @@
 
             <tbody th:if="${newPrestigeSaleUnit != null}">
 
-            <tr th:if="${shouldCreateNewPrestigeSaleUnit == null or shouldCreateNewPrestigeSaleUnit == false}">
-                <td th:if="${newBasket.client != null and newBasket.client.id != null}">
-                    <!-- Выбор имени продукта -->
+            <tr th:if="${newBasket.shouldCreateNewPrestigeSaleUnit == false}">
 
-                    <select th:if="${newPrestigeSaleUnit.retailProduct.product.productName.id != null}" required>
-                        <option value="constant" selected th:text="${newPrestigeSaleUnit.retailProduct.product.productName.productName}"></option>
-                    </select>
-                    <select th:unless="${newPrestigeSaleUnit.retailProduct.product.productName.id != null}"
-                            th:field="*{retailSaleUnitList[__*{retailSaleUnitList.size() - 1}__].retailProduct.product.productName.id}" required>
-                        <option th:each="productName : ${allProductsNames}" th:value="${productName.id}" th:text="${productName.productName}">
-                        </option>
-                    </select>
-                </td>
-                <td th:unless="${newBasket.client != null and newBasket.client.id != null}" style="text-align: center;">
-                    <a><b>...</b></a>
-                </td>
+                <!-- Выбор имени продукта -->
+                <div th:if="${newBasket.client != null and newBasket.client.id != null}">
+                    <div th:if="${newBasket.newItemSelectType.name() == 'INPUT' and newBasket.productSearchFilter.productName == null}">
+                        <td>
+                            <input type="text" th:field="*{productSearchFilter.productName}">
+                        </td>
+                    </div>
+                    <div th:unless="${newBasket.newItemSelectType.name() == 'INPUT' and newBasket.productSearchFilter.productName == null}">
+                        <td>
+                            <div th:if="${newPrestigeSaleUnit.retailProduct.product.productName.id != null}">
+                                <select required>
+                                    <option value="constant" selected th:text="${newPrestigeSaleUnit.retailProduct.product.productName.productName}"></option>
+                                </select>
+                            </div>
+                            <div th:unless="${newPrestigeSaleUnit.retailProduct.product.productName.id != null}">
+                                <div th:if="${#lists.isEmpty(allProductsNames)}">
+                                    <span><b>Нет доступных данных</b></span>
+                                </div>
+                                <div th:unless="${#lists.isEmpty(allProductsNames)}">
+                                    <select th:field="*{retailSaleUnitList[__*{retailSaleUnitList.size() - 1}__].retailProduct.product.productName.id}" required>
+                                        <option value="" th:placeholder="true">Выберите имя продукта</option>
+                                        <option th:each="productName : ${allProductsNames}" th:value="${productName.id}" th:text="${productName.productName}"></option>
+                                    </select>
+                                </div>
+                            </div >
+                        </td>
+                    </div>
+                </div>
+                <div th:unless="${newBasket.client != null and newBasket.client.id != null}">
+                    <td style="text-align: center;">
+                        <a><b>...</b></a>
+                    </td>
+                </div>
 
-                <td th:if="${newPrestigeSaleUnit.retailProduct.product.productName.id != null}">
-                    <!-- Выбор модели машины -->
+                <!-- Выбор модели машины -->
+                <div th:if="${newBasket.newItemSelectType.name() == 'INPUT' and newBasket.productSearchFilter.carModel == null}">
+                    <td>
+                        <input type="text" th:field="*{productSearchFilter.carModel}">
+                    </td>
+                </div>
+                <div th:unless="${newBasket.newItemSelectType.name() == 'INPUT' and newBasket.productSearchFilter.carModel == null}">
+                    <td th:if="${newPrestigeSaleUnit.retailProduct.product.productName.id != null}">
+                        <select th:if="${newPrestigeSaleUnit.retailProduct.product.carModel != null}" required>
+                            <option value="constant" selected th:text="${newPrestigeSaleUnit.retailProduct.product.carModel}"></option>
+                        </select>
+                        <select th:unless="${newPrestigeSaleUnit.retailProduct.product.carModel != null}"
+                                th:field="*{retailSaleUnitList[__*{retailSaleUnitList.size() - 1}__].retailProduct.product.carModel}" required>
 
-                    <select th:if="${newPrestigeSaleUnit.retailProduct.product.carModel != null}" required>
-                        <option value="constant" selected th:text="${newPrestigeSaleUnit.retailProduct.product.carModel}"></option>
-                    </select>
-                    <select th:unless="${newPrestigeSaleUnit.retailProduct.product.carModel != null}"
-                            th:field="*{retailSaleUnitList[__*{retailSaleUnitList.size() - 1}__].retailProduct.product.carModel}" required>
+                            <option value="" th:placeholder="true">Выберите модель машины</option>
+                            <option th:each="carModel : ${allCarModels}" th:value="${carModel}" th:text="${carModel}">
+                            </option>
+                        </select>
+                    </td>
+                    <td th:unless="${newPrestigeSaleUnit.retailProduct.product.productName.id != null}" style="text-align: center;">
+                        <a><b>...</b></a>
+                    </td>
+                </div>
 
-                        <option th:each="carModel : ${allCarModels}" th:value="${carModel}" th:text="${carModel}">
-                        </option>
-                    </select>
-                </td>
-                <td th:unless="${newPrestigeSaleUnit.retailProduct.product.productName.id != null}" style="text-align: center;">
-                    <a><b>...</b></a>
-                </td>
+                <!-- Выбор артикула -->
+                <div th:if="${newBasket.newItemSelectType.name() == 'INPUT' and newBasket.productSearchFilter.articleNumber == null}">
+                    <td>
+                        <input type="text" th:field="*{productSearchFilter.articleNumber}">
+                    </td>
+                </div>
+                <div th:unless="${newBasket.newItemSelectType.name() == 'INPUT' and newBasket.productSearchFilter.articleNumber == null}">
+                    <td th:if="${newPrestigeSaleUnit.retailProduct.product.carModel != null}">
+                        <select th:if="${newPrestigeSaleUnit.retailProduct.product.articleNumber != null}" required>
+                            <option value="constant" selected th:text="${newPrestigeSaleUnit.retailProduct.product.articleNumber}"></option>
+                        </select>
+                        <select th:unless="${newPrestigeSaleUnit.retailProduct.product.articleNumber != null}"
+                                th:field="*{retailSaleUnitList[__*{retailSaleUnitList.size() - 1}__].retailProduct.product.articleNumber}" required>
 
-                <td th:if="${newPrestigeSaleUnit.retailProduct.product.carModel != null}">
-                    <!-- Выбор артикула -->
+                            <option value="" th:placeholder="true">Выберите артикул</option>
+                            <option th:each="articleNumber : ${allArticleNumbers}" th:value="${articleNumber}" th:text="${articleNumber}">
+                            </option>
+                        </select>
+                    </td>
+                    <td th:unless="${newPrestigeSaleUnit.retailProduct.product.carModel != null}" style="text-align: center;">
+                        <a><b>...</b></a>
+                    </td>
+                </div>
 
-                    <select th:if="${newPrestigeSaleUnit.retailProduct.product.articleNumber != null}" required>
-                        <option value="constant" selected th:text="${newPrestigeSaleUnit.retailProduct.product.articleNumber}"></option>
-                    </select>
-                    <select th:unless="${newPrestigeSaleUnit.retailProduct.product.articleNumber != null}"
-                            th:field="*{retailSaleUnitList[__*{retailSaleUnitList.size() - 1}__].retailProduct.product.articleNumber}" required>
+                <!-- Выбор бренда -->
+                <div th:if="${newBasket.newItemSelectType.name() == 'INPUT' and newBasket.productSearchFilter.brandName == null}">
+                    <td>
+                        <input type="text" th:field="*{productSearchFilter.brandName}">
+                    </td>
+                </div>
+                <div th:unless="${newBasket.newItemSelectType.name() == 'INPUT' and newBasket.productSearchFilter.brandName == null}">
+                    <td th:if="${newPrestigeSaleUnit.retailProduct.product.articleNumber != null}">
+                        <select th:if="${newPrestigeSaleUnit.retailProduct.product.brand != null and newPrestigeSaleUnit.retailProduct.product.brand.id != null}" required>
+                            <option value="constant" selected th:text="${newPrestigeSaleUnit.retailProduct.product.brand.brandName}"></option>
+                        </select>
+                        <select th:unless="${newPrestigeSaleUnit.retailProduct.product.brand != null and newPrestigeSaleUnit.retailProduct.product.brand.id != null}"
+                                th:field="*{retailSaleUnitList[__*{retailSaleUnitList.size() - 1}__].retailProduct.product.brand.id}" required>
 
-                        <option th:each="articleNumber : ${allArticleNumbers}" th:value="${articleNumber}" th:text="${articleNumber}">
-                        </option>
-                    </select>
-                </td>
-                <td th:unless="${newPrestigeSaleUnit.retailProduct.product.carModel != null}" style="text-align: center;">
-                    <a><b>...</b></a>
-                </td>
-
-                <td th:if="${newPrestigeSaleUnit.retailProduct.product.articleNumber != null}">
-                    <!-- Выбор бренда -->
-
-                    <select th:if="${newPrestigeSaleUnit.retailProduct.product.brand != null and newPrestigeSaleUnit.retailProduct.product.brand.id != null}" required>
-                        <option value="constant" selected th:text="${newPrestigeSaleUnit.retailProduct.product.brand.brandName}"></option>
-                    </select>
-                    <select th:unless="${newPrestigeSaleUnit.retailProduct.product.brand != null and newPrestigeSaleUnit.retailProduct.product.brand.id != null}"
-                            th:field="*{retailSaleUnitList[__*{retailSaleUnitList.size() - 1}__].retailProduct.product.brand.id}" required>
-
-                        <option th:each="brand : ${allBrands}" th:value="${brand.id}" th:text="${brand.brandName}">
-                        </option>
-                    </select>
-                </td>
-                <td th:unless="${newPrestigeSaleUnit.retailProduct.product.articleNumber != null}" style="text-align: center;">
-                    <a><b>...</b></a>
-                </td>
+                            <option value="" th:placeholder="true">Выберите бренд</option>
+                            <option th:each="brand : ${allBrands}" th:value="${brand.id}" th:text="${brand.brandName}">
+                            </option>
+                        </select>
+                    </td>
+                    <td th:unless="${newPrestigeSaleUnit.retailProduct.product.articleNumber != null}" style="text-align: center;">
+                        <a><b>...</b></a>
+                    </td>
+                </div>
 
                 <td th:if="${newPrestigeSaleUnit.retailProduct.product.brand != null and
                              newPrestigeSaleUnit.retailProduct.product.brand.id != null}">
@@ -285,11 +346,32 @@
                     <span><b>...</b></span>
                 </td>
 
-                <!-- Кнопка удаления -->
-                <td th:if="${newBasket.client != null and newBasket.client.id != null}" style="text-align: center;">
-                    <a th:href="@{/prestige/productListManagement/deletePrestigeSaleUnit(removeIndex=${newBasket.retailSaleUnitList.size() - 1})}">
-                        <img th:src="@{/images/delete.png}" alt="Удалить" style="width: 20px; height: 20px;">
-                    </a>
+                <td th:if="${newBasket.client != null and newBasket.client.id != null}" style="text-align: left;">
+
+                    <div style="width: 50px;">
+                        <!-- Кнопка удаления -->
+                        <a title="Удалить строку" th:href="@{/prestige/productListManagement/deletePrestigeSaleUnit(removeIndex=${newBasket.retailSaleUnitList.size() - 1})}">
+                            <img th:src="@{/images/delete.png}" style="width: 20px; height: 20px; float: left;">
+                        </a>
+
+                        <div th:if="${newPrestigeSaleUnit.retailProduct.product.productName.id == null}">
+                            <!-- Кнопка метода выбора товаров в корзине -->
+                            <a  title="Добавить товар через поиск по фильтру"
+                                th:if="${newBasket.retailSaleUnitList[__*{retailSaleUnitList.size() - 1}__].retailProduct.product.productName.id == null
+                                    and newBasket.newItemSelectType.name() == T(com.prestige.models.BasketSelectType).LIST.name()}"
+                                th:href="@{/prestige/productListManagement/changeBasketNewItemSelectType(selectType=${T(com.prestige.models.BasketSelectType).INPUT.name()})}">
+
+                                <img th:src="@{/images/loupe.png}" style="width: 20px; height: 20px; float: right;">
+                            </a>
+                            <a  title="Добавить товар через выбор по списку"
+                                th:unless="${newBasket.retailSaleUnitList[__*{retailSaleUnitList.size() - 1}__].retailProduct.product.productName.id == null
+                                        and newBasket.newItemSelectType.name() == T(com.prestige.models.BasketSelectType).LIST.name()}"
+                                th:href="@{/prestige/productListManagement/changeBasketNewItemSelectType(selectType=${T(com.prestige.models.BasketSelectType).LIST.name()})}">
+
+                                <img th:src="@{/images/list.png}" style="width: 20px; height: 20px; float: right;">
+                            </a>
+                        </div>
+                    </div>
                 </td>
             </tr>
 
@@ -316,7 +398,7 @@
                 <td th:if="${saleUnit.isSaved == true}"><a th:text="${saleUnit.getRetailProduct().getProduct().getNotes()}"></a></td>
 
                 <!-- Кнопка удаления -->
-                <td th:if="${saleUnit.isSaved == true}" style="text-align: center;">
+                <td th:if="${saleUnit.isSaved == true}" style="text-align: left;">
                     <a th:href="@{/prestige/productListManagement/deletePrestigeSaleUnit(removeIndex=${stat.index})}">
 
                         <img th:src="@{/images/delete.png}" alt="Удалить" style="width: 20px; height: 20px;">
@@ -327,18 +409,17 @@
         </table>
     </div>
 
-    <div th:if="${shouldCreateNewPrestigeSaleUnit != null}">
+    <div th:if="${newBasket.shouldCreateNewPrestigeSaleUnit == true}">
         <button type="submit" name="action" value="add" style="margin-bottom: 10px;">Добавить новый товар</button>
         <button type="submit" name="action" value="update" style="margin-bottom: 10px;">Обновить и сохранить корзину</button>
     </div>
     <div th:if="${newPrestigeSaleUnit.getTotalSumSmn() != null}">
         <button type="submit" name="action" value="save" style="margin-bottom: 10px;">Сохранить новый товар</button>
     </div>
-    <div th:if="${newPrestigeSaleUnit.getTotalSumSmn() == null and (shouldCreateNewPrestigeSaleUnit == null or shouldCreateNewPrestigeSaleUnit == false)}">
+    <div th:if="${newPrestigeSaleUnit.getTotalSumSmn() == null and newBasket.shouldCreateNewPrestigeSaleUnit == false}">
         <button type="submit" name="action" value="next" style="margin-bottom: 10px;">Далее</button>
     </div>
-    <div th:if="${newBasket.client != null and newBasket.client.name != null and
-                (shouldCreateNewPrestigeSaleUnit == null or shouldCreateNewPrestigeSaleUnit == false)}">
+    <div th:if="${newBasket.client != null and newBasket.client.name != null and newBasket.shouldCreateNewPrestigeSaleUnit == false}">
         <button type="submit" name="action" value="reset" style="margin-bottom: 10px;">Сбросить</button>
     </div>
 </form>

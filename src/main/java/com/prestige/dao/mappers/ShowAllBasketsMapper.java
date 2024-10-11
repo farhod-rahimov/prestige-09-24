@@ -15,8 +15,12 @@ public class ShowAllBasketsMapper implements RowMapper<Basket> {
         Client client = new Client(rs.getInt(4), rs.getString(5),
                 rs.getString(6));
 
-        Basket basket = new Basket(rs.getInt(1), rs.getTimestamp(2),
-                                    rs.getTimestamp(3), client, rs.getBigDecimal(7), 0, null);
+        Basket basket = new Basket();
+        basket.setId(rs.getInt(1));
+        basket.setCreatedDateTime(rs.getTimestamp(2));
+        basket.setLastChangedDateTime(rs.getTimestamp(3));
+        basket.setClient(client);
+        basket.setTotalSum(rs.getBigDecimal(7));
 
         return basket;
     }

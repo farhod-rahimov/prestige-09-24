@@ -3,13 +3,13 @@ package com.prestige.controllers.prestige;
 import com.prestige.dao.ProductListManagementDAO;
 import com.prestige.dao.Utils;
 import com.prestige.models.*;
+import com.prestige.models.searchFilters.RetailProductSearchFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
@@ -385,20 +385,24 @@ public class ProductListManagementController {
         session.setAttribute("newBasket", newBasket);
         model.addAttribute("newBasket", newBasket);
         model.addAttribute("newPrestigeSaleUnit", newPrestigeSaleUnit);
-        model.addAttribute("allClients", productListManagementDAO.showAllClients());
+        model.addAttribute("allClientNames", productListManagementDAO.getAllClientNames());
 
         return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
     }
 
-    private void completeBasket(Basket newPrestigeBasket) {
+    private void completeBasket(Basket newPrestigeBasket, Model model) {
         Client client = newPrestigeBasket.getClient();
 
-        if (client != null && client.getName() == null) {
-            client.setName(productListManagementDAO.getClientNameById(client.getId()));
+        if (client == null) {
+            return;
         }
 
-        if (client != null && client.getPhoneNumber() == null) {
-            client.setPhoneNumber(productListManagementDAO.getClientPhoneNumberById(client.getId()));
+        if (client.getName() != null && client.getPhoneNumber() == null) {
+            model.addAttribute("allClientPhoneNumbers", productListManagementDAO.getAllClientPhoneNumbersByNames(client.getName()));
+        }
+        else if (client.getName() != null && client.getPhoneNumber() != null) {
+            client.setId(productListManagementDAO.getClientIdByNameAndPhoneNumber(client.getName(), client.getPhoneNumber()));
+            model.addAttribute("allProductsNames", productListManagementDAO.showAllProductNames());
         }
     }
 
@@ -430,7 +434,7 @@ public class ProductListManagementController {
         boolean isSaleUnitAlreadyInTheBasket = isSaleUnitAlreadyInTheBasket(newPrestigeSaleUnitList, newPrestigeSaleUnit);
 
         if (action.equals("save") || (isSaleUnitAlreadyInTheBasket && newPrestigeSaleUnit.getIsSaved() == false)) {
-            model.addAttribute("shouldCreateNewPrestigeSaleUnit", true);
+            newBasket.shouldCreateNewPrestigeSaleUnit = true;
 
             if (isSaleUnitAlreadyInTheBasket && newPrestigeSaleUnit.getIsSaved() == false) {
                 Product product = newPrestigeSaleUnit.getRetailProduct().getProduct();
@@ -496,24 +500,25 @@ public class ProductListManagementController {
         }
     }
 
-    private void findNextStep(RetailSaleUnit newPrestigeSaleUnit, Model model) {
+    private void findNextStep(RetailSaleUnit newPrestigeSaleUnit, RetailProductSearchFilter productSearchFilter, Model model) {
         RetailProduct prestigeProduct = newPrestigeSaleUnit.getRetailProduct();
 
         if (prestigeProduct.getProduct().getProductName().getId() == null) {
-            model.addAttribute("allProductsNames", productListManagementDAO.showAllProductNames());
+            model.addAttribute("allProductsNames", productListManagementDAO.showAllProductNames(productSearchFilter));
         }
         else if (prestigeProduct.getProduct().getCarModel() == null) {
             model.addAttribute("allCarModels", productListManagementDAO.getCarModelsByProductNameId(
-                    prestigeProduct.getProduct().getProductName().getId()));
+                    prestigeProduct.getProduct().getProductName().getId(), productSearchFilter));
         }
         else if (prestigeProduct.getProduct().getArticleNumber() == null) {
             model.addAttribute("allArticleNumbers", productListManagementDAO.getArticleNumbersByProductNameIdAndCarModel(
-                    prestigeProduct.getProduct().getProductName().getId(),  prestigeProduct.getProduct().getCarModel()));
+                    prestigeProduct.getProduct().getProductName().getId(), prestigeProduct.getProduct().getCarModel(),
+                    productSearchFilter));
         }
         else if (prestigeProduct.getProduct().getBrand() == null || (prestigeProduct.getProduct().getBrand().getId() == null)) {
             model.addAttribute("allBrands", productListManagementDAO.getBrandsByProductNameIdAndCarModelAndArticleNumber(
                     prestigeProduct.getProduct().getProductName().getId(), prestigeProduct.getProduct().getCarModel(),
-                    prestigeProduct.getProduct().getArticleNumber()));
+                    prestigeProduct.getProduct().getArticleNumber(), productSearchFilter));
         }
         else if (prestigeProduct.getPriceDollar() == null) {
             newPrestigeSaleUnit.getRetailProduct().setPriceDollar(productListManagementDAO.getWACCPriceByProductId(
@@ -535,30 +540,44 @@ public class ProductListManagementController {
         }
     }
 
+    @GetMapping("/changeBasketNewItemSelectType")
+    public String changeBasketNewItemSelectType(@ModelAttribute("newBasket") Basket newBasket,
+                                                @RequestParam("selectType") String selectType,
+                                                HttpSession session,  Model model) {
+
+        newBasket.setNewItemSelectType(BasketSelectType.valueOf(selectType));
+
+        return addNewPrestigeBasketPost(newBasket, null, "next", session, model, null);
+    }
+
     @PostMapping("/addNewPrestigeBasket")
-    public String addNewPrestigeBasketGet(@ModelAttribute("newBasket") Basket newBasket, BindingResult bindingResult,
-                                          @RequestParam("action") String action, HttpSession session,  Model model,
-                                          @RequestParam(name = "desiredTotalSum", required = false) BigDecimal desiredTotalSum) {
+    public String addNewPrestigeBasketPost(@ModelAttribute("newBasket") Basket newBasket, BindingResult bindingResult,
+                                           @RequestParam("action") String action, HttpSession session,  Model model,
+                                           @RequestParam(name = "desiredTotalSum", required = false) BigDecimal desiredTotalSum) {
 
         List<RetailSaleUnit> newPrestigeSaleUnitList = newBasket.getRetailSaleUnitList();
         RetailSaleUnit newPrestigeSaleUnit = newPrestigeSaleUnitList.get(newPrestigeSaleUnitList.size() - 1);
+        newBasket.shouldCreateNewPrestigeSaleUnit = false; // reset every time
 
-        completeBasket(newBasket);
         completeNewProduct(newPrestigeSaleUnit.getRetailProduct().getProduct());
 
-        if (action.equals("reset")) {
+        if (!newBasket.isClientSelectionDone()) {
+            completeBasket(newBasket, model);
+        }
+        else if (action.equals("reset")) {
             newPrestigeSaleUnitList.remove(newPrestigeSaleUnitList.size() - 1);
             newPrestigeSaleUnit = createNewPrestigeSaleUnit(newPrestigeSaleUnitList, model, session);
+            newBasket.resetProductSearchFilter();
         }
         else if (action.equals("save") || (action.equals("add") && newPrestigeSaleUnit.getTotalSumSmn() != null)) {
             newPrestigeSaleUnit = saveNewPrestigeSaleUnit(newBasket, model, session, action);
         }
         else if (action.equals("update")) {
             updateNewPrestigeSaleUnitList(newBasket, newPrestigeSaleUnitList, desiredTotalSum);
-            model.addAttribute("shouldCreateNewPrestigeSaleUnit", true);
+            newBasket.shouldCreateNewPrestigeSaleUnit = true;
         }
         else {
-            findNextStep(newPrestigeSaleUnit, model);
+            findNextStep(newPrestigeSaleUnit, newBasket.getProductSearchFilter(), model);
         }
 
         model.addAttribute("magicValue", settings.getValueByKey("magicValue"));
@@ -577,9 +596,6 @@ public class ProductListManagementController {
         List<RetailSaleUnit> newPrestigeSaleUnitList = newBasket.getRetailSaleUnitList();
         RetailSaleUnit newPrestigeSaleUnit = newPrestigeSaleUnitList.get(newPrestigeSaleUnitList.size() - 1);
 
-        boolean shouldCreateNewPrestigeSaleUnit = (removeIndex == newPrestigeSaleUnitList.size() - 1) ||
-                newPrestigeSaleUnit.getRetailProduct().getProduct().getProductName().getId() == null;
-
         if (removeIndex > newPrestigeSaleUnitList.size() - 1) {
             String error = String.format("Неверный порядковый номер. Товара №%d нет в текущей корзине." +
                     "Пожалуйста, нажмите 'Обновить и сохранить корзину'", removeIndex + 1);
@@ -588,18 +604,14 @@ public class ProductListManagementController {
         else if (removeIndex == newPrestigeSaleUnitList.size() - 1) {
             newPrestigeSaleUnitList.remove(removeIndex);
             newPrestigeSaleUnitList.add(new RetailSaleUnit());
-            model.addAttribute("shouldCreateNewPrestigeSaleUnit", true);
+            newBasket.resetNewItemSelectType();
+            newBasket.resetProductSearchFilter();
+            newBasket.shouldCreateNewPrestigeSaleUnit = true;
         }
         else {
             productListManagementDAO.removePrestigeSaleUnitFromBasket(newPrestigeSaleUnitList.get(removeIndex), newBasket);
             newPrestigeSaleUnitList.remove(removeIndex);
-
-            if (shouldCreateNewPrestigeSaleUnit) {
-                model.addAttribute("shouldCreateNewPrestigeSaleUnit", true);
-            }
-            else {
-                findNextStep(newPrestigeSaleUnit, model);
-            }
+            findNextStep(newPrestigeSaleUnit, newBasket.getProductSearchFilter(), model);
         }
 
         model.addAttribute("magicValue", settings.getValueByKey("magicValue"));
