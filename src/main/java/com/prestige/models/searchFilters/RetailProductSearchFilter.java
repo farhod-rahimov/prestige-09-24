@@ -30,7 +30,15 @@ public class RetailProductSearchFilter {
     }
 
     public boolean hasAnyFilter() {
-        return productName != null || carModel != null || articleNumber != null || brandName != null;
+        return  (productName != null && productName.isEmpty() == false) ||
+                (carModel != null && carModel.isEmpty() == false) ||
+                (articleNumber != null && articleNumber.isEmpty() == false) ||
+                (brandName != null && brandName.isEmpty() == false);
+
+    }
+
+    public boolean isSet() {
+        return productName != null && carModel != null && articleNumber != null && brandName != null;
     }
 
     public void reset() {

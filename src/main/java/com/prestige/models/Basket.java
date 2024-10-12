@@ -31,7 +31,9 @@ public class Basket {
 
     private int totalSumHash;
 
-    private BasketSelectType newItemSelectType;
+    private ESelectType newItemSelectType;
+
+    private ESelectType newClientSelectType;
 
     private List<RetailSaleUnit> retailSaleUnitList;
 
@@ -45,8 +47,10 @@ public class Basket {
         setCreatedDateTime(new Timestamp(System.currentTimeMillis()));
         setLastChangedDateTime(getCreatedDateTime());
 
+        client = new Client();
         totalSum = new BigDecimal(0);
-        newItemSelectType = BasketSelectType.LIST;
+        newItemSelectType = ESelectType.LIST;
+        newClientSelectType = ESelectType.LIST;
         retailSaleUnitList = new LinkedList<>();
         productSearchFilter = new RetailProductSearchFilter();
         clientSearchFilter = new ClientSearchFilter();
@@ -83,7 +87,7 @@ public class Basket {
     }
 
     public void resetNewItemSelectType() {
-        newItemSelectType = BasketSelectType.LIST;
+        newItemSelectType = ESelectType.LIST;
     }
 
     public void resetProductSearchFilter() {

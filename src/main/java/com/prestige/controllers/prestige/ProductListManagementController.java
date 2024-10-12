@@ -385,20 +385,26 @@ public class ProductListManagementController {
         session.setAttribute("newBasket", newBasket);
         model.addAttribute("newBasket", newBasket);
         model.addAttribute("newPrestigeSaleUnit", newPrestigeSaleUnit);
-        model.addAttribute("allClientNames", productListManagementDAO.getAllClientNames());
+        model.addAttribute("allClientNames", productListManagementDAO.getAllClientNames(newBasket.getClientSearchFilter()));
 
         return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
     }
 
-    private void completeBasket(Basket newPrestigeBasket, Model model) {
+    private void completeBasket(Basket newPrestigeBasket, String action, Model model) {
         Client client = newPrestigeBasket.getClient();
 
-        if (client == null) {
-            return;
+        if (action.equals("reset")) {
+            newPrestigeBasket.setClient(new Client());
+            newPrestigeBasket.getClientSearchFilter().reset();
+
+            client = newPrestigeBasket.getClient();
         }
 
-        if (client.getName() != null && client.getPhoneNumber() == null) {
-            model.addAttribute("allClientPhoneNumbers", productListManagementDAO.getAllClientPhoneNumbersByNames(client.getName()));
+        if (client.getName() == null) {
+            model.addAttribute("allClientNames", productListManagementDAO.getAllClientNames(newPrestigeBasket.getClientSearchFilter()));
+        }
+        else if (client.getName() != null && client.getPhoneNumber() == null) {
+            model.addAttribute("allClientPhoneNumbers", productListManagementDAO.getAllClientPhoneNumbersByNames(client.getName(), newPrestigeBasket.getClientSearchFilter()));
         }
         else if (client.getName() != null && client.getPhoneNumber() != null) {
             client.setId(productListManagementDAO.getClientIdByNameAndPhoneNumber(client.getName(), client.getPhoneNumber()));
@@ -545,7 +551,17 @@ public class ProductListManagementController {
                                                 @RequestParam("selectType") String selectType,
                                                 HttpSession session,  Model model) {
 
-        newBasket.setNewItemSelectType(BasketSelectType.valueOf(selectType));
+        newBasket.setNewItemSelectType(ESelectType.valueOf(selectType));
+
+        return addNewPrestigeBasketPost(newBasket, null, "next", session, model, null);
+    }
+
+    @GetMapping("/changeClientSelectType")
+    public String changeClientSelectType(@ModelAttribute("newBasket") Basket newBasket,
+                                         @RequestParam("selectType") String selectType,
+                                         HttpSession session,  Model model) {
+
+        newBasket.setNewClientSelectType(ESelectType.valueOf(selectType));
 
         return addNewPrestigeBasketPost(newBasket, null, "next", session, model, null);
     }
@@ -562,7 +578,7 @@ public class ProductListManagementController {
         completeNewProduct(newPrestigeSaleUnit.getRetailProduct().getProduct());
 
         if (!newBasket.isClientSelectionDone()) {
-            completeBasket(newBasket, model);
+            completeBasket(newBasket, action, model);
         }
         else if (action.equals("reset")) {
             newPrestigeSaleUnitList.remove(newPrestigeSaleUnitList.size() - 1);

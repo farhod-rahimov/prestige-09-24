@@ -69,7 +69,7 @@ public class ProductListManagementDAO {
         return whereSql + "1 = 1 ";
     }
 
-    private List<String> getAllClientNamesInternal(ClientSearchFilter filter) {
+    public List<String> getAllClientNames(ClientSearchFilter filter) {
         List<Object> bindings = new ArrayList();
 
         String sql =    "SELECT pc.name " +
@@ -83,14 +83,6 @@ public class ProductListManagementDAO {
                 "ORDER BY (pc.name)";
 
         return jdbcTemplate.queryForList(sql, bindings.toArray(), String.class);
-    }
-
-    public List<String> getAllClientNames() {
-        return getAllClientNamesInternal(null);
-    }
-
-    public List<String> getAllClientNames(ClientSearchFilter filter) {
-        return getAllClientNamesInternal(filter);
     }
 
     private List<String> getAllClientPhoneNumbersByNamesInternal(String name, ClientSearchFilter filter) {

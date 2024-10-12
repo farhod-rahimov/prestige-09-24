@@ -24,7 +24,11 @@ public class ClientSearchFilter {
     }
 
     public boolean hasAnyFilter() {
-        return name != null || phoneNumber != null;
+        return (name != null && name.isEmpty() == false) || (phoneNumber != null && phoneNumber.isEmpty() == false);
+    }
+
+    public boolean isSet() {
+        return name != null && phoneNumber != null;
     }
 
     public void reset() {

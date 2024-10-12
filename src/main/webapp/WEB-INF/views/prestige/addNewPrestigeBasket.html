@@ -87,6 +87,7 @@
             <tr>
                 <th colspan="2">Клиент</th>
                 <th rowspan="2">Итого</th>
+                <th rowspan="2" style="background-color: white;"></th>
             </tr>
             <tr>
                 <th>Имя</th>
@@ -96,38 +97,95 @@
         <tbody>
             <tr>
                 <td>
-                    <div th:if="${newBasket.client != null and newBasket.client.name != null}">
+                    <div th:if="${newBasket.client.name != null}">
                         <a th:text="${newBasket.client.name}"></a>
                     </div>
-                    <div th:unless="${newBasket.client != null and newBasket.client.name != null}">
-                        <select th:field="*{client.name}" id="clientName" required>
-                            <option value="" th:placeholder="true">Выберите имя клиента</option>
-                            <option th:each="name : ${allClientNames}" th:value="${name}" th:text="${name}"></option>
-                        </select>
+                    <div th:unless="${newBasket.client.name != null}">
+                        <div th:if="${newBasket.newClientSelectType.name() == 'CREATE' and newBasket.clientSearchFilter.name == null}">
+                            <input type="text" th:field="*{client.name}">
+                        </div>
+                        <div th:if="${newBasket.newClientSelectType.name() == 'INPUT' and newBasket.clientSearchFilter.name == null}">
+                            <input type="text" th:field="*{clientSearchFilter.name}">
+                        </div>
+
+                        <div th:if="${(newBasket.newClientSelectType.name() == 'LIST' and newBasket.clientSearchFilter.name == null)
+                                   or (newBasket.newClientSelectType.name() == 'INPUT' and newBasket.clientSearchFilter.name != null)}">
+
+                            <div th:if="${#lists.isEmpty(allClientNames)}">
+                                <span><b>Нет доступных данных</b></span>
+                            </div>
+                            <div th:unless="${#lists.isEmpty(allClientNames)}">
+                                <select th:field="*{client.name}" id="clientName" required>
+                                    <option value="" th:placeholder="true">Выберите имя клиента</option>
+                                    <option th:each="name : ${allClientNames}" th:value="${name}" th:text="${name}"></option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </td>
-                <td th:if="${newBasket.client != null and newBasket.client.name != null}">
-                    <div th:if="${newBasket.client != null and newBasket.client.phoneNumber != null}">
-                        <a th:text="${newBasket.client.phoneNumber}"></a>
-                    </div>
-                    <div th:unless="${newBasket.client != null and newBasket.client.phoneNumber != null}">
-                        <select th:field="*{client.phoneNumber}" id="clientPhoneNumber" required>
-                            <option value="" th:placeholder="true">Выберите номер телефона</option>
-                            <option th:each="phoneNumber : ${allClientPhoneNumbers}" th:value="${phoneNumber}" th:text="${phoneNumber}"></option>
-                        </select>
-                    </div>
-                </td>
-                <td th:unless="${newBasket.client != null and newBasket.client.name != null}" style="text-align: center;">
-                    <a><b>...</b></a>
-                </td>
-                <td th:if="${newBasket.client != null and newBasket.client.phoneNumber != null}">
+
+                <div th:if="${newBasket.newClientSelectType.name() == 'INPUT' and newBasket.clientSearchFilter.phoneNumber == null}">
+                    <td>
+                        <input type="text" th:field="*{clientSearchFilter.phoneNumber}">
+                    </td>
+                </div>
+                <div th:unless="${newBasket.newClientSelectType.name() == 'INPUT' and newBasket.clientSearchFilter.phoneNumber == null}">
+                        <div th:if="${newBasket.client.name != null}">
+                            <td>
+                                <div th:if="${newBasket.client.phoneNumber != null}">
+                                    <a th:text="${newBasket.client.phoneNumber}"></a>
+                                </div>
+                                <div th:unless="${newBasket.client.phoneNumber != null}">
+                                    <select th:field="*{client.phoneNumber}" id="clientPhoneNumber" required>
+                                        <option value="" th:placeholder="true">Выберите номер телефона</option>
+                                        <option th:each="phoneNumber : ${allClientPhoneNumbers}" th:value="${phoneNumber}" th:text="${phoneNumber}"></option>
+                                    </select>
+                                </div>
+                            </td>
+                        </div>
+                        <div th:unless="${newBasket.client.name != null}">
+                            <td style="text-align: center;">
+                                <a><b>...</b></a>
+                            </td>
+                        </div>
+                </div>
+
+                <td th:if="${newBasket.client.phoneNumber != null}">
                     <div style="display: flex; align-items: center;">
                         <input type="number" step="0.01" th:name="desiredTotalSum" th:value="*{totalSum}">
                         <span style="margin-left: 5px;">смн</span>
                     </div>
                 </td>
-                <td th:unless="${newBasket.client != null and newBasket.client.phoneNumber != null}" style="text-align: center;">
+                <td th:unless="${newBasket.client.phoneNumber != null}" style="text-align: center;">
                     <a><b>...</b></a>
+                </td>
+
+                <td style="text-align: left;">
+                    <div style="width: 60px;" th:if="${newBasket.clientSearchFilter.isSet() == false && newBasket.client.name == null}">
+                        <!-- Кнопка метода выбора клиента в корзине -->
+
+                        <div th:if="${newBasket.newClientSelectType.name() == T(com.prestige.models.ESelectType).LIST.name()}">
+                            <a  title="Выбрать клиента через поиск по фильтру"
+                                th:href="@{/prestige/productListManagement/changeClientSelectType(selectType=${T(com.prestige.models.ESelectType).INPUT.name()})}">
+
+                                <img th:src="@{/images/loupe.png}" style="width: 25px; height: 25px; float: left;">
+                            </a>
+                        </div>
+                        <div th:if="${newBasket.newClientSelectType.name() == T(com.prestige.models.ESelectType).INPUT.name()}">
+                            <a  title="Выбрать клиента через выбор по списку"
+                                th:href="@{/prestige/productListManagement/changeClientSelectType(selectType=${T(com.prestige.models.ESelectType).LIST.name()})}">
+
+                                <img th:src="@{/images/list.png}" style="width: 25px; height: 25px; float: left;">
+                            </a>
+                        </div>
+                        <div th:if="${newBasket.newClientSelectType.name() != T(com.prestige.models.ESelectType).CREATE.name()}">
+                            <a  title="Добавить нового клиента"
+                                th:href="@{/prestige/productListManagement/changeClientSelectType(selectType=${T(com.prestige.models.ESelectType).CREATE.name()})}">
+
+                                <img th:src="@{/images/add-user.png}" style="width: 25px; height: 25px; float: right;">
+                            </a>
+                        </div>
+                    </div>
                 </td>
             </tr>
         </tbody>
@@ -160,7 +218,7 @@
             <tr th:if="${newBasket.shouldCreateNewPrestigeSaleUnit == false}">
 
                 <!-- Выбор имени продукта -->
-                <div th:if="${newBasket.client != null and newBasket.client.id != null}">
+                <div th:if="${newBasket.client.id != null}">
                     <div th:if="${newBasket.newItemSelectType.name() == 'INPUT' and newBasket.productSearchFilter.productName == null}">
                         <td>
                             <input type="text" th:field="*{productSearchFilter.productName}">
@@ -187,7 +245,7 @@
                         </td>
                     </div>
                 </div>
-                <div th:unless="${newBasket.client != null and newBasket.client.id != null}">
+                <div th:unless="${newBasket.client.id != null}">
                     <td style="text-align: center;">
                         <a><b>...</b></a>
                     </td>
@@ -352,29 +410,29 @@
                     <span><b>...</b></span>
                 </td>
 
-                <td th:if="${newBasket.client != null and newBasket.client.id != null}" style="text-align: left;">
+                <td th:if="${newBasket.client.id != null}" style="text-align: left;">
 
-                    <div style="width: 50px;">
+                    <div style="width: 60px;">
                         <!-- Кнопка удаления -->
                         <a title="Удалить строку" th:href="@{/prestige/productListManagement/deletePrestigeSaleUnit(removeIndex=${newBasket.retailSaleUnitList.size() - 1})}">
-                            <img th:src="@{/images/delete.png}" style="width: 20px; height: 20px; float: left;">
+                            <img th:src="@{/images/delete.png}" style="width: 25px; height: 25px; float: left;">
                         </a>
 
-                        <div th:if="${newPrestigeSaleUnit.retailProduct.product.productName.id == null}">
+                        <div th:if="${newBasket.productSearchFilter.isSet() == false && newPrestigeSaleUnit.retailProduct.product.productName.id == null}">
                             <!-- Кнопка метода выбора товаров в корзине -->
                             <a  title="Добавить товар через поиск по фильтру"
                                 th:if="${newBasket.retailSaleUnitList[__*{retailSaleUnitList.size() - 1}__].retailProduct.product.productName.id == null
-                                    and newBasket.newItemSelectType.name() == T(com.prestige.models.BasketSelectType).LIST.name()}"
-                                th:href="@{/prestige/productListManagement/changeBasketNewItemSelectType(selectType=${T(com.prestige.models.BasketSelectType).INPUT.name()})}">
+                                    and newBasket.newItemSelectType.name() == T(com.prestige.models.ESelectType).LIST.name()}"
+                                th:href="@{/prestige/productListManagement/changeBasketNewItemSelectType(selectType=${T(com.prestige.models.ESelectType).INPUT.name()})}">
 
-                                <img th:src="@{/images/loupe.png}" style="width: 20px; height: 20px; float: right;">
+                                <img th:src="@{/images/loupe.png}" style="width: 25px; height: 25px; float: right;">
                             </a>
                             <a  title="Добавить товар через выбор по списку"
                                 th:unless="${newBasket.retailSaleUnitList[__*{retailSaleUnitList.size() - 1}__].retailProduct.product.productName.id == null
-                                        and newBasket.newItemSelectType.name() == T(com.prestige.models.BasketSelectType).LIST.name()}"
-                                th:href="@{/prestige/productListManagement/changeBasketNewItemSelectType(selectType=${T(com.prestige.models.BasketSelectType).LIST.name()})}">
+                                        and newBasket.newItemSelectType.name() == T(com.prestige.models.ESelectType).LIST.name()}"
+                                th:href="@{/prestige/productListManagement/changeBasketNewItemSelectType(selectType=${T(com.prestige.models.ESelectType).LIST.name()})}">
 
-                                <img th:src="@{/images/list.png}" style="width: 20px; height: 20px; float: right;">
+                                <img th:src="@{/images/list.png}" style="width: 25px; height: 25px; float: right;">
                             </a>
                         </div>
                     </div>
@@ -407,7 +465,7 @@
                 <td th:if="${saleUnit.isSaved == true}" style="text-align: left;">
                     <a th:href="@{/prestige/productListManagement/deletePrestigeSaleUnit(removeIndex=${stat.index})}">
 
-                        <img th:src="@{/images/delete.png}" alt="Удалить" style="width: 20px; height: 20px;">
+                        <img th:src="@{/images/delete.png}" alt="Удалить" style="width: 25px; height: 25px;">
                     </a>
                 </td>
             </tr>
@@ -425,7 +483,8 @@
     <div th:if="${newPrestigeSaleUnit.getTotalSumSmn() == null and newBasket.shouldCreateNewPrestigeSaleUnit == false}">
         <button type="submit" name="action" value="next" style="margin-bottom: 10px;">Далее</button>
     </div>
-    <div th:if="${newBasket.client != null and newBasket.client.name != null and newBasket.shouldCreateNewPrestigeSaleUnit == false}">
+    <div th:if="${(newBasket.client.name != null and newBasket.shouldCreateNewPrestigeSaleUnit == false) or
+                  (newBasket.client.name == null && #lists.isEmpty(allClientNames))}">
         <button type="submit" name="action" value="reset" style="margin-bottom: 10px;">Сбросить</button>
     </div>
 </form>
