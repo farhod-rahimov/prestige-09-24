@@ -79,7 +79,8 @@ public class ProductListManagementDAO {
             sql += buildWhereClauseForClientSearchFilter(filter, bindings);
         }
 
-        sql += "ORDER BY (pc.name)";
+        sql +=  "GROUP BY (pc.name)" +
+                "ORDER BY (pc.name)";
 
         return jdbcTemplate.queryForList(sql, bindings.toArray(), String.class);
     }
@@ -239,7 +240,7 @@ public class ProductListManagementDAO {
         return whereSql + "1 = 1 ";
     }
 
-    public List<ProductName> showAllPrestigeProductNames(RetailProductSearchFilter filter) {
+    public List<ProductName> getAllPrestigeProductNames(RetailProductSearchFilter filter) {
         List<Object> bindings = new ArrayList<>();
 
         String sql =    "SELECT cpn.id, cpn.product_name " +
@@ -309,7 +310,8 @@ public class ProductListManagementDAO {
                 "JOIN common_product_names ON common_products.product_name_id = common_product_names.id " +
                 "JOIN common_brand_names ON common_products.brand_name_id = common_brand_names.id " +
 
-                "order by (common_product_names.product_name, common_products.car_model)",
+                "ORDER BY   (common_product_names.product_name, common_products.car_model, " +
+                            "common_products.article_number, common_brand_names.brand_name)",
                 new ShowAllProductsMapper());
     }
 
@@ -341,7 +343,7 @@ public class ProductListManagementDAO {
         return false;
     }
 
-    private List<String> getCarModelsByProductNameIdInternal(int productNameId, RetailProductSearchFilter filter) {
+    public List<String> getPrestigeCarModelsByProductNameId(int productNameId, RetailProductSearchFilter filter) {
         List<Object> bindings = new ArrayList<>();
         RetailProductSearchFilter tmpFilter = new RetailProductSearchFilter(filter);
 
@@ -362,7 +364,7 @@ public class ProductListManagementDAO {
             sql +=      "WHERE ";
         }
 
-        sql +=          "product_name_id = ? ";
+        sql +=          "cp.product_name_id = ? ";
         bindings.add(productNameId);
 
         sql +=          "GROUP BY (cp.car_model) " +
@@ -372,14 +374,17 @@ public class ProductListManagementDAO {
     }
 
     public List<String> getCarModelsByProductNameId(int productNameId) {
-        return getCarModelsByProductNameIdInternal(productNameId, null);
+        String sql =    "SELECT cp.car_model " +
+                        "FROM common_products cp " +
+                        "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
+                        "WHERE cp.product_name_id = ? " +
+                        "GROUP BY (cp.car_model) " +
+                        "ORDER BY (cp.car_model)";
+
+        return jdbcTemplate.queryForList(sql, new Object[]{productNameId}, String.class);
     }
 
-    public List<String> getCarModelsByProductNameId(int productNameId, RetailProductSearchFilter filter) {
-        return getCarModelsByProductNameIdInternal(productNameId, filter);
-    }
-
-    private List<String> getArticleNumbersByProductNameIdAndCarModelInternal(int productNameId, String carModel, RetailProductSearchFilter filter) {
+    public List<String> getPrestigeArticleNumbersByProductNameIdAndCarModel(int productNameId, String carModel, RetailProductSearchFilter filter) {
         List<Object> bindings = new ArrayList<>();
         RetailProductSearchFilter tmpFilter = new RetailProductSearchFilter(filter);
 
@@ -413,14 +418,18 @@ public class ProductListManagementDAO {
     }
 
     public List<String> getArticleNumbersByProductNameIdAndCarModel(int productNameId, String carModel) {
-        return getArticleNumbersByProductNameIdAndCarModelInternal(productNameId, carModel, null);
+        String sql =    "SELECT cp.article_number " +
+                        "FROM common_products cp " +
+                        "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
+                        "WHERE cp.product_name_id = ? " +
+                        "AND cp.car_model = ? " +
+                        "GROUP BY (article_number) " +
+                        "ORDER BY (article_number)";
+
+        return jdbcTemplate.queryForList(sql, new Object[]{productNameId, carModel}, String.class);
     }
 
-    public List<String> getArticleNumbersByProductNameIdAndCarModel(int productNameId, String carModel, RetailProductSearchFilter filter) {
-        return getArticleNumbersByProductNameIdAndCarModelInternal(productNameId, carModel, filter);
-    }
-
-    private List<Brand> getBrandsByProductNameIdAndCarModelAndArticleNumberInternal(int productNameId, String carModel,
+    public List<Brand> getPrestigeBrandsByProductNameIdAndCarModelAndArticleNumber(int productNameId, String carModel,
                                                                                    String articleNumber, RetailProductSearchFilter filter) {
 
         List<Object> bindings = new ArrayList<>();
@@ -459,14 +468,17 @@ public class ProductListManagementDAO {
     }
 
     public List<Brand> getBrandsByProductNameIdAndCarModelAndArticleNumber(int productNameId, String carModel, String articleNumber) {
+        String sql =    "SELECT cbn.id, cbn.brand_name " +
+                        "FROM common_products cp " +
+                        "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
+                        "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+                        "WHERE cp.product_name_id = ? " +
+                        "AND cp.car_model = ? " +
+                        "AND cp.article_number = ? " +
+                        "GROUP BY (cbn.id, cbn.brand_name) " +
+                        "ORDER BY (cbn.brand_name)";
 
-        return getBrandsByProductNameIdAndCarModelAndArticleNumberInternal(productNameId, carModel, articleNumber, null);
-    }
-
-    public List<Brand> getBrandsByProductNameIdAndCarModelAndArticleNumber(int productNameId, String carModel,
-                                                                                   String articleNumber, RetailProductSearchFilter filter) {
-
-        return getBrandsByProductNameIdAndCarModelAndArticleNumberInternal(productNameId, carModel, articleNumber, filter);
+        return jdbcTemplate.query(sql, new Object[]{productNameId, carModel, articleNumber}, new BrandMapper());
     }
 
     public String getStoreNameById(int id) {
@@ -529,7 +541,8 @@ public class ProductListManagementDAO {
                         "GROUP BY(common_product_names.product_name, common_products.car_model, common_products.article_number, " +
                                  "common_brand_names.brand_name, common_products.notes) " +
 
-                        "ORDER BY(common_product_names.product_name, common_products.car_model)", new ShowAllPrestigeProductsMapper());
+                        "ORDER BY(common_product_names.product_name, common_products.car_model, " +
+                                 "common_products.article_number, common_brand_names.brand_name)", new ShowAllPrestigeProductsMapper());
    }
 
    public void updateSettings(String key, String value) {

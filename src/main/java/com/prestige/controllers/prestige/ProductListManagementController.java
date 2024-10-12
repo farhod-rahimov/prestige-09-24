@@ -402,7 +402,7 @@ public class ProductListManagementController {
         }
         else if (client.getName() != null && client.getPhoneNumber() != null) {
             client.setId(productListManagementDAO.getClientIdByNameAndPhoneNumber(client.getName(), client.getPhoneNumber()));
-            model.addAttribute("allProductsNames", productListManagementDAO.showAllPrestigeProductNames(null));
+            model.addAttribute("allProductsNames", productListManagementDAO.getAllPrestigeProductNames(newPrestigeBasket.getProductSearchFilter()));
         }
     }
 
@@ -445,23 +445,23 @@ public class ProductListManagementController {
                 model.addAttribute("error", error);
 
                 newPrestigeSaleUnitList.remove(newPrestigeSaleUnitList.size() - 1);
-                return createNewPrestigeSaleUnit(newPrestigeSaleUnitList, model, session);
+                return createNewPrestigeSaleUnit(newBasket, newPrestigeSaleUnitList, model, session);
             }
         }
 
         productListManagementDAO.saveNewPrestigeSaleUnit(newBasket, newPrestigeSaleUnit);
         updateRetailSaleUnit(newPrestigeSaleUnit);
-        return createNewPrestigeSaleUnit(newPrestigeSaleUnitList, model, session);
+        return createNewPrestigeSaleUnit(newBasket, newPrestigeSaleUnitList, model, session);
     }
 
-    private RetailSaleUnit createNewPrestigeSaleUnit(List<RetailSaleUnit> newPrestigeSaleUnitList, Model model, HttpSession session) {
+    private RetailSaleUnit createNewPrestigeSaleUnit(Basket newBasket, List<RetailSaleUnit> newPrestigeSaleUnitList, Model model, HttpSession session) {
         RetailSaleUnit newPrestigeSaleUnit = new RetailSaleUnit();
         newPrestigeSaleUnitList.add(newPrestigeSaleUnit);
 
         model.addAttribute("newPrestigeSaleUnit", newPrestigeSaleUnit);
         session.setAttribute("newPrestigeSaleUnit", model.getAttribute("newPrestigeSaleUnit"));
 
-        model.addAttribute("allProductsNames", productListManagementDAO.showAllPrestigeProductNames(null));
+        model.addAttribute("allProductsNames", productListManagementDAO.getAllPrestigeProductNames(newBasket.getProductSearchFilter()));
 
         return newPrestigeSaleUnit;
     }
@@ -504,19 +504,19 @@ public class ProductListManagementController {
         RetailProduct prestigeProduct = newPrestigeSaleUnit.getRetailProduct();
 
         if (prestigeProduct.getProduct().getProductName().getId() == null) {
-            model.addAttribute("allProductsNames", productListManagementDAO.showAllPrestigeProductNames(productSearchFilter));
+            model.addAttribute("allProductsNames", productListManagementDAO.getAllPrestigeProductNames(productSearchFilter));
         }
         else if (prestigeProduct.getProduct().getCarModel() == null) {
-            model.addAttribute("allCarModels", productListManagementDAO.getCarModelsByProductNameId(
+            model.addAttribute("allCarModels", productListManagementDAO.getPrestigeCarModelsByProductNameId(
                     prestigeProduct.getProduct().getProductName().getId(), productSearchFilter));
         }
         else if (prestigeProduct.getProduct().getArticleNumber() == null) {
-            model.addAttribute("allArticleNumbers", productListManagementDAO.getArticleNumbersByProductNameIdAndCarModel(
+            model.addAttribute("allArticleNumbers", productListManagementDAO.getPrestigeArticleNumbersByProductNameIdAndCarModel(
                     prestigeProduct.getProduct().getProductName().getId(), prestigeProduct.getProduct().getCarModel(),
                     productSearchFilter));
         }
         else if (prestigeProduct.getProduct().getBrand() == null || (prestigeProduct.getProduct().getBrand().getId() == null)) {
-            model.addAttribute("allBrands", productListManagementDAO.getBrandsByProductNameIdAndCarModelAndArticleNumber(
+            model.addAttribute("allBrands", productListManagementDAO.getPrestigeBrandsByProductNameIdAndCarModelAndArticleNumber(
                     prestigeProduct.getProduct().getProductName().getId(), prestigeProduct.getProduct().getCarModel(),
                     prestigeProduct.getProduct().getArticleNumber(), productSearchFilter));
         }
@@ -566,11 +566,13 @@ public class ProductListManagementController {
         }
         else if (action.equals("reset")) {
             newPrestigeSaleUnitList.remove(newPrestigeSaleUnitList.size() - 1);
-            newPrestigeSaleUnit = createNewPrestigeSaleUnit(newPrestigeSaleUnitList, model, session);
+
+            newPrestigeSaleUnit = createNewPrestigeSaleUnit(newBasket, newPrestigeSaleUnitList, model, session);
             newBasket.resetProductSearchFilter();
         }
         else if (action.equals("save") || (action.equals("add") && newPrestigeSaleUnit.getTotalSumSmn() != null)) {
             newPrestigeSaleUnit = saveNewPrestigeSaleUnit(newBasket, model, session, action);
+            newBasket.resetProductSearchFilter();
         }
         else if (action.equals("update")) {
             updateNewPrestigeSaleUnitList(newBasket, newPrestigeSaleUnitList, desiredTotalSum);
