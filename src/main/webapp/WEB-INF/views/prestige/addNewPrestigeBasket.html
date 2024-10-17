@@ -101,15 +101,15 @@
                         <a th:text="${newBasket.client.name}"></a>
                     </div>
                     <div th:unless="${newBasket.client.name != null}">
-                        <div th:if="${newBasket.newClientSelectType.name() == 'CREATE' and newBasket.clientSearchFilter.name == null}">
+                        <div th:if="${newBasket.newClientSelectType.name() == 'CREATE'}">
                             <input type="text" th:field="*{client.name}">
                         </div>
                         <div th:if="${newBasket.newClientSelectType.name() == 'INPUT' and newBasket.clientSearchFilter.name == null}">
                             <input type="text" th:field="*{clientSearchFilter.name}">
                         </div>
 
-                        <div th:if="${(newBasket.newClientSelectType.name() == 'LIST' and newBasket.clientSearchFilter.name == null)
-                                   or (newBasket.newClientSelectType.name() == 'INPUT' and newBasket.clientSearchFilter.name != null)}">
+                        <div th:if="${newBasket.newClientSelectType.name() == 'LIST' or
+                                     (newBasket.newClientSelectType.name() == 'INPUT' and newBasket.clientSearchFilter.name != null)}">
 
                             <div th:if="${#lists.isEmpty(allClientNames)}">
                                 <span><b>Нет доступных данных</b></span>
@@ -124,30 +124,31 @@
                     </div>
                 </td>
 
-                <div th:if="${newBasket.newClientSelectType.name() == 'INPUT' and newBasket.clientSearchFilter.phoneNumber == null}">
-                    <td>
-                        <input type="text" th:field="*{clientSearchFilter.phoneNumber}">
-                    </td>
+                <div th:if="${newBasket.client.phoneNumber != null}">
+                    <td><a th:text="${newBasket.client.phoneNumber}"></a></td>
                 </div>
-                <div th:unless="${newBasket.newClientSelectType.name() == 'INPUT' and newBasket.clientSearchFilter.phoneNumber == null}">
-                        <div th:if="${newBasket.client.name != null}">
-                            <td>
-                                <div th:if="${newBasket.client.phoneNumber != null}">
-                                    <a th:text="${newBasket.client.phoneNumber}"></a>
-                                </div>
-                                <div th:unless="${newBasket.client.phoneNumber != null}">
-                                    <select th:field="*{client.phoneNumber}" id="clientPhoneNumber" required>
-                                        <option value="" th:placeholder="true">Выберите номер телефона</option>
-                                        <option th:each="phoneNumber : ${allClientPhoneNumbers}" th:value="${phoneNumber}" th:text="${phoneNumber}"></option>
-                                    </select>
-                                </div>
-                            </td>
-                        </div>
-                        <div th:unless="${newBasket.client.name != null}">
-                            <td style="text-align: center;">
-                                <a><b>...</b></a>
-                            </td>
-                        </div>
+                <div th:unless="${newBasket.client.phoneNumber != null}">
+                    <div th:if="${newBasket.newClientSelectType.name() == 'CREATE'}">
+                        <td><input type="text" th:field="*{client.phoneNumber}"></td>
+                    </div>
+                    <div th:if="${newBasket.newClientSelectType.name() == 'INPUT' and newBasket.clientSearchFilter.phoneNumber == null}">
+                        <td><input type="text" th:field="*{clientSearchFilter.phoneNumber}"></td>
+                    </div>
+                    <div th:if="${((newBasket.newClientSelectType.name() == 'INPUT' and newBasket.clientSearchFilter.phoneNumber != null) or
+                                   newBasket.newClientSelectType.name() == 'LIST') and #lists.isEmpty(allClientPhoneNumbers) == false}">
+
+                        <td>
+                            <select th:field="*{client.phoneNumber}" id="phoneNumber" required>
+                                <option value="" th:placeholder="true">Выберите номер телефона</option>
+                                <option th:each="phoneNumber : ${allClientPhoneNumbers}" th:value="${phoneNumber}" th:text="${phoneNumber}"></option>
+                            </select>
+                        </td>
+                    </div>
+                    <div th:if="${newBasket.client.name == null and ((newBasket.newClientSelectType.name() == 'INPUT' and newBasket.clientSearchFilter.phoneNumber != null)
+                                   or newBasket.newClientSelectType.name() == 'LIST')}">
+
+                        <td style="text-align: center;"><a><b>...</b></a></td>
+                    </div>
                 </div>
 
                 <td th:if="${newBasket.client.phoneNumber != null}">
@@ -183,6 +184,18 @@
                                 th:href="@{/prestige/productListManagement/changeClientSelectType(selectType=${T(com.prestige.models.ESelectType).CREATE.name()})}">
 
                                 <img th:src="@{/images/add-user.png}" style="width: 25px; height: 25px; float: right;">
+                            </a>
+                        </div>
+                        <div th:unless="${newBasket.newClientSelectType.name() != T(com.prestige.models.ESelectType).CREATE.name()}">
+                            <a  title="Выбрать клиента через поиск по фильтру"
+                                th:href="@{/prestige/productListManagement/changeClientSelectType(selectType=${T(com.prestige.models.ESelectType).INPUT.name()})}">
+
+                                <img th:src="@{/images/loupe.png}" style="width: 25px; height: 25px; float: left;">
+                            </a>
+                            <a  title="Выбрать клиента через выбор по списку"
+                                th:href="@{/prestige/productListManagement/changeClientSelectType(selectType=${T(com.prestige.models.ESelectType).LIST.name()})}">
+
+                                <img th:src="@{/images/list.png}" style="width: 25px; height: 25px; float: right;">
                             </a>
                         </div>
                     </div>

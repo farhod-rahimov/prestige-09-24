@@ -46,21 +46,25 @@ public class ProductListManagementController {
         return "prestige/addNewClient"; // return /prestige/addNewClient.html
     }
 
-    @PostMapping("/addNewClient")
-    public String addNewClientPost(@ModelAttribute("newClient") Client newClient,
-                                    BindingResult bindingResult, Model model) {
-
-        if (bindingResult.hasErrors()) {
-            // TODO: показать ошибку на странице
-            return addNewClientGet(model);
-        }
+    private boolean saveNewClient(Client newClient, Model model) {
 
         if (!productListManagementDAO.saveNewClient(newClient)) {
             String errorMessage = String.format("Клиент с именем - %s и номером телефона - %s уже существует",
                     newClient.getName(), newClient.getPhoneNumber());
             model.addAttribute("error", errorMessage);
-            return addNewClientGet(model);
+
+            return false;
         };
+        return true;
+    }
+
+    @PostMapping("/addNewClient")
+    public String addNewClientPost(@ModelAttribute("newClient") Client newClient,
+                                    BindingResult bindingResult, Model model) {
+
+        if (bindingResult.hasErrors() || !saveNewClient(newClient, model)) {
+            return addNewClientGet(model);
+        }
         return "redirect:/prestige/productListManagement/showAllClients";
     }
 
@@ -397,18 +401,30 @@ public class ProductListManagementController {
             newPrestigeBasket.setClient(new Client());
             newPrestigeBasket.getClientSearchFilter().reset();
 
-            client = newPrestigeBasket.getClient();
+            if (newPrestigeBasket.getNewClientSelectType() == ESelectType.LIST) {
+                model.addAttribute("allClientNames", productListManagementDAO.getAllClientNames(newPrestigeBasket.getClientSearchFilter()));
+            }
         }
+        else if (newPrestigeBasket.getNewClientSelectType() == ESelectType.CREATE) {
 
-        if (client.getName() == null) {
-            model.addAttribute("allClientNames", productListManagementDAO.getAllClientNames(newPrestigeBasket.getClientSearchFilter()));
+            if (client.getName() != null && client.getPhoneNumber() != null) {
+
+                if (!saveNewClient(client, model)) {
+                    newPrestigeBasket.setClient(new Client());
+                }
+            }
         }
-        else if (client.getName() != null && client.getPhoneNumber() == null) {
-            model.addAttribute("allClientPhoneNumbers", productListManagementDAO.getAllClientPhoneNumbersByNames(client.getName(), newPrestigeBasket.getClientSearchFilter()));
-        }
-        else if (client.getName() != null && client.getPhoneNumber() != null) {
-            client.setId(productListManagementDAO.getClientIdByNameAndPhoneNumber(client.getName(), client.getPhoneNumber()));
-            model.addAttribute("allProductsNames", productListManagementDAO.getAllPrestigeProductNames(newPrestigeBasket.getProductSearchFilter()));
+        else {
+            if (client.getName() == null) {
+                model.addAttribute("allClientNames", productListManagementDAO.getAllClientNames(newPrestigeBasket.getClientSearchFilter()));
+            }
+            if (client.getName() != null && client.getPhoneNumber() == null) {
+                model.addAttribute("allClientPhoneNumbers", productListManagementDAO.getAllClientPhoneNumbersByNames(client.getName(), newPrestigeBasket.getClientSearchFilter()));
+            }
+            else if (client.getName() != null && client.getPhoneNumber() != null) {
+                client.setId(productListManagementDAO.getClientIdByNameAndPhoneNumber(client.getName(), client.getPhoneNumber()));
+                model.addAttribute("allProductsNames", productListManagementDAO.getAllPrestigeProductNames(newPrestigeBasket.getProductSearchFilter()));
+            }
         }
     }
 
@@ -580,22 +596,26 @@ public class ProductListManagementController {
         if (!newBasket.isClientSelectionDone()) {
             completeBasket(newBasket, action, model);
         }
-        else if (action.equals("reset")) {
-            newPrestigeSaleUnitList.remove(newPrestigeSaleUnitList.size() - 1);
 
-            newPrestigeSaleUnit = createNewPrestigeSaleUnit(newBasket, newPrestigeSaleUnitList, model, session);
-            newBasket.resetProductSearchFilter();
-        }
-        else if (action.equals("save") || (action.equals("add") && newPrestigeSaleUnit.getTotalSumSmn() != null)) {
-            newPrestigeSaleUnit = saveNewPrestigeSaleUnit(newBasket, model, session, action);
-            newBasket.resetProductSearchFilter();
-        }
-        else if (action.equals("update")) {
-            updateNewPrestigeSaleUnitList(newBasket, newPrestigeSaleUnitList, desiredTotalSum);
-            newBasket.shouldCreateNewPrestigeSaleUnit = true;
-        }
-        else {
-            findNextStep(newPrestigeSaleUnit, newBasket.getProductSearchFilter(), model);
+        if (newBasket.isClientSelectionDone()) {
+
+            if (action.equals("reset")) {
+                newPrestigeSaleUnitList.remove(newPrestigeSaleUnitList.size() - 1);
+
+                newPrestigeSaleUnit = createNewPrestigeSaleUnit(newBasket, newPrestigeSaleUnitList, model, session);
+                newBasket.resetProductSearchFilter();
+            }
+            else if (action.equals("save") || (action.equals("add") && newPrestigeSaleUnit.getTotalSumSmn() != null)) {
+                newPrestigeSaleUnit = saveNewPrestigeSaleUnit(newBasket, model, session, action);
+                newBasket.resetProductSearchFilter();
+            }
+            else if (action.equals("update")) {
+                updateNewPrestigeSaleUnitList(newBasket, newPrestigeSaleUnitList, desiredTotalSum);
+                newBasket.shouldCreateNewPrestigeSaleUnit = true;
+            }
+            else {
+                findNextStep(newPrestigeSaleUnit, newBasket.getProductSearchFilter(), model);
+            }
         }
 
         model.addAttribute("magicValue", settings.getValueByKey("magicValue"));

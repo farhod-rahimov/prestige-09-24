@@ -129,9 +129,20 @@ public class ProductListManagementDAO {
         newClient.setPhoneNumber(newClient.getPhoneNumber().replaceAll("[- ]", "")); // удалить все "-" и " "
 
         if (!checkIfClientExists(newClient)) {
-            jdbcTemplate.update("INSERT INTO prestige_clients (name, phone_number) VALUES(?, ?)",
-                    newClient.getName(), newClient.getPhoneNumber());
+            String sql = "INSERT INTO prestige_clients (name, phone_number) " +
+                         "VALUES (?, ?) RETURNING id";
 
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+
+            jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
+                ps.setString(1, newClient.getName());
+                ps.setString(2, newClient.getPhoneNumber());
+
+                return ps;
+            }, keyHolder);
+
+            newClient.setId(keyHolder.getKey().intValue());
             return true;
         }
         return false;
