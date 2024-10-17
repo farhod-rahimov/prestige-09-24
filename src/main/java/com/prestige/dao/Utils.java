@@ -17,8 +17,15 @@ public class Utils {
         return string.toUpperCase();
     }
 
-    private String formatArticleNumber(String articleNumber) {
-        articleNumber = articleNumber.replaceAll("[^a-zA-Z0-9]", ""); // удалить все символы кроме БУКВ и ЦИФР
+    public String formatArticleNumber(String articleNumber, boolean shouldReplaceAsterisk) {
+
+        if (shouldReplaceAsterisk) {
+            articleNumber = articleNumber.replaceAll("[^a-zA-Z0-9]", ""); // удалить все символы кроме БУКВ и ЦИФР
+        }
+        else {
+            articleNumber = articleNumber.replaceAll("[^a-zA-Z0-9*]", ""); // удалить все символы кроме БУКВ, ЦИФР и *
+        }
+
         articleNumber = toUpperCase(articleNumber);
 
         if (articleNumber.length() == 10) {
@@ -29,6 +36,6 @@ public class Utils {
 
     public void formatProductAttributes(Product product) {
         product.setCarModel(toUpperCase(product.getCarModel()));
-        product.setArticleNumber(formatArticleNumber(product.getArticleNumber()));
+        product.setArticleNumber(formatArticleNumber(product.getArticleNumber(), true));
     }
 }

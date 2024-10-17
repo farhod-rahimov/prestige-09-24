@@ -52,18 +52,26 @@ public class ProductListManagementDAO {
         return jdbcTemplate.queryForObject(sql, new Object[]{name, phoneNumber}, Integer.class);
     }
 
+    private String getFormattedRegEx(String regEx) {
+
+        if (!regEx.isEmpty() && regEx.charAt(0) == '*') {
+            regEx = "\\\\" + regEx;
+        }
+        return regEx;
+    }
+
     private String buildWhereClauseForClientSearchFilter(ClientSearchFilter filter, List<Object> bindings) {
 
         String whereSql = "WHERE ";
 
         if (filter.getName() != null) {
             whereSql += "pc.name ~* ? AND ";
-            bindings.add(filter.getName());
+            bindings.add(getFormattedRegEx(filter.getName()));
         }
 
         if (filter.getPhoneNumber() != null) {
             whereSql += "pc.phone_number ~* ? AND ";
-            bindings.add(filter.getPhoneNumber());
+            bindings.add(getFormattedRegEx(filter.getPhoneNumber()));
         }
 
         return whereSql + "1 = 1 ";
@@ -222,22 +230,22 @@ public class ProductListManagementDAO {
 
         if (filter.getProductName() != null) {
             whereSql += "cpn.product_name ~* ? AND ";
-            bindings.add(filter.getProductName());
+            bindings.add(getFormattedRegEx(filter.getProductName()));
         }
 
         if (filter.getCarModel() != null) {
             whereSql += "cp.car_model ~* ? AND ";
-            bindings.add(filter.getCarModel());
+            bindings.add(getFormattedRegEx(filter.getCarModel()));
         }
 
         if (filter.getArticleNumber() != null) {
             whereSql += "cp.article_number ~* ? AND ";
-            bindings.add(filter.getArticleNumber());
+            bindings.add(getFormattedRegEx(utils.formatArticleNumber(filter.getArticleNumber(), false)));
         }
 
         if (filter.getBrandName() != null) {
             whereSql += "cbn.brand_name ~* ? AND ";
-            bindings.add(filter.getBrandName());
+            bindings.add(getFormattedRegEx(filter.getBrandName()));
         }
 
         return whereSql + "1 = 1 ";
