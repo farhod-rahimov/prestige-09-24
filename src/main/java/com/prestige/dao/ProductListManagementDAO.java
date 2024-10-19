@@ -17,6 +17,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Component
 public class ProductListManagementDAO {
@@ -598,9 +599,9 @@ public class ProductListManagementDAO {
         return jdbcTemplate.queryForObject(sql, new Object[]{productId, productId}, Integer.class);
     }
 
-    private void saveNewPrestigeBasket(Basket newBasket) {
-        String sql = "INSERT INTO prestige_baskets (created_date_time, last_changed_date_time, client_id) " +
-                     "VALUES (?, ?, ?) RETURNING id";
+    public void saveNewPrestigeBasket(Basket newBasket) {
+        String sql = "INSERT INTO prestige_baskets (created_date_time, last_changed_date_time, client_id, total_sum) " +
+                     "VALUES (?, ?, ?, ?) RETURNING id";
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -609,18 +610,24 @@ public class ProductListManagementDAO {
             ps.setTimestamp(1, newBasket.getCreatedDateTime());
             ps.setTimestamp(2, newBasket.getLastChangedDateTime());
             ps.setInt(3, newBasket.getClient().getId());
+            ps.setBigDecimal(4, newBasket.getTotalSum());
             return ps;
         }, keyHolder);
 
         newBasket.setId(keyHolder.getKey().intValue());
     }
 
+    public void updatePrestigeBasket(Basket basket) {
+        String sql = "UPDATE prestige_baskets SET client_id = ?, created_date_time = ?, last_changed_date_time = ?, total_sum = ? " +
+                     "WHERE id = ?";
+
+        Object[] bindings = new Object[]{basket.getClient().getId(), basket.getCreatedDateTime(), basket.getLastChangedDateTime(),
+                                         basket.getTotalSum(), basket.getId()};
+
+        jdbcTemplate.update(sql, bindings);
+    }
+
     public void saveNewPrestigeSaleUnit(Basket newBasket, RetailSaleUnit newPrestigeSaleUnit) {
-
-        if (newBasket.getId() == null) {
-            saveNewPrestigeBasket(newBasket);
-        }
-
         String sql = "INSERT INTO prestige_all_sales (product_id, quantity, sold_price_smn, basket_id) " +
                      "VALUES (?, ?, ?, ?)";
 

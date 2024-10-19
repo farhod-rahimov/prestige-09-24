@@ -423,6 +423,7 @@ public class ProductListManagementController {
             }
             else if (client.getName() != null && client.getPhoneNumber() != null) {
                 client.setId(productListManagementDAO.getClientIdByNameAndPhoneNumber(client.getName(), client.getPhoneNumber()));
+                productListManagementDAO.saveNewPrestigeBasket(newPrestigeBasket);
                 model.addAttribute("allProductsNames", productListManagementDAO.getAllPrestigeProductNames(newPrestigeBasket.getProductSearchFilter()));
             }
         }
@@ -473,6 +474,7 @@ public class ProductListManagementController {
 
         productListManagementDAO.saveNewPrestigeSaleUnit(newBasket, newPrestigeSaleUnit);
         updateRetailSaleUnit(newPrestigeSaleUnit);
+        updateBasket(newBasket, true);
         return createNewPrestigeSaleUnit(newBasket, newPrestigeSaleUnitList, model, session);
     }
 
@@ -497,11 +499,20 @@ public class ProductListManagementController {
         }
     }
 
+    void updateBasket(Basket newBasket, boolean shouldCalculateTotalSum) {
+
+        // if basket is created
+        if (newBasket.getId() != null) {
+            newBasket.update(shouldCalculateTotalSum);
+            productListManagementDAO.updatePrestigeBasket(newBasket);
+        }
+    }
+
     void updateNewPrestigeSaleUnitList(Basket newBasket, List<RetailSaleUnit> newPrestigeSaleUnitList, BigDecimal desiredTotalSum) {
 
         Basket tmpBasket = new Basket();
         tmpBasket.setRetailSaleUnitList(newPrestigeSaleUnitList);
-        tmpBasket.update(); // calculate hash
+        tmpBasket.calculateTotalSumHash(); // calculate hash
 
         boolean shouldUpdateList = false;
 
@@ -519,6 +530,10 @@ public class ProductListManagementController {
             for (int i = 0; i < newPrestigeSaleUnitList.size() - 1; i++) {
                 updateRetailSaleUnit(newPrestigeSaleUnitList.get(i));
             }
+
+            newBasket.setTotalSum(tmpBasket.getTotalSum());
+            newBasket.setTotalSumHash(tmpBasket.getTotalSumHash());
+            updateBasket(newBasket, false);
         }
     }
 
@@ -605,7 +620,7 @@ public class ProductListManagementController {
                 newPrestigeSaleUnit = createNewPrestigeSaleUnit(newBasket, newPrestigeSaleUnitList, model, session);
                 newBasket.resetProductSearchFilter();
             }
-            else if (action.equals("save") || (action.equals("add") && newPrestigeSaleUnit.getTotalSumSmn() != null)) {
+            else if (action.equals("save")) {
                 newPrestigeSaleUnit = saveNewPrestigeSaleUnit(newBasket, model, session, action);
                 newBasket.resetProductSearchFilter();
             }
@@ -622,8 +637,10 @@ public class ProductListManagementController {
         model.addAttribute("exchangeRate", settings.getValueByKey("exchangeRate"));
         model.addAttribute("newPrestigeSaleUnit", newPrestigeSaleUnit);
 
-        newBasket.update();
-
+        // if action equals "update", "save", we don't need to update the basket because it is already done
+        if (!action.equals("update") && !action.equals("save")) {
+            updateBasket(newBasket, false);
+        }
         return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
     }
 
@@ -645,18 +662,18 @@ public class ProductListManagementController {
             newBasket.resetNewItemSelectType();
             newBasket.resetProductSearchFilter();
             newBasket.shouldCreateNewPrestigeSaleUnit = true;
+            updateBasket(newBasket, false);
         }
         else {
             productListManagementDAO.removePrestigeSaleUnitFromBasket(newPrestigeSaleUnitList.get(removeIndex), newBasket);
             newPrestigeSaleUnitList.remove(removeIndex);
             findNextStep(newPrestigeSaleUnit, newBasket.getProductSearchFilter(), model);
+            updateBasket(newBasket, true);
         }
 
         model.addAttribute("magicValue", settings.getValueByKey("magicValue"));
         model.addAttribute("exchangeRate", settings.getValueByKey("exchangeRate"));
         model.addAttribute("newPrestigeSaleUnit", newPrestigeSaleUnit);
-
-        newBasket.update();
 
         return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
     }

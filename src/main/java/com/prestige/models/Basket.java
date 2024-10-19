@@ -70,18 +70,25 @@ public class Basket {
         return getDateTimeFormatted(lastChangedDateTime);
     }
 
-    public void update() {
+    public void calculateTotalSumHash() {
         totalSum = new BigDecimal(0);
         totalSumHash = 0;
 
-        for (int i = 0; i < retailSaleUnitList.size() - 1; i++) {
-            totalSum = totalSum.add(retailSaleUnitList.get(i).getTotalSumSmn());
-            totalSumHash += Objects.hash(retailSaleUnitList.get(i).getRetailProduct().getProduct().getId(),
-                    retailSaleUnitList.get(i).getQuantity(), retailSaleUnitList.get(i).getSoldPriceSmn());
-        }
+        for (int i = 0; i < retailSaleUnitList.size(); i++) {
+            RetailSaleUnit unit = retailSaleUnitList.get(i);
 
-        if (retailSaleUnitList.get(retailSaleUnitList.size() - 1).getIsSaved() == true) {
-            totalSum = totalSum.add(retailSaleUnitList.get(retailSaleUnitList.size() - 1).getTotalSumSmn());
+            if (unit.getIsSaved()) {
+                totalSum = totalSum.add(unit.getTotalSumSmn());
+                totalSumHash += Objects.hash(unit.getRetailProduct().getProduct().getId(),
+                                             unit.getQuantity(), unit.getSoldPriceSmn());
+            }
+        }
+    }
+
+    public void update(boolean shouldCalculateTotalSum) {
+
+        if (shouldCalculateTotalSum) {
+            calculateTotalSumHash();
         }
         setLastChangedDateTime(new Timestamp(System.currentTimeMillis()));
     }

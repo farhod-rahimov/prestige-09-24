@@ -64,7 +64,8 @@ create table if not exists sklad_baskets (
 	id serial primary key,
 	created_date_time TIMESTAMP not null,
     last_changed_date_time TIMESTAMP not null,
-	client_id int references sklad_clients not null
+	client_id int references sklad_clients not null,
+	total_sum numeric(15, 4) not null
 );
 
 create table if not exists sklad_all_sales (
@@ -86,7 +87,8 @@ create table if not exists prestige_baskets (
 	id serial primary key,
 	created_date_time TIMESTAMP not null,
 	last_changed_date_time TIMESTAMP not null,
-	client_id int references prestige_clients not null
+	client_id int references prestige_clients not null,
+	total_sum numeric(15, 4) not null
 );
 
 create table if not exists prestige_all_sales(
