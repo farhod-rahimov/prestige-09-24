@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Корзины</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            table-layout: fixed;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center; /* Выравнивание текста в шапке по центру */
+        }
+        td:first-child, th:first-child {
+            border-left: none;
+        }
+        td:last-child, th:last-child {
+            border-right: none;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .error-message {
+            color: red;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Все корзины магазина</h2>
+
+<!-- Отображение сообщения об ошибке -->
+<div th:if="${error}" class="error-message" th:text="${error}"></div>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID корзины</th>
+        <th>Имя клиента</th>
+        <th>Номер телефона</th>
+        <th>Сумма</th>
+        <th>Дата создания</th>
+        <th>Дата последнего изменения</th>
+        <th>Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+        <tr th:each="basket : ${allPrestigeBaskets}" th:with="link=@{/prestige/productListManagement/baskets/{basketId}/(basketId=${basket.getId()})}">
+
+            <td><a th:href="${link}" th:text="${basket.getId()}"></a></td>
+            <td><a th:href="${link}" th:text="${basket.getClient().getName()}"></a></td>
+            <td><a th:href="${link}" th:text="${basket.getClient().getPhoneNumber()}"></a></td>
+            <td><a th:href="${link}" th:text="${basket.getTotalSum() + ' смн'}"></a></td>
+            <td><a th:href="${link}" th:text="${basket.getCreatedDateTime()}"></a></td>
+            <td><a th:href="${link}" th:text="${basket.getLastChangedDateTime()}"></a></td>
+            <td>
+                <form th:action="@{/prestige/productListManagement/baskets/{basketId}/(basketId=${basket.getId()})}" method="post">
+                    <input type="hidden" name="_method" value="delete">
+                    <button type="submit"><img th:src="@{/images/delete.png}" alt="Удалить" style="width: 25px; height: 25px;"></button>
+                </form>
+            </td>
+        </tr>
+    </tbody>
+</table>
+</body>
+</html>

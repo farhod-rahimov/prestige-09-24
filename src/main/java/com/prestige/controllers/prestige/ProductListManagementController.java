@@ -10,6 +10,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
@@ -678,10 +679,47 @@ public class ProductListManagementController {
         return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
     }
 
-    @GetMapping("/showAllPrestigeBaskets")
+    @GetMapping("/baskets")
     public String showAllPrestigeBaskets(Model model) {
-//        model.addAttribute("showProductNameSelectionSection", true);
-//        model.addAttribute("allProducts", productListManagementDAO.showAllProducts());
+        model.addAttribute("allPrestigeBaskets", productListManagementDAO.showAllPrestigeBaskets());
         return "prestige/showAllPrestigeBaskets"; // return /prestige/showAllPrestigeBaskets.html
+    }
+
+    @GetMapping("/baskets/{basketId}")
+    public String showPrestigeBasketById(@PathVariable("basketId") Integer basketId, Model model) {
+        Basket basket = productListManagementDAO.getPrestigeBasketById(basketId);
+        basket.setRetailSaleUnitList(productListManagementDAO.getAllPrestigeSaleUnitsByBasketId(basketId));
+
+        for (RetailSaleUnit saleUnit : basket.getRetailSaleUnitList()) {
+
+            RetailProduct retailProduct = saleUnit.getRetailProduct();
+            retailProduct.setPriceDollar(productListManagementDAO.getWACCPriceByProductId(retailProduct.getProduct().getId()));
+            retailProduct.setStockBalance(productListManagementDAO.getTotalStockBalanceByProductId(retailProduct.getProduct().getId()));
+        }
+
+        basket.setShouldCreateNewPrestigeSaleUnit(true);
+
+        RetailSaleUnit newPrestigeSaleUnit = new RetailSaleUnit();
+        basket.getRetailSaleUnitList().add(newPrestigeSaleUnit);
+
+        model.addAttribute("newBasket", basket);
+        model.addAttribute("newPrestigeSaleUnit", newPrestigeSaleUnit);
+
+        model.addAttribute("magicValue", settings.getValueByKey("magicValue"));
+        model.addAttribute("exchangeRate", settings.getValueByKey("exchangeRate"));
+
+        return "prestige/addNewPrestigeBasket"; // return /prestige/addNewPrestigeBasket.html
+    }
+
+    @DeleteMapping("/baskets/{basketId}")
+    public String deletePrestigeBasketById(@PathVariable("basketId") Integer basketId, RedirectAttributes redirectAttributes) {
+
+        if (productListManagementDAO.checkIfBasketExists(basketId)) {
+            productListManagementDAO.deletePrestigeBasketById(basketId);
+        }
+        else {
+            redirectAttributes.addFlashAttribute("error", String.format("Корзина с ID = %d не была удалена, т.к она не существует", basketId));
+        }
+        return "redirect:/prestige/productListManagement/baskets";
     }
 }

@@ -17,10 +17,4 @@ public class SalesController {
     public SalesController(PrestigeSalesDAO prestigeSalesDAO) {
         this.prestigeSalesDAO = prestigeSalesDAO;
     }
-
-    @GetMapping()
-    public String showAllBaskets(Model model) {
-        model.addAttribute("allBaskets", prestigeSalesDAO.showAllBaskets());
-        return "prestige/sales/showAllBaskets"; // return /prestige/sales/showAllBaskets.html
-    }
 }

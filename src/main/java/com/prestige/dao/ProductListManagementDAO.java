@@ -338,6 +338,12 @@ public class ProductListManagementDAO {
         return jdbcTemplate.queryForObject(sql, bindings, Boolean.class);
     }
 
+    public boolean checkIfBasketExists(Integer basketId) {
+        String sql = "SELECT EXISTS (SELECT 1 FROM prestige_baskets WHERE id = ?)";
+
+        return jdbcTemplate.queryForObject(sql, new Object[]{basketId}, Boolean.class);
+    }
+
     public boolean saveNewProduct(Product product) {
         utils.formatProductAttributes(product);
 
@@ -663,5 +669,47 @@ public class ProductListManagementDAO {
         String sql = "DELETE FROM prestige_all_sales WHERE product_id = ? AND basket_id = ?";
 
         jdbcTemplate.update(sql, new Object[]{removePrestigeSaleUnit.getRetailProduct().getProduct().getId(), newBasket.getId()});
+    }
+
+    public List<Basket> showAllPrestigeBaskets() {
+        String sql =    "SELECT pb.id, pc.id, pc.name, pc.phone_number, pb.created_date_time, " +
+                               "pb.last_changed_date_time, pb.total_sum " +
+                        "FROM prestige_baskets pb " +
+                        "JOIN prestige_clients pc ON pb.client_id = pc.id " +
+                        "ORDER BY (pb.id) DESC";
+
+        return jdbcTemplate.query(sql, new ShowAllPrestigeBasketsMapper());
+    }
+
+    public Basket getPrestigeBasketById(Integer id) {
+        String sql =    "SELECT pb.id, pc.id, pc.name, pc.phone_number, pb.created_date_time, " +
+                               "pb.last_changed_date_time, pb.total_sum " +
+                        "FROM prestige_baskets pb " +
+                        "JOIN prestige_clients pc ON pb.client_id = pc.id " +
+                        "WHERE pb.id = ?";
+
+
+        return jdbcTemplate.queryForObject(sql, new Object[]{id}, new ShowAllPrestigeBasketsMapper());
+    }
+
+    public List<RetailSaleUnit> getAllPrestigeSaleUnitsByBasketId(Integer basketId) {
+        String sql =    "SELECT cpn.id, cpn.product_name, " +
+                               "cp.id, cp.car_model, cp.article_number, cbn.id, cbn.brand_name, cp.notes, " +
+                               "pas.quantity, pas.sold_price_smn " +
+                        "FROM prestige_all_sales pas " +
+                        "JOIN common_products cp ON pas.product_id = cp.id " +
+                        "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
+                        "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+                        "WHERE pas.basket_id = ?";
+
+        return jdbcTemplate.query(sql, new Object[]{basketId}, new GetAllPrestigeSaleUnitsMapper());
+    }
+
+    public void deletePrestigeBasketById(Integer id) {
+        String sql_1 = "DELETE FROM prestige_all_sales  WHERE basket_id = ?";
+        String sql_2 = "DELETE FROM prestige_baskets WHERE id = ?";
+
+        jdbcTemplate.update(sql_1, new Object[]{id});
+        jdbcTemplate.update(sql_2, new Object[]{id});
     }
 }
