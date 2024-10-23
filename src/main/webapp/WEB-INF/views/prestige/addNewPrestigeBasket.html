@@ -76,7 +76,8 @@
 </head>
 <body>
 
-<h2>Добавление новой корзины</h2>
+<h2 th:if="${newBasket.getId() == null}">Добавление новой корзины</h2>
+<h2 th:unless="${newBasket.getId() == nul}" th:text="'Корзина ID = ' + ${newBasket.getId()}"></h2>
 
 <form th:method="POST" th:action="@{/prestige/productListManagement/addNewPrestigeBasket}" th:object="${newBasket}">
     <!-- Отображение сообщения об ошибке -->
