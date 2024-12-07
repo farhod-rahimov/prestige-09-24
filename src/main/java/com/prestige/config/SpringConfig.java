@@ -1,11 +1,14 @@
 package com.prestige.config;
 
+import com.prestige.converters.StringToTimestampConverter;
+import com.prestige.dao.Utils;
 import com.prestige.service.DatabaseInitializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -62,6 +65,14 @@ public class SpringConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/images/**")
                 .addResourceLocations("classpath:/static/images/");
+
+        registry.addResourceHandler("/js/**")
+                .addResourceLocations("classpath:/static/js/");
+    }
+
+    @Override
+    public void addFormatters(FormatterRegistry registry) {
+        registry.addConverter(new StringToTimestampConverter());
     }
 
     @Bean
@@ -87,4 +98,8 @@ public class SpringConfig implements WebMvcConfigurer {
         return new DatabaseInitializer();
     }
 
+    @Bean
+    public Utils utils() {
+        return new Utils();
+    }
 }

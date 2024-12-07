@@ -14,4 +14,14 @@ public class ProductName {
     private Integer id;
 
     private String productName;
+
+    @Override
+    public boolean equals(Object obj) {
+        ProductName other = (ProductName)obj;
+
+        if (other != null && this != other) {
+            return other.id.equals(id) && other.productName.equals(productName);
+        }
+        return false;
+    }
 }

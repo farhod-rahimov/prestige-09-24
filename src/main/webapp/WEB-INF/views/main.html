@@ -1,33 +1,62 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>CRM</title>
+    <title>Престиж</title>
     <style>
+        body {
+            margin: 0; /* Убираем стандартные отступы */
+            padding: 0; /* Убираем стандартные отступы */
+        }
+
+        .container {
+            display: flex; /* Располагаем блоки по горизонтали */
+            align-items: center; /* Вертикальное выравнивание по центру */
+            padding: 10px; /* Внутренний отступ, чтобы блоки не прилипали к краю */
+        }
+
         .block {
-            width: 200px;
-            height: 100px;
-            border: 1px solid black;
-            margin-right: 20px; /* добавлено, чтобы создать отступ между блоками */
-            display: inline-block; /* изменено с flex на inline-block */
-            vertical-align: center; /* выравнивание по вертикали */
-            text-align: center; /* выравнивание текста по горизонтали */
-            line-height: 60px; /* выравнивание текста по вертикали */
+            width: 250px; /* Ширина блоков */
+            height: 100px; /* Высота блоков */
+            border: 1px solid black; /* Граница блоков */
+            margin-right: 20px; /* Отступ между блоками */
+            display: flex; /* Используем flex для выравнивания содержимого */
+            align-items: center; /* Вертикальное выравнивание по центру */
+            justify-content: center; /* Горизонтальное выравнивание по центру */
+            text-align: center;
+            padding: 10px; /* Внутренний отступ */
+            box-sizing: border-box; /* Учитываем отступы и границы в ширине и высоте */
+            background-color: #4CAF50; /* Зеленая заливка */
+            color: white; /* Белый текст */
+            transition: background-color 0.3s ease; /* Плавное изменение фона */
+        }
+
+        .block a {
+            text-decoration: none; /* Убираем стандартное подчеркивание у ссылок */
+            color: white; /* Белый цвет текста */
+            font-weight: bold; /* Полужирный шрифт */
+            font-size: 1rem;
+        }
+
+        .block a:hover {
+            text-decoration: underline; /* Подчеркивание при наведении */
+        }
+
+        .block h2 {
+            white-space: normal; /* Разрешить перенос текста */
+            margin: 0; /* Удалить стандартные отступы h2 */
         }
     </style>
 </head>
-
 <body>
-
+<div class="container">
     <div class="block" id="sales">
-        <a href="/prestige"><h2>Престиж</h2></a>
+        <a href="/prestige"><h2>ПРЕСТИЖ</h2></a>
     </div>
 
-    <div class="block" id="acquire">
-        <h2>Склад</h2>
+    <div class="block" id="sklad">
+        <h2>СКЛАД</h2>
     </div>
-
+</div>
 </body>
-
 </html>
-

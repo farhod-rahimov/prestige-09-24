@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оприходовать новый товар</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50; /* Зеленый цвет для кнопки "Сохранить" */
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049; /* Более темный зеленый при наведении */
+        }
+        .error-message {
+            color: red;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Оприходование нового товара</h2>
+
+<form th:method="POST" th:action="@{/prestige/products}" th:object="${retailProduct}">
+    <!-- Отображение сообщения об ошибке -->
+    <div th:if="${error}" class="error-message" th:text="${error}"></div>
+
+
+    <label for="productNameId">Название товара:</label>
+    <div th:if="${step.value == 'PRODUCT_NAME_SELECTION'}">
+        <select type="text" th:field="*{product.productName.id}" id="productNameId" required>
+            <option th:each="productName : ${allProductNames}" th:value="${productName.id}" th:text="${productName.productName}">Выберите название товара</option>
+        </select>
+    </div>
+    <div th:unless="${step.value == 'PRODUCT_NAME_SELECTION'}">
+        <select required>
+            <option value="constant" selected th:text="*{product.productName.productName}"></option>
+        </select>
+
+        <label for="carModel">Модель машины:</label>
+        <div th:if="${step.value == 'CAR_MODEL_SELECTION'}">
+            <select type="text" th:field="*{product.carModel}" id="carModel" required>
+                <option th:each="carModel : ${availableCarModels}" th:value="${carModel}" th:text="${carModel}">Выберите модель машины</option>
+            </select>
+        </div>
+        <div th:unless="${step.value == 'CAR_MODEL_SELECTION'}">
+            <select required>
+                <option value="constant" selected th:text="*{product.carModel}"></option>
+            </select>
+
+            <label for="engineModel">Модель мотора:</label>
+            <div th:if="${step.value == 'ENGINE_MODEL_SELECTION'}">
+                <select type="text" th:field="*{product.engineModel}" id="engineModel" required>
+                    <option th:each="engineModel : ${availableEngineModels}" th:value="${engineModel}" th:text="${engineModel}">Выберите модель мотора</option>
+                </select>
+            </div>
+            <div th:unless="${step.value == 'ENGINE_MODEL_SELECTION'}">
+                <select required>
+                    <option value="constant" selected th:text="*{product.engineModel}"></option>
+                </select>
+
+                <label for="oemArticleNumber">Артикул, OEM:</label>
+                <div th:if="${step.value == 'OEM_ARTICLE_NUMBER_SELECTION'}">
+                    <select type="text" th:field="*{product.oemArticleNumber}" id="oemArticleNumber" required>
+                        <option th:each="oemArticleNumber : ${availableOemArticleNumbers}" th:value="${oemArticleNumber}" th:text="${oemArticleNumber}">Выберите артикул, OEM</option>
+                    </select>
+                </div>
+                <div th:unless="${step.value == 'OEM_ARTICLE_NUMBER_SELECTION'}">
+                    <select required>
+                        <option value="constant" selected th:text="*{product.oemArticleNumber}"></option>
+                    </select>
+
+                    <label for="crossArticleNumber">Артикул, КРОСС:</label>
+                    <div th:if="${step.value == 'CROSS_ARTICLE_NUMBER_SELECTION'}">
+                        <select type="text" th:field="*{product.crossArticleNumber}" id="crossArticleNumber" required>
+                            <option th:each="crossArticleNumber : ${availableCrossArticleNumbers}" th:value="${crossArticleNumber}" th:text="${crossArticleNumber}">Выберите артикул, КРОСС</option>
+                        </select>
+                    </div>
+                    <div th:unless="${step.value == 'CROSS_ARTICLE_NUMBER_SELECTION'}">
+                        <select required>
+                            <option value="constant" selected th:text="*{product.crossArticleNumber}"></option>
+                        </select>
+
+                        <label for="brand">БРЕНД:</label>
+                        <div th:if="${step.value == 'BRAND_SELECTION'}">
+                            <select type="text" th:field="*{product.brand.brandName}" id="brand" required>
+                                <option th:each="brand : ${availableBrands}" th:value="${brand}" th:text="${brand}">Выберите бренд</option>
+                            </select>
+                        </div>
+                        <div th:unless="${step.value == 'BRAND_SELECTION'}">
+                            <select required>
+                                <option value="constant" selected th:text="*{product.brand.brandName}"></option>
+                            </select>
+
+                            <label for="supplier">Поставщик:</label>
+                            <div th:if="${step.value == 'SUPPLIER_SELECTION'}">
+                                <select type="text" th:field="*{supplier.id}" id="supplier" required>
+                                    <option th:each="supplier : ${allSuppliers}" th:value="${supplier.id}" th:text="${supplier.storeName}">Выберите поставщика</option>
+                                </select>
+                            </div>
+                            <div th:unless="${step.value == 'SUPPLIER_SELECTION'}">
+                                <select required>
+                                    <option value="constant" selected th:text="*{supplier.storeName}"></option>
+                                </select>
+
+                                <label for="quantity">Кол-во:</label>
+                                <div th:if="${step.value == 'QUANTITY_AND_PRICE_INPUT'}">
+                                    <input type="number" step="any" id="quantity" th:field="*{stockBalance}" required>
+                                </div>
+                                <div th:unless="${step.value == 'QUANTITY_AND_PRICE_INPUT'}">
+                                    <input type="number" step="any" th:field="*{stockBalance}" readonly>
+                                </div>
+
+                                <label for="priceDollar">Цена, $:</label>
+                                <div th:if="${step.value == 'QUANTITY_AND_PRICE_INPUT'}">
+                                    <input type="number" step="any" id="priceDollar" th:field="*{priceDollar}" required>
+                                </div>
+                                <div th:unless="${step.value == 'QUANTITY_AND_PRICE_INPUT'}">
+                                    <input type="number" step="any" th:field="*{priceDollar}" readonly>
+
+                                    <label for="dateTime">Дата и время оприходования:</label>
+                                    <div th:if="${step.value == 'DATE_TIME_SELECTION'}">
+                                        <input type="datetime-local" id="dateTime" th:field="*{deliveryDateTime}">
+                                    </div>
+                                    <div th:unless="${step.value == 'DATE_TIME_SELECTION'}">
+                                        <input type="datetime-local" th:field="*{deliveryDateTime}" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div th:if="${step.value == 'DATE_TIME_SELECTION'}">
+        <button type="submit" name="method" value="post">Сохранить</button>
+    </div>
+    <div th:unless="${step.value == 'DATE_TIME_SELECTION'}">
+        <button type="submit" name="method" value="post">Далее</button>
+    </div>
+
+</form>
+
+</body>
+</html>

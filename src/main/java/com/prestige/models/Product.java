@@ -22,9 +22,26 @@ public class Product {
 
     private String carModel;
 
-    private String articleNumber;
+    private String engineModel;
+
+    private String oemArticleNumber;
+
+    private String crossArticleNumber;
 
     private Brand brand;
 
     private String notes;
+
+    @Override
+    public boolean equals(Object obj) {
+        Product other = (Product)obj;
+
+        if (other != null && this != other) {
+            return  other.id.equals(id) && other.productName.equals(productName) &&
+                    other.carModel.equals(carModel) && other.engineModel.equals(engineModel) &&
+                    other.oemArticleNumber.equals(oemArticleNumber) && other.crossArticleNumber.equals(crossArticleNumber) &&
+                    other.brand.equals(brand) && other.notes.equals(notes);
+        }
+        return false;
+    }
 }

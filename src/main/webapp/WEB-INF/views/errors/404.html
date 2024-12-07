@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Страница не найдена</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 50px;
+            color: #4CAF50;
+        }
+        p {
+            font-size: 20px;
+            margin: 20px 0;
+        }
+        a {
+            display: inline-block;
+            padding: 10px 20px;
+            color: white;
+            background-color: #4CAF50;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        a:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<h1>404 - Страница не найдена</h1>
+<p>Извините, но запрашиваемая страница не существует.</p>
+
+<div th:if="${previousPage != null}">
+    <p>Вы можете вернуться на <a th:href="${previousPage}">предыдущую страницу</a>
+        или на <a th:href="@{/}">главную страницу</a>.</p>
+</div>
+<div th:unless="${previousPage != null}">
+    <p>Вы можете вернуться на <a th:href="@{/}">главную страницу</a>.</p>
+</div>
+
+</body>
+</html>

@@ -19,4 +19,14 @@ public class Brand {
     private Integer id;
 
     private String brandName;
+
+    @Override
+    public boolean equals(Object obj) {
+        Brand other = (Brand)obj;
+
+        if (other != null && this != other) {
+            return other.id.equals(id) && other.brandName.equals(brandName);
+        }
+        return false;
+    }
 }

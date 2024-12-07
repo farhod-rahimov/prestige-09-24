@@ -11,13 +11,19 @@ import lombok.Setter;
 @NoArgsConstructor
 public class Client {
 
-    private Integer id;
+    protected Integer id;
 
-    private String name;
+    protected String name;
 
-    private String phoneNumber;
+    protected String phoneNumber;
 
-    public boolean isAllFieldsSet() {
-        return id != null && name != null && phoneNumber != null;
+    @Override
+    public boolean equals(Object obj) {
+        Client other = (Client)obj;
+
+        if (other != null && this != other) {
+            return other.id.equals(id) && other.name.equals(name) && other.phoneNumber.equals(phoneNumber);
+        }
+        return false;
     }
 }

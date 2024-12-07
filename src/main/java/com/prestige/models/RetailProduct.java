@@ -6,38 +6,41 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.sql.Timestamp;
-
 
 @Getter
 @Setter
 @AllArgsConstructor
-public class RetailProduct {
+@NoArgsConstructor
+public class RetailProduct extends RetailProductView {
 
     private Integer id;
 
-    private Timestamp dateTime;
+    private Timestamp deliveryDateTime;
 
-    private Product product;
+    private Supplier supplier;
 
-    private BigDecimal priceDollar;
+    public RetailProduct(Integer id, Timestamp deliveryDateTime, Supplier supplier,
+                         Product product, BigDecimal priceDollar, Integer stockBalance) {
 
-    private Integer stockBalance;
-
-    private Store store;
-
-    public RetailProduct() {
-        product = new Product();
-        product.setProductName(new ProductName());
+        this.id = id;
+        this.deliveryDateTime = deliveryDateTime;
+        this.supplier = supplier;
+        this.product = product;
+        this.priceDollar = priceDollar;
+        this.stockBalance = stockBalance;
     }
 
-    public BigDecimal getConvertedPriceToSmn(BigDecimal magicValue, BigDecimal exchangeRate) {
-        BigDecimal hundred = new BigDecimal("100");
+    @Override
+    public boolean equals(Object obj) {
+        RetailProduct other = (RetailProduct)obj;
 
-        // (100 + magicValue) / 100) * exchangeRate
-        BigDecimal convertedPriceToSmn = priceDollar.multiply(hundred.add(magicValue).divide(hundred)).multiply(exchangeRate);
-
-        return convertedPriceToSmn.setScale(0, RoundingMode.HALF_UP);
+        if (other != null && this != other) {
+            return  super.equals(other) &&
+                    other.id.equals(id) &&
+                    other.deliveryDateTime.equals(deliveryDateTime) &&
+                    other.supplier.equals(supplier);
+        }
+        return false;
     }
 }

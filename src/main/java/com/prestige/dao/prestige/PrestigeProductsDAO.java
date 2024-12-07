@@ -1,0 +1,222 @@
+package com.prestige.dao.prestige;
+
+import com.prestige.dao.mappers.RetailProductMapper;
+import com.prestige.dao.mappers.RetailProductViewMapper;
+import com.prestige.models.RetailProduct;
+import com.prestige.models.RetailProductView;
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Component;
+
+import java.sql.PreparedStatement;
+import java.util.List;
+
+@Component
+@Getter
+public class PrestigeProductsDAO {
+
+    private final JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    public PrestigeProductsDAO(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    public List<RetailProductView> findAllProductsView() {
+        String sql =    "SELECT " +
+
+                            "cp.id as cp_id, " +
+                            "cpn.id as cpn_id, " +
+                            "cpn.product_name, " +
+                            "cp.car_model, " +
+                            "cp.engine_model, " +
+                            "cp.oem_article_number, " +
+                            "cp.cross_article_number, " +
+                            "cbn.id, " +
+                            "cbn.brand_name, " +
+                            "cp.notes, " +
+                            "ROUND(SUM(pp.price_dollar * pp.stock_balance) / SUM(pp.stock_balance), 2), " +
+                            "SUM(pp.stock_balance) " +
+
+                        "FROM prestige_products pp " +
+
+                        "JOIN common_products cp ON pp.common_product_id = cp.id " +
+                        "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
+                        "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+
+                        "GROUP BY   (cp.id, cpn.id, cbn.id) " +
+
+                        "ORDER BY   (cbn.brand_name, cpn.product_name, cp.car_model, cp.engine_model, " +
+                                    "cp.oem_article_number, cp.cross_article_number) ";
+
+        return jdbcTemplate.query(sql, new RetailProductViewMapper());
+    }
+
+    public void saveNewPrestigeProduct(RetailProduct retailProduct) {
+        String sql =    "INSERT INTO prestige_products (" +
+
+                            "common_product_id, " +
+                            "price_dollar, " +
+                            "stock_balance, " +
+                            "supplier_id, " +
+                            "date_time" +
+                        ") VALUES (?, ?, ?, ?, ?) RETURNING id";
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
+            ps.setInt(1, retailProduct.getProduct().getId());
+            ps.setBigDecimal(2, retailProduct.getPriceDollar());
+            ps.setInt(3, retailProduct.getStockBalance());
+            ps.setInt(4, retailProduct.getSupplier().getId());
+            ps.setTimestamp(5, retailProduct.getDeliveryDateTime());
+
+            return ps;
+        }, keyHolder);
+
+        retailProduct.setId(keyHolder.getKey().intValue());
+    }
+
+    public void updatePrestigeProduct(RetailProduct retailProduct) {
+        String sql =    "UPDATE prestige_products SET " +
+
+                            "price_dollar = ?, " +
+                            "stock_balance = ? " +
+
+                        "WHERE id = ?";
+
+        Object[] bindings = new Object[]{
+                retailProduct.getPriceDollar(),
+                retailProduct.getStockBalance(),
+                retailProduct.getId()
+        };
+
+        jdbcTemplate.update(sql, bindings);
+    }
+
+    public void deletePrestigeProductById(Integer prestigeProductId) {
+        String sql = "DELETE from prestige_products WHERE id = ?";
+
+        jdbcTemplate.update(sql, prestigeProductId);
+    }
+
+    public List<RetailProduct> findPrestigeProductSupplyListByProductId(Integer productId) {
+        String sql =    "SELECT " +
+                            "pp.id as pp_id, " +
+                            "cp.id as cp_id, " +
+                            "cbn.id as cbn_id, " +
+                            "cbn.brand_name, " +
+                            "cpn.id as cpn_id, " +
+                            "cpn.product_name, " +
+                            "cp.car_model, " +
+                            "cp.engine_model, " +
+                            "cp.oem_article_number, " +
+                            "cp.cross_article_number, " +
+                            "cp.notes, " +
+                            "pp.price_dollar, " +
+                            "pp.stock_balance, " +
+                            "ps.id as psn_id, " +
+                            "ps.name, " +
+                            "ps.phone_number, " +
+                            "ps.store_name, " +
+                            "pp.date_time " +
+
+                        "FROM prestige_products pp " +
+
+                        "JOIN common_products cp ON pp.common_product_id = cp.id " +
+                        "JOIN common_brand_names cbn ON cp.brand_name_id  = cbn.id " +
+                        "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
+                        "JOIN prestige_suppliers ps ON pp.supplier_id = ps.id " +
+
+                        "WHERE cp.id = ? " +
+
+                        "ORDER BY(pp.date_time)";
+
+        return jdbcTemplate.query(sql, new Object[]{productId}, new RetailProductMapper());
+    }
+
+    public RetailProduct findPrestigeProductSupplyByProductIdAndSupplyId(Integer productId, Integer supplyId) {
+        String sql =    "SELECT " +
+                            "pp.id as pp_id, " +
+                            "cp.id as cp_id, " +
+                            "cbn.id as cbn_id, " +
+                            "cbn.brand_name, " +
+                            "cpn.id as cpn_id, " +
+                            "cpn.product_name, " +
+                            "cp.car_model, " +
+                            "cp.engine_model, " +
+                            "cp.oem_article_number, " +
+                            "cp.cross_article_number, " +
+                            "cp.notes, " +
+                            "pp.price_dollar, " +
+                            "pp.stock_balance, " +
+                            "ps.id as psn_id, " +
+                            "ps.name, " +
+                            "ps.phone_number, " +
+                            "ps.store_name, " +
+                            "pp.date_time " +
+
+                        "FROM prestige_products pp " +
+
+                        "JOIN common_products cp ON pp.common_product_id = cp.id " +
+                        "JOIN common_brand_names cbn ON cp.brand_name_id  = cbn.id " +
+                        "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
+                        "JOIN prestige_suppliers ps ON pp.supplier_id = ps.id " +
+
+                        "WHERE " +
+                            "cp.id = ? AND " +
+                            "pp.id = ?";
+
+
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{productId, supplyId}, new RetailProductMapper());
+        }
+        catch (DataAccessException e) {
+            return null;
+        }
+    }
+
+    public RetailProduct findPrestigeProductSupplyBySupplyId(Integer supplyId) {
+        String sql = "SELECT " +
+                        "pp.id as pp_id, " +
+                        "cp.id as cp_id, " +
+                        "cbn.id as cbn_id, " +
+                        "cbn.brand_name, " +
+                        "cpn.id as cpn_id, " +
+                        "cpn.product_name, " +
+                        "cp.car_model, " +
+                        "cp.engine_model, " +
+                        "cp.oem_article_number, " +
+                        "cp.cross_article_number, " +
+                        "cp.notes, " +
+                        "pp.price_dollar, " +
+                        "pp.stock_balance, " +
+                        "ps.id as psn_id, " +
+                        "ps.name, " +
+                        "ps.phone_number, " +
+                        "ps.store_name, " +
+                        "pp.date_time " +
+
+                    "FROM prestige_products pp " +
+
+                    "JOIN common_products cp ON pp.common_product_id = cp.id " +
+                    "JOIN common_brand_names cbn ON cp.brand_name_id  = cbn.id " +
+                    "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
+                    "JOIN prestige_suppliers ps ON pp.supplier_id = ps.id " +
+
+                    "WHERE " +
+                        "pp.id = ?";
+
+
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{supplyId}, new RetailProductMapper());
+        } catch (DataAccessException e) {
+            return null;
+        }
+    }
+}

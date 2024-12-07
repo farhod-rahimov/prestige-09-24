@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Товары</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .add-product-link {
+            display: inline-block;
+            padding: 10px 20px;
+            color: white;
+            background-color: #4CAF50;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .add-product-link:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            table-layout: fixed;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+        }
+        th:first-child, td:first-child {
+            width: 80px; /* Устанавливаем ширину для первого столбца */
+            text-align: center;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+        }
+        td:first-child, th:first-child {
+            border-left: none;
+        }
+        td:last-child, th:last-child {
+            border-right: none;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .error-message {
+            color: red;
+            margin-bottom: 20px;
+        }
+        a {
+            text-decoration: none;
+            color: #000000; /* Цвет текста ссылок */
+            font-weight: normal;
+            transition: color 0.3s ease, text-decoration 0.3s ease;
+        }
+        a:hover {
+            text-decoration: underline; /* Подчеркивание при наведении */
+        }
+        a:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(72, 168, 72, 0.6); /* Эффект при фокусе на ссылке */
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2>Товары</h2>
+    <a th:href="@{'/' + ${URIBeginning} + '/product-management/products/add'}" class="add-product-link">Добавить новый товар</a>
+</div>
+
+<div th:if="${error}" class="error-message" th:text="${error}"></div>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Название товара</th>
+        <th>Модель машины</th>
+        <th>Модель мотора</th>
+        <th>Артикул, OEM</th>
+        <th>Артикул, КРОСС</th>
+        <th>Бренд</th>
+        <th>Комментарий</th>
+    </tr>
+    </thead>
+    <tbody>
+
+    <tr th:each="product : ${allProducts}"
+        th:with="link='/' + ${URIBeginning} + '/product-management/products/' + ${product.getId()}">
+
+        <td><a th:href="${link}" th:text="${product.getId()}"></a></td>
+        <td><a th:href="${link}" th:text="${product.getProductName().getProductName()}"></a></td>
+        <td><a th:href="${link}" th:text="${product.getCarModel()}"></a></td>
+        <td><a th:href="${link}" th:text="${product.getEngineModel()}"></a></td>
+        <td><a th:href="${link}" th:text="${product.getOemArticleNumber()}"></a></td>
+        <td><a th:href="${link}" th:text="${product.getCrossArticleNumber()}"></a></td>
+        <td><a th:href="${link}" th:text="${product.getBrand().getBrandName()}"></a></td>
+        <td><a th:href="${link}" th:title="${product.getNotes()}" th:text="${utils.getTruncatedText(product.getNotes(), 7)}"></a></td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

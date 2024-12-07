@@ -26,6 +26,20 @@
             text-align: center;
             padding: 10px; /* Внутренний отступ */
             box-sizing: border-box; /* Учитываем отступы и границы в ширине и высоте */
+            background-color: #4CAF50; /* Зеленая заливка */
+            color: white; /* Белый текст */
+            transition: background-color 0.3s ease; /* Плавное изменение фона */
+        }
+
+        .block a {
+            text-decoration: none; /* Убираем стандартное подчеркивание у ссылок */
+            color: white; /* Белый цвет текста */
+            font-weight: bold; /* Полужирный шрифт */
+            font-size: 1rem;
+        }
+
+        .block a:hover {
+            text-decoration: underline; /* Подчеркивание при наведении */
         }
 
         .block h2 {
@@ -36,16 +50,40 @@
 </head>
 <body>
 <div class="container">
+    <div class="block" id="prestige-products">
+        <a href="/prestige/products/"><h2>Показать все товары в магазине</h2></a>
+    </div>
+
+    <div class="block" id="prestige-products-add">
+        <a href="/prestige/products/add"><h2>Оприходовать новый товар в магазин</h2></a>
+    </div>
+</div>
+
+<div class="container">
     <div class="block" id="sales">
-        <a href="/prestige/sales"><h2>Продажи</h2></a>
+        <h2>Продажи</h2>
+    </div>
+</div>
+
+<div class="container">
+    <div class="block" id="clients">
+        <a href="/prestige/clients/"><h2>Клиенты</h2></a>
     </div>
 
-    <div class="block" id="acquire">
-        <h2>Поступления</h2>
+    <div class="block" id="suppliers">
+        <a href="/prestige/suppliers/"><h2>Поставщики</h2></a>
     </div>
+</div>
 
-    <div class="block" id="productListManagement">
-        <a href="/prestige/productListManagement"><h2>Управление списком товаров</h2></a>
+<div class="container">
+    <div class="block" id="product-management">
+        <a href="/prestige/product-management/"><h2>Управление номенклатурой товаров</h2></a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="block" id="settings">
+        <h2>Настройки</h2>
     </div>
 </div>
 </body>

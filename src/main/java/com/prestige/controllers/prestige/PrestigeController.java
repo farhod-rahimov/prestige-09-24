@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/prestige")
 public class PrestigeController {
 
-    @GetMapping()
-    public String prestige() {
+    @GetMapping
+    public String main() {
         return "prestige/prestige"; // return /prestige/prestige.html
     }
 }

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактирование названия товара</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="tel"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            color: white;
+            text-align: center;
+        }
+        button[type="submit"] {
+            background-color: #4CAF50; /* Зеленый цвет для кнопки "Сохранить изменения" */
+        }
+        button[type="submit"]:hover {
+            background-color: #45a049; /* Более темный зеленый при наведении */
+        }
+        button[name="method"][value="delete"] {
+            background-color: #f44336; /* Красный цвет для кнопки "Удалить" */
+        }
+        button[name="method"][value="delete"]:hover {
+            background-color: #d32f2f; /* Более темный красный при наведении */
+        }
+        .error-message {
+            color: red;
+            margin-bottom: 20px;
+        }
+    </style>
+    <script th:src="@{/js/confirm-delete.js}"></script>
+</head>
+<body>
+
+<h2>Редактирование названия товара</h2>
+
+<form method="POST" th:action="@{${'/' + URIBeginning + '/product-management/product-names'}}" th:object="${productName}">
+
+    <!-- Отображение сообщения об ошибке -->
+    <div class="error-message" th:if="${error}" th:text="${error}"></div>
+
+    <input type="hidden" id="id" th:field="*{id}" required>
+
+    <label for="name">Название товара:</label>
+    <input type="text" id="name" th:field="*{productName}" required>
+
+    <div class="button-container">
+        <button type="submit" name="method" value="put">Сохранить изменения</button>
+        <button type="submit" name="method" value="delete"
+                onclick="confirmDelete(event, 'Вы уверены, что хотите удалить это название товара?')">Удалить</button>
+    </div>
+</form>
+
+</body>
+</html>
