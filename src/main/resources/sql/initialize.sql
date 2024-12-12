@@ -81,6 +81,12 @@ create table if not exists sklad_all_sales (
 	basket_id int references sklad_baskets(id) not null
 );
 
+create table if not exists sklad_settings(
+	id serial primary key,
+    key varchar(100) not null,
+    value varchar(100) not null
+);
+
 -- prestige
 
 create table if not exists prestige_clients (
@@ -105,6 +111,7 @@ create table if not exists prestige_all_sales(
 );
 
 create table if not exists prestige_settings(
-    settings_name varchar(100) not null,
-    settings_value varchar(100) not null
+	id serial primary key,
+    key varchar(100) not null,
+    value varchar(100) not null
 );

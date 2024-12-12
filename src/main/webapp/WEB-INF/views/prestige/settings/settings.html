@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Параметры</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .add-settings-link {
+            display: inline-block;
+            padding: 10px 20px;
+            color: white;
+            background-color: #4CAF50;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .add-settings-link:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            table-layout: fixed;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+        }
+        td:first-child, th:first-child {
+            border-left: none;
+        }
+        td:last-child, th:last-child {
+            border-right: none;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .error-message {
+            color: red;
+            margin-bottom: 20px;
+        }
+        a {
+            text-decoration: none;
+            color: #000000; /* Цвет текста ссылок */
+            font-weight: normal;
+            transition: color 0.3s ease, text-decoration 0.3s ease;
+        }
+        a:hover {
+            text-decoration: underline; /* Подчеркивание при наведении */
+        }
+        a:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(72, 168, 72, 0.6); /* Эффект при фокусе на ссылке */
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2>Все параметры</h2>
+    <a href="/prestige/settings/add" class="add-settings-link">Добавить новый параметр</a>
+</div>
+
+<div th:if="${error}" class="error-message" th:text="${error}"></div>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Название параметра</th>
+        <th>Значение параметра</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="settings : ${allSettings}" th:with="link=@{/prestige/settings/{settingsId}/(settingsId=${settings.getId()})}">
+        <td><a th:href="${link}" th:text="${settings.id}"></a></td>
+        <td><a th:href="${link}" th:text="${settings.key}"></a></td>
+        <td><a th:href="${link}" th:text="${settings.value}"></a></td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>
