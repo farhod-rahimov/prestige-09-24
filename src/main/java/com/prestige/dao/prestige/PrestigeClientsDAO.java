@@ -101,4 +101,22 @@ public class PrestigeClientsDAO {
 
         jdbcTemplate.update(sql, new Object[]{clientId});
     }
+
+    public List<String> findUniqueClientNames() {
+        String sql =    "SELECT pc.name " +
+                        "FROM prestige_clients pc " +
+                        "GROUP BY (pc.name) " +
+                        "ORDER BY (pc.name)";
+
+        return jdbcTemplate.queryForList(sql, String.class);
+    }
+
+    public List<String> findPhoneNumbersByClientName(String clientName) {
+        String sql =    "SELECT pc.phone_number " +
+                        "FROM prestige_clients pc " +
+                        "WHERE pc.name = ? " +
+                        "ORDER BY (pc.phone_number)";
+
+        return jdbcTemplate.queryForList(sql, new Object[] {clientName}, String.class);
+    }
 }

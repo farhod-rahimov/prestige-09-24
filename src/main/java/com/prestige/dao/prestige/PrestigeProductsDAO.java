@@ -1,9 +1,10 @@
 package com.prestige.dao.prestige;
 
+import com.prestige.dao.mappers.BrandMapper;
+import com.prestige.dao.mappers.ProductNameMapper;
 import com.prestige.dao.mappers.RetailProductMapper;
 import com.prestige.dao.mappers.RetailProductViewMapper;
-import com.prestige.models.RetailProduct;
-import com.prestige.models.RetailProductView;
+import com.prestige.models.*;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -13,6 +14,8 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
 import java.sql.PreparedStatement;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -218,5 +221,136 @@ public class PrestigeProductsDAO {
         } catch (DataAccessException e) {
             return null;
         }
+    }
+
+    public List<ProductName> findAllProductNames() {
+        String sql =    "SELECT cpn.id, cpn.product_name " +
+                        "FROM prestige_products pp " +
+                        "JOIN common_products cp ON pp.common_product_id = cp.id " +
+                        "JOIN common_product_names cpn ON cpn.id = cp.product_name_id " +
+                        "GROUP BY (cpn.id) " +
+                        "ORDER BY (cpn.product_name)";
+
+        return jdbcTemplate.query(sql, new ProductNameMapper());
+    }
+
+    public List<String> findAvailableCarModels(Product product) {
+        String sql =    "SELECT cp.car_model " +
+                        "FROM prestige_products pp " +
+                        "JOIN common_products cp ON pp.common_product_id = cp.id " +
+                        "JOIN common_product_names cpn ON cpn.id = cp.product_name_id " +
+                        "WHERE cpn.id = ? " +
+                        "GROUP BY (cp.car_model) " +
+                        "ORDER by (cp.car_model)";
+
+        return jdbcTemplate.queryForList(sql, new Object[]{product.getProductName().getId()}, String.class);
+    }
+
+    public List<String> findAvailableEngineModels(Product product) {
+        String sql =    "SELECT cp.engine_model " +
+                        "FROM prestige_products pp " +
+                        "JOIN common_products cp ON pp.common_product_id = cp.id " +
+                        "JOIN common_product_names cpn ON cpn.id = cp.product_name_id " +
+                        "WHERE " +
+                            "cpn.id = ? AND " +
+                            "cp.car_model = ? AND " +
+                            "cp.engine_model IS NOT NULL AND " +
+                            "cp.engine_model != '' " +
+                        "GROUP BY (cp.engine_model) " +
+                        "ORDER by (cp.engine_model)";
+
+        List<Object> bindings = new ArrayList();
+        bindings.addAll(Arrays.asList(product.getProductName().getId(), product.getCarModel()));
+
+        return jdbcTemplate.queryForList(sql, bindings.toArray(), String.class);
+    }
+
+    public List<String> findAvailableOemArticleNumbers(Product product) {
+        String sql =    "SELECT cp.oem_article_number " +
+                        "FROM prestige_products pp " +
+                        "JOIN common_products cp ON pp.common_product_id = cp.id " +
+                        "JOIN common_product_names cpn ON cpn.id = cp.product_name_id " +
+                        "WHERE " +
+                            "cpn.id = ? AND " +
+                            "cp.car_model = ? AND ";
+
+        List<Object> bindings = new ArrayList();
+        bindings.addAll(Arrays.asList(product.getProductName().getId(), product.getCarModel()));
+
+        if (product.getEngineModel() != null && !product.getEngineModel().isEmpty()) {
+            sql +=          "cp.engine_model = ? AND ";
+            bindings.add(product.getEngineModel());
+        }
+
+        sql +=              "cp.oem_article_number IS NOT NULL AND " +
+                            "cp.oem_article_number != '' " +
+                        "GROUP BY (cp.oem_article_number) " +
+                        "ORDER by (cp.oem_article_number)";
+
+        return jdbcTemplate.queryForList(sql, bindings.toArray(), String.class);
+    }
+
+    public List<String> findAvailableCrossArticleNumbers(Product product) {
+        String sql =    "SELECT cp.cross_article_number " +
+                        "FROM prestige_products pp " +
+                        "JOIN common_products cp ON pp.common_product_id = cp.id " +
+                        "JOIN common_product_names cpn ON cpn.id = cp.product_name_id " +
+                        "WHERE " +
+                            "cpn.id = ? AND " +
+                            "cp.car_model = ? ";
+
+        List<Object> bindings = new ArrayList();
+        bindings.addAll(Arrays.asList(product.getProductName().getId(), product.getCarModel()));
+
+        if (product.getEngineModel() != null && !product.getEngineModel().isEmpty()) {
+            sql +=          "AND cp.engine_model = ? ";
+            bindings.add(product.getEngineModel());
+        }
+
+        if (product.getOemArticleNumber() != null && !product.getOemArticleNumber().isEmpty()) {
+            sql +=          "AND cp.oem_article_number = ? ";
+            bindings.add(product.getOemArticleNumber());
+        }
+
+        sql +=              "AND cp.cross_article_number IS NOT NULL " +
+                            "AND cp.cross_article_number != '' " +
+                            "GROUP BY (cp.cross_article_number) " +
+                            "ORDER by (cp.cross_article_number)";
+
+        return jdbcTemplate.queryForList(sql, bindings.toArray(), String.class);
+    }
+
+    public List<Brand> findAvailableBrands(Product product) {
+        String sql =    "SELECT cbn.id, cbn.brand_name " +
+                        "FROM prestige_products pp " +
+                        "JOIN common_products cp ON pp.common_product_id = cp.id " +
+                        "JOIN common_product_names cpn ON cpn.id = cp.product_name_id " +
+                        "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+                        "WHERE " +
+                            "cpn.id = ? AND " +
+                            "cp.car_model = ? ";
+
+        List<Object> bindings = new ArrayList();
+        bindings.addAll(Arrays.asList(product.getProductName().getId(), product.getCarModel()));
+
+        if (product.getEngineModel() != null && !product.getEngineModel().isEmpty()) {
+            sql +=          "AND cp.engine_model = ? ";
+            bindings.add(product.getEngineModel());
+        }
+
+        if (product.getOemArticleNumber() != null && !product.getOemArticleNumber().isEmpty()) {
+            sql +=          "AND cp.oem_article_number = ? ";
+            bindings.add(product.getOemArticleNumber());
+        }
+
+        if (product.getCrossArticleNumber() != null && !product.getCrossArticleNumber().isEmpty()) {
+            sql +=          "AND cp.cross_article_number = ? ";
+            bindings.add(product.getCrossArticleNumber());
+        }
+
+        sql +=              "GROUP BY (cbn.id) " +
+                            "ORDER by (cbn.brand_name)";
+
+        return jdbcTemplate.query(sql, bindings.toArray(), new BrandMapper());
     }
 }

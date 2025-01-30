@@ -39,22 +39,20 @@
         }
         th, td {
             padding: 12px 15px;
-            text-align: left;
             border-bottom: 1px solid #ddd;
             border-right: 1px solid #ddd;
-        }
-        th:first-child, td:first-child {
-            width: 80px; /* Устанавливаем ширину для первого столбца */
-            text-align: center;
         }
         th {
             background-color: #4CAF50;
             color: white;
             text-align: center;
         }
-        th:nth-child(1), td:nth-child(1) {
-            width: 25ch;
+        td {
             text-align: left;
+        }
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 25ch; /* Устанавливаем ширину для первого столбца */
         }
         tr:hover {
             background-color: #f1f1f1;

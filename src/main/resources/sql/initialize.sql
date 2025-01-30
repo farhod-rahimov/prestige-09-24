@@ -19,7 +19,7 @@ create table if not exists common_products (
 	engine_model varchar(1000),
 	oem_article_number varchar(1000),
 	cross_article_number varchar(1000),
-	notes varchar(1000)
+	notes TEXT
 );
 
 create table if not exists sklad_suppliers (
@@ -71,10 +71,12 @@ create table if not exists sklad_baskets (
 	created_date_time TIMESTAMP not null,
     last_changed_date_time TIMESTAMP not null,
 	client_id int references sklad_clients not null,
-	total_sum numeric(15, 4) not null
+	total_sum numeric(15, 4) not null,
+    notes TEXT
 );
 
 create table if not exists sklad_all_sales (
+	id serial primary key,
 	product_id int references common_products(id) not null,
     quantity int not null,
     sold_price_dollar numeric(15, 4) not null,
@@ -100,10 +102,12 @@ create table if not exists prestige_baskets (
 	created_date_time TIMESTAMP not null,
 	last_changed_date_time TIMESTAMP not null,
 	client_id int references prestige_clients not null,
-	total_sum numeric(15, 4) not null
+	total_sum numeric(15, 4) not null,
+    notes TEXT
 );
 
 create table if not exists prestige_all_sales(
+	id serial primary key,
 	product_id int references common_products(id) not null,
 	quantity int not null,
 	sold_price_smn numeric(15, 4) not null,

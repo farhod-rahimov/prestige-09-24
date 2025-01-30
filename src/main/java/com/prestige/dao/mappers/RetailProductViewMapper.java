@@ -20,6 +20,8 @@ public class RetailProductViewMapper implements RowMapper<RetailProductView> {
                 rs.getString(5), rs.getString(6), rs.getString(7),
                 brand, rs.getString(10));
 
+
+
         return new RetailProductView(product, rs.getBigDecimal(11), rs.getInt(12));
     }
 }
