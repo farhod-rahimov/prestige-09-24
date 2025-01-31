@@ -27,3 +27,5 @@ sales
 
 <th>(INNER RECOMMENDED, SMN)</th> (средневзвешенная проданная цена)
 <th>Остаток до реализации</th> (special select query)
+
+prestige_products -> 'stock_balance' rename to 'quantity'

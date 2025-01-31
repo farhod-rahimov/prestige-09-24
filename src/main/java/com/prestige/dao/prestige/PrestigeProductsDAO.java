@@ -353,4 +353,16 @@ public class PrestigeProductsDAO {
 
         return jdbcTemplate.query(sql, bindings.toArray(), new BrandMapper());
     }
+
+    public Integer findStockBeforeSale(Product product, Integer basketId) {
+        String sql =    "SELECT SUM(pp.stock_balance) - COALESCE(SUM(pas.quantity), 0) " +
+                        "FROM prestige_products pp " +
+                        "LEFT JOIN prestige_all_sales pas ON pp.common_product_id = pas.common_product_id " +
+                        "WHERE " +
+                                "pp.common_product_id = ? AND " +
+                                "(pas.basket_id != ? OR pas.basket_id IS NULL) " +
+                        "GROUP BY (pp.common_product_id)";
+
+        return jdbcTemplate.queryForObject(sql, new Object[]{product.getId(), basketId} , Integer.class);
+    }
 }

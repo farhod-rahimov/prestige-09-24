@@ -119,4 +119,14 @@ public class PrestigeClientsDAO {
 
         return jdbcTemplate.queryForList(sql, new Object[] {clientName}, String.class);
     }
+
+    public Integer findClientId(Client client) {
+        String sql =    "SELECT id " +
+                        "FROM prestige_clients pc " +
+                        "WHERE " +
+                            "pc.name = ? AND " +
+                            "pc.phone_number = ? ";
+
+        return jdbcTemplate.queryForObject(sql, new Object[] {client.getName(), client.getPhoneNumber()}, Integer.class);
+    }
 }

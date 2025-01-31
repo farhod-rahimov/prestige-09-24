@@ -85,20 +85,28 @@ public class CommonProductsDAO {
                         "WHERE " +
                             "cp.brand_name_id = ? AND " +
                             "cp.product_name_id = ? AND " +
-                            "cp.car_model = ? AND " +
-                            "cp.engine_model = ? AND " +
-                            "cp.oem_article_number = ? AND " +
-                            "cp.cross_article_number = ?";
+                            "cp.car_model = ? ";
 
         List<Object> bindings = new ArrayList();
 
-        bindings.add(product.getBrand().getId());
-        bindings.add(product.getProductName().getId());
-        bindings.add(product.getCarModel());
-        bindings.add(product.getEngineModel());
-        bindings.add(product.getOemArticleNumber());
-        bindings.add(product.getCrossArticleNumber());
+        bindings.addAll(Arrays.asList(product.getBrand().getId(),
+                                      product.getProductName().getId(),
+                                      product.getCarModel()));
 
+        if (product.getEngineModel() != null) {
+            sql +=          "AND cp.engine_model = ? ";
+            bindings.add(product.getEngineModel());
+        }
+
+        if (product.getOemArticleNumber() != null) {
+            sql +=          "AND cp.oem_article_number = ? ";
+            bindings.add(product.getOemArticleNumber());
+        }
+
+        if (product.getCrossArticleNumber() != null) {
+            sql +=          "AND cp.cross_article_number = ? ";
+            bindings.add(product.getCrossArticleNumber());
+        }
         return jdbcTemplate.queryForObject(sql, bindings.toArray(), Integer.class);
     }
 

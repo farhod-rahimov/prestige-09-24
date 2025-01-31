@@ -2,6 +2,7 @@ package com.prestige.controllers.prestige;
 
 import com.prestige.dao.common.CommonBrandNamesDAO;
 import com.prestige.dao.common.CommonProductNamesDAO;
+import com.prestige.dao.common.CommonProductsDAO;
 import com.prestige.dao.prestige.PrestigeBasketsDAO;
 import com.prestige.dao.prestige.PrestigeClientsDAO;
 import com.prestige.dao.prestige.PrestigeProductsDAO;
@@ -31,6 +32,8 @@ public class PrestigeBasketsController {
 
     private PrestigeProductsDAO prestigeProductsDAO;
 
+    private CommonProductsDAO commonProductsDAO;
+
     private CommonProductNamesDAO commonProductNamesDAO;
 
     private CommonBrandNamesDAO commonBrandNamesDAO;
@@ -53,11 +56,12 @@ public class PrestigeBasketsController {
 
     @Autowired
     public PrestigeBasketsController(PrestigeBasketsDAO prestigeBasketsDAO, PrestigeClientsDAO prestigeClientsDAO,
-                                     PrestigeProductsDAO prestigeProductsDAO, CommonProductNamesDAO commonProductNamesDAO,
-                                     CommonBrandNamesDAO commonBrandNamesDAO) {
+                                     PrestigeProductsDAO prestigeProductsDAO, CommonProductsDAO commonProductsDAO,
+                                     CommonProductNamesDAO commonProductNamesDAO, CommonBrandNamesDAO commonBrandNamesDAO) {
         this.prestigeBasketsDAO = prestigeBasketsDAO;
         this.prestigeClientsDAO = prestigeClientsDAO;
         this.prestigeProductsDAO = prestigeProductsDAO;
+        this.commonProductsDAO = commonProductsDAO;
         this.commonProductNamesDAO = commonProductNamesDAO;
         this.commonBrandNamesDAO = commonBrandNamesDAO;
     }
@@ -156,9 +160,12 @@ public class PrestigeBasketsController {
     }
 
     private EStep processPhoneNumberSelection(Basket basket, Model model, EStep step) {
-        model.addAttribute("allProductNames", prestigeProductsDAO.findAllProductNames());
+        basket.getClient().setId(prestigeClientsDAO.findClientId(basket.getClient()));
         basket.setSalesList(new LinkedList<>());
         basket.getSalesList().add(new Sales());
+
+        prestigeBasketsDAO.saveNewPrestigeBasket(basket);
+        model.addAttribute("allProductNames", prestigeProductsDAO.findAllProductNames());
 
         return getNextStep(step);
     }
@@ -252,7 +259,16 @@ public class PrestigeBasketsController {
         if (sales.getProduct().getBrand().getBrandName() == null) {
             sales.getProduct().setBrand(commonBrandNamesDAO.findBrandById(sales.getProduct().getBrand().getId()));
         }
+        sales.getProduct().setId(commonProductsDAO.findProductId(sales.getProduct()));
+        setPrivateInfos(basket);
+
         return getNextStep(step);
+    }
+
+    private void setPrivateInfos(Basket basket) {
+        Sales sales = basket.getSalesList().get(basket.getSalesList().size() - 1);
+
+        sales.setStockBeforeSale(prestigeProductsDAO.findStockBeforeSale(sales.getProduct(), basket.getId()));
     }
 
     private EStep processProductQuantityAndPriceSelection(Basket basket, Model model, EStep step) {
