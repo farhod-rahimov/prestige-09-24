@@ -95,4 +95,17 @@ public class PrestigeSettingsDAO {
 
         jdbcTemplate.update(sql, new Object[]{settingsId});
     }
+
+    public Settings findSettingsByName(String settingsName) {
+        String sql =    "SELECT ps.id, ps.key, ps.value " +
+                        "FROM prestige_settings ps " +
+                        "WHERE ps.key = ?";
+
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[] {settingsName}, new SettingsMap());
+        }
+        catch (DataAccessException e) {
+            return null;
+        }
+    }
 }

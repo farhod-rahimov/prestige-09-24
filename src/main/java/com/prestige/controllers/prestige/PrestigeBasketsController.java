@@ -6,9 +6,11 @@ import com.prestige.dao.common.CommonProductsDAO;
 import com.prestige.dao.prestige.PrestigeBasketsDAO;
 import com.prestige.dao.prestige.PrestigeClientsDAO;
 import com.prestige.dao.prestige.PrestigeProductsDAO;
+import com.prestige.dao.prestige.PrestigeSettingsDAO;
 import com.prestige.models.Basket;
 import com.prestige.models.Brand;
 import com.prestige.models.Sales;
+import com.prestige.models.Settings;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,6 +34,8 @@ public class PrestigeBasketsController {
     private PrestigeClientsDAO prestigeClientsDAO;
 
     private PrestigeProductsDAO prestigeProductsDAO;
+
+    private PrestigeSettingsDAO prestigeSettingsDAO;
 
     private CommonProductsDAO commonProductsDAO;
 
@@ -56,11 +61,13 @@ public class PrestigeBasketsController {
 
     @Autowired
     public PrestigeBasketsController(PrestigeBasketsDAO prestigeBasketsDAO, PrestigeClientsDAO prestigeClientsDAO,
-                                     PrestigeProductsDAO prestigeProductsDAO, CommonProductsDAO commonProductsDAO,
-                                     CommonProductNamesDAO commonProductNamesDAO, CommonBrandNamesDAO commonBrandNamesDAO) {
+                                     PrestigeProductsDAO prestigeProductsDAO, PrestigeSettingsDAO prestigeSettingsDAO,
+                                     CommonProductsDAO commonProductsDAO, CommonProductNamesDAO commonProductNamesDAO,
+                                     CommonBrandNamesDAO commonBrandNamesDAO) {
         this.prestigeBasketsDAO = prestigeBasketsDAO;
         this.prestigeClientsDAO = prestigeClientsDAO;
         this.prestigeProductsDAO = prestigeProductsDAO;
+        this.prestigeSettingsDAO = prestigeSettingsDAO;
         this.commonProductsDAO = commonProductsDAO;
         this.commonProductNamesDAO = commonProductNamesDAO;
         this.commonBrandNamesDAO = commonBrandNamesDAO;
@@ -267,8 +274,18 @@ public class PrestigeBasketsController {
 
     private void setPrivateInfos(Basket basket) {
         Sales sales = basket.getSalesList().get(basket.getSalesList().size() - 1);
+        Settings exchangeRateSettings = prestigeSettingsDAO.findSettingsByName("exchangeRate");
+        Settings magicValueSettings = prestigeSettingsDAO.findSettingsByName("magicValue");
+
+        if (exchangeRateSettings == null || magicValueSettings == null) {
+            throw new RuntimeException("Settings 'exchangeRate' or 'magicValue' doesn't exist. Please initialize it in the settings");
+        }
+
+        BigDecimal exchangeRate = new BigDecimal(exchangeRateSettings.getValue());
+        BigDecimal magicValue = new BigDecimal(magicValueSettings.getValue());
 
         sales.setStockBeforeSale(prestigeProductsDAO.findStockBeforeSale(sales.getProduct(), basket.getId()));
+        sales.setCalculatedPrice(sales.getWholesalePrice().multiply(exchangeRate).multiply(magicValue));
     }
 
     private EStep processProductQuantityAndPriceSelection(Basket basket, Model model, EStep step) {

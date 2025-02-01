@@ -1,0 +1,2 @@
+INSERT INTO prestige_settings (key, value) VALUES ('exchangeRate', '11.22') ON CONFLICT (key) DO NOTHING;
+INSERT INTO prestige_settings (key, value) VALUES ('magicValue', '20') ON CONFLICT (key) DO NOTHING;

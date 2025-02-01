@@ -85,7 +85,7 @@ create table if not exists sklad_all_sales (
 
 create table if not exists sklad_settings(
 	id serial primary key,
-    key varchar(100) not null,
+    key varchar(100) unique not null,
     value varchar(100) not null
 );
 
@@ -116,6 +116,6 @@ create table if not exists prestige_all_sales(
 
 create table if not exists prestige_settings(
 	id serial primary key,
-    key varchar(100) not null,
+    key varchar(100) unique not null,
     value varchar(100) not null
 );

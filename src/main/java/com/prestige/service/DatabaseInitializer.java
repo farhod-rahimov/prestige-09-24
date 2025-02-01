@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.stream.Collectors;
 
@@ -23,7 +22,15 @@ public class DatabaseInitializer {
 
     @Transactional
     public void initializeDatabase() {
-        executeSqlScript("classpath:sql/initialize.sql");
+
+        try {
+            executeSqlScript("classpath:sql/schema.sql");
+            executeSqlScript("classpath:sql/data.sql");
+        }
+        catch (RuntimeException e) {
+            System.err.println(e.getMessage());
+            System.exit(1);
+        }
     }
 
     private void executeSqlScript(String scriptPath) {
@@ -33,8 +40,8 @@ public class DatabaseInitializer {
             BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()));
             String scriptContent = reader.lines().collect(Collectors.joining("\n"));
             jdbcTemplate.execute(scriptContent);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            throw new RuntimeException("Ошибка при выполнении SQL-скрипта: " + scriptPath, e);
         }
     }
 }
