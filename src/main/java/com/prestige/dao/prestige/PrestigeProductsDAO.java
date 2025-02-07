@@ -13,10 +13,9 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 @Component
 @Getter
@@ -364,5 +363,34 @@ public class PrestigeProductsDAO {
                         "GROUP BY (pp.common_product_id)";
 
         return jdbcTemplate.queryForObject(sql, new Object[]{product.getId(), basketId} , Integer.class);
+    }
+
+    public BigDecimal findWholesalePrice(Product product, Integer basketId) {
+        String sql = "SELECT " +
+                        "CASE " +
+                            "WHEN SUM(pp.stock_balance) - SUM(COALESCE(pas.quantity, 0)) = 0 " +
+                            "THEN (SELECT pp.price_dollar " +
+                                  "FROM prestige_products pp " +
+                                  "WHERE pp.common_product_id = ? " +
+                                  "ORDER BY pp.date_time DESC " +
+                                  "LIMIT 1) "; // если остаток 0, берем последнюю закупочную цену
+
+        sql +=              "ELSE " +
+                                "(" +
+                                    "SUM(pp.price_dollar * pp.stock_balance)" +
+                                    " - " +
+                                    "SUM(COALESCE(pas.quantity, 0) * COALESCE(pas.sold_price_smn, 0))" +
+                                ") / (" +
+                                        "SUM(pp.stock_balance) - SUM(COALESCE(pas.quantity, 0))" +
+                                    ") "; // иначе средневзвешенная цена.
+
+        sql +=              "END as weighted_average_price " +
+                            "FROM prestige_products pp " +
+                            "LEFT JOIN prestige_all_sales pas ON pp.id = pas.common_product_id " +
+                            "WHERE pp.common_product_id = ? AND (pas.basket_id != 1 OR pas.basket_id IS NULL) " +
+                            "GROUP BY (pp.common_product_id) " +
+                            "ORDER BY (pp.common_product_id)";
+
+        return jdbcTemplate.queryForObject(sql, new Object[]{product.getId(), product.getId()} , BigDecimal.class);
     }
 }

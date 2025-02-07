@@ -285,6 +285,7 @@ public class PrestigeBasketsController {
         BigDecimal magicValue = new BigDecimal(magicValueSettings.getValue());
 
         sales.setStockBeforeSale(prestigeProductsDAO.findStockBeforeSale(sales.getProduct(), basket.getId()));
+        sales.setWholesalePrice(prestigeProductsDAO.findWholesalePrice(sales.getProduct(), basket.getId()));
         sales.setCalculatedPrice(sales.getWholesalePrice().multiply(exchangeRate).multiply(magicValue));
     }
 
