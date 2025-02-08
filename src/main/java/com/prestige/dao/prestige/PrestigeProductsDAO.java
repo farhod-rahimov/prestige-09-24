@@ -14,6 +14,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.util.*;
 
@@ -353,19 +354,20 @@ public class PrestigeProductsDAO {
         return jdbcTemplate.query(sql, bindings.toArray(), new BrandMapper());
     }
 
-    public Integer findStockBeforeSale(Product product, Integer basketId) {
+    public Integer findStockBeforeSale(Product product) {
         String sql =    "SELECT SUM(pp.stock_balance) - COALESCE(SUM(pas.quantity), 0) " +
                         "FROM prestige_products pp " +
                         "LEFT JOIN prestige_all_sales pas ON pp.common_product_id = pas.common_product_id " +
+                        "LEFT JOIN prestige_baskets pb ON pas.basket_id = pb.id " +
                         "WHERE " +
                                 "pp.common_product_id = ? AND " +
-                                "(pas.basket_id != ? OR pas.basket_id IS NULL) " +
+                                "(pb.created_date_time IS NULL OR pp.date_time < pb.created_date_time) " +
                         "GROUP BY (pp.common_product_id)";
 
-        return jdbcTemplate.queryForObject(sql, new Object[]{product.getId(), basketId} , Integer.class);
+        return jdbcTemplate.queryForObject(sql, new Object[]{product.getId()} , Integer.class);
     }
 
-    public BigDecimal findWholesalePrice(Product product, Integer basketId) {
+    public BigDecimal findWholesalePrice(Product product) {
         String sql = "SELECT " +
                         "CASE " +
                             "WHEN SUM(pp.stock_balance) - SUM(COALESCE(pas.quantity, 0)) = 0 " +
@@ -379,7 +381,7 @@ public class PrestigeProductsDAO {
                                 "(" +
                                     "SUM(pp.price_dollar * pp.stock_balance)" +
                                     " - " +
-                                    "SUM(COALESCE(pas.quantity, 0) * COALESCE(pas.sold_price_smn, 0))" +
+                                    "SUM(COALESCE(pas.quantity, 0) * COALESCE(pas.wholesale_price, 0))" +
                                 ") / (" +
                                         "SUM(pp.stock_balance) - SUM(COALESCE(pas.quantity, 0))" +
                                     ") "; // иначе средневзвешенная цена.
@@ -387,10 +389,14 @@ public class PrestigeProductsDAO {
         sql +=              "END as weighted_average_price " +
                             "FROM prestige_products pp " +
                             "LEFT JOIN prestige_all_sales pas ON pp.id = pas.common_product_id " +
-                            "WHERE pp.common_product_id = ? AND (pas.basket_id != 1 OR pas.basket_id IS NULL) " +
+                            "LEFT JOIN prestige_baskets pb ON pas.basket_id = pb.id " +
+                            "WHERE " +
+                                "pp.common_product_id = ? AND " +
+                                "(pb.created_date_time IS NULL OR pp.date_time < pb.created_date_time) " +
                             "GROUP BY (pp.common_product_id) " +
                             "ORDER BY (pp.common_product_id)";
 
-        return jdbcTemplate.queryForObject(sql, new Object[]{product.getId(), product.getId()} , BigDecimal.class);
+        return jdbcTemplate.queryForObject(sql, new Object[]{product.getId(), product.getId()} , BigDecimal.class)
+                           .setScale(2, RoundingMode.HALF_UP);
     }
 }

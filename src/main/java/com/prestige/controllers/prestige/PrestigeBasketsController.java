@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -274,6 +275,13 @@ public class PrestigeBasketsController {
 
     private void setPrivateInfos(Basket basket) {
         Sales sales = basket.getSalesList().get(basket.getSalesList().size() - 1);
+
+        sales.setStockBeforeSale(prestigeProductsDAO.findStockBeforeSale(sales.getProduct()));
+        sales.setWholesalePrice(prestigeProductsDAO.findWholesalePrice(sales.getProduct()));
+        sales.setCalculatedPrice(getCalculatedPrice(sales.getWholesalePrice()));
+    }
+
+    private BigDecimal getCalculatedPrice(BigDecimal wholesalePrice) {
         Settings exchangeRateSettings = prestigeSettingsDAO.findSettingsByName("exchangeRate");
         Settings magicValueSettings = prestigeSettingsDAO.findSettingsByName("magicValue");
 
@@ -284,9 +292,8 @@ public class PrestigeBasketsController {
         BigDecimal exchangeRate = new BigDecimal(exchangeRateSettings.getValue());
         BigDecimal magicValue = new BigDecimal(magicValueSettings.getValue());
 
-        sales.setStockBeforeSale(prestigeProductsDAO.findStockBeforeSale(sales.getProduct(), basket.getId()));
-        sales.setWholesalePrice(prestigeProductsDAO.findWholesalePrice(sales.getProduct(), basket.getId()));
-        sales.setCalculatedPrice(sales.getWholesalePrice().multiply(exchangeRate).multiply(magicValue));
+        return wholesalePrice.multiply(new BigDecimal(100).add(magicValue).divide(new BigDecimal(100)))
+                             .multiply(exchangeRate).setScale(2, RoundingMode.HALF_UP);
     }
 
     private EStep processProductQuantityAndPriceSelection(Basket basket, Model model, EStep step) {
