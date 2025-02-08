@@ -354,49 +354,82 @@ public class PrestigeProductsDAO {
         return jdbcTemplate.query(sql, bindings.toArray(), new BrandMapper());
     }
 
-    public Integer findStockBeforeSale(Product product) {
-        String sql =    "SELECT SUM(pp.stock_balance) - COALESCE(SUM(pas.quantity), 0) " +
-                        "FROM prestige_products pp " +
-                        "LEFT JOIN prestige_all_sales pas ON pp.common_product_id = pas.common_product_id " +
-                        "LEFT JOIN prestige_baskets pb ON pas.basket_id = pb.id " +
-                        "WHERE " +
-                                "pp.common_product_id = ? AND " +
-                                "(pb.created_date_time IS NULL OR pp.date_time < pb.created_date_time) " +
-                        "GROUP BY (pp.common_product_id)";
+    public Integer findStockBeforeSale(Product product, Basket basket) {
+        String sql =    "SELECT " +
+                            "(SELECT SUM(pp.stock_balance) " +
+                             "FROM prestige_products pp " +
+                             "WHERE pp.common_product_id = ? AND " +
+                                   "pp.date_time < ?) " +
 
-        return jdbcTemplate.queryForObject(sql, new Object[]{product.getId()} , Integer.class);
+                            " - " +
+
+                            "(COALESCE(" +
+                                "(SELECT SUM(pas.quantity) " +
+                                 "FROM prestige_all_sales pas " +
+                                 "JOIN prestige_baskets pb on pas.basket_id = pb.id " +
+                                 "WHERE pas.common_product_id = ? AND " +
+                                       "pb.created_date_time < ?), 0))";
+
+        List<Object> bindings = new ArrayList();
+
+        bindings.addAll(Arrays.asList(product.getId(), basket.getCreatedDateTime()));
+        bindings.addAll(Arrays.asList(product.getId(), basket.getCreatedDateTime()));
+
+        return jdbcTemplate.queryForObject(sql, bindings.toArray(), Integer.class);
     }
 
     public BigDecimal findWholesalePrice(Product product) {
-        String sql = "SELECT " +
-                        "CASE " +
-                            "WHEN SUM(pp.stock_balance) - SUM(COALESCE(pas.quantity, 0)) = 0 " +
-                            "THEN (SELECT pp.price_dollar " +
-                                  "FROM prestige_products pp " +
-                                  "WHERE pp.common_product_id = ? " +
-                                  "ORDER BY pp.date_time DESC " +
-                                  "LIMIT 1) "; // если остаток 0, берем последнюю закупочную цену
+        String sql =   "WITH    stock_data AS ( " +
+                                    "SELECT " +
+                                        "SUM(pp.stock_balance) AS total_stock, " +
+                                        "SUM(pp.stock_balance * pp.price_dollar) AS total_stock_value, " +
+                                        "( " +
+                                            "SELECT pp.price_dollar " +
+                                            "FROM prestige_products pp " +
+                                            "WHERE pp.common_product_id = ? " +
+                                            "ORDER BY pp.date_time DESC " +
+                                            "LIMIT 1 " +
+                                        ") AS latest_price " +
+                                    "FROM prestige_products pp " +
+                                    "WHERE pp.common_product_id = ?), " +
 
-        sql +=              "ELSE " +
-                                "(" +
-                                    "SUM(pp.price_dollar * pp.stock_balance)" +
-                                    " - " +
-                                    "SUM(COALESCE(pas.quantity, 0) * COALESCE(pas.wholesale_price, 0))" +
-                                ") / (" +
-                                        "SUM(pp.stock_balance) - SUM(COALESCE(pas.quantity, 0))" +
-                                    ") "; // иначе средневзвешенная цена.
+                                "sales_data AS ( " +
+                                    "SELECT " +
+                                        "COALESCE(SUM(pas.quantity), 0) AS total_sold, " +
+                                        "COALESCE(SUM(pas.quantity * pas.wholesale_price), 0) AS total_sold_value " +
+                                    "FROM prestige_all_sales pas " +
+                                    "WHERE pas.common_product_id = ?) " +
 
-        sql +=              "END as weighted_average_price " +
-                            "FROM prestige_products pp " +
-                            "LEFT JOIN prestige_all_sales pas ON pp.id = pas.common_product_id " +
-                            "LEFT JOIN prestige_baskets pb ON pas.basket_id = pb.id " +
-                            "WHERE " +
-                                "pp.common_product_id = ? AND " +
-                                "(pb.created_date_time IS NULL OR pp.date_time < pb.created_date_time) " +
-                            "GROUP BY (pp.common_product_id) " +
-                            "ORDER BY (pp.common_product_id)";
+                                "SELECT " +
+                                    "CASE " +
+                                        "WHEN (sd.total_stock - sd2.total_sold) = 0 " +
+                                        "THEN sd.latest_price " +
+                                        "ELSE (sd.total_stock_value - sd2.total_sold_value) / (sd.total_stock - sd2.total_sold) " +
+                                    "END AS calculated_price " +
+                                "FROM stock_data sd, sales_data sd2;";
 
-        return jdbcTemplate.queryForObject(sql, new Object[]{product.getId(), product.getId()} , BigDecimal.class)
+        List<Object> bindings = new ArrayList();
+
+        bindings.addAll(Arrays.asList(product.getId(), product.getId(), product.getId()));
+
+        return jdbcTemplate.queryForObject(sql, bindings.toArray(), BigDecimal.class)
                            .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    public BigDecimal findRecommendedPrice(Product product, BigDecimal calculatedPrice) {
+        String sql =    "SELECT SUM(COALESCE(pas.quantity, 0) * COALESCE(pas.sold_price_smn, 0)) / " +
+                               "SUM(COALESCE(pas.quantity, 1)) "; // 1 чтобы не было деления на 0
+
+        sql +=          "FROM prestige_all_sales pas " +
+                        "WHERE pas.common_product_id = ? " +
+                        "GROUP BY (pas.common_product_id)";
+
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{product.getId()} , BigDecimal.class)
+                               .setScale(2, RoundingMode.HALF_UP);
+        }
+        catch (DataAccessException e) {
+            return calculatedPrice;
+        }
     }
 }

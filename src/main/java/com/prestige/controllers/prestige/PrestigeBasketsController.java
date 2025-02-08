@@ -276,9 +276,10 @@ public class PrestigeBasketsController {
     private void setPrivateInfos(Basket basket) {
         Sales sales = basket.getSalesList().get(basket.getSalesList().size() - 1);
 
-        sales.setStockBeforeSale(prestigeProductsDAO.findStockBeforeSale(sales.getProduct()));
+        sales.setStockBeforeSale(prestigeProductsDAO.findStockBeforeSale(sales.getProduct(), basket));
         sales.setWholesalePrice(prestigeProductsDAO.findWholesalePrice(sales.getProduct()));
         sales.setCalculatedPrice(getCalculatedPrice(sales.getWholesalePrice()));
+        sales.setRecommendedPrice(prestigeProductsDAO.findRecommendedPrice(sales.getProduct(), sales.getCalculatedPrice()));
     }
 
     private BigDecimal getCalculatedPrice(BigDecimal wholesalePrice) {
