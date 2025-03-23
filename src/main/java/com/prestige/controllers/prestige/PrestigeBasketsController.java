@@ -3,10 +3,7 @@ package com.prestige.controllers.prestige;
 import com.prestige.dao.common.CommonBrandNamesDAO;
 import com.prestige.dao.common.CommonProductNamesDAO;
 import com.prestige.dao.common.CommonProductsDAO;
-import com.prestige.dao.prestige.PrestigeBasketsDAO;
-import com.prestige.dao.prestige.PrestigeClientsDAO;
-import com.prestige.dao.prestige.PrestigeProductsDAO;
-import com.prestige.dao.prestige.PrestigeSettingsDAO;
+import com.prestige.dao.prestige.*;
 import com.prestige.models.Basket;
 import com.prestige.models.Brand;
 import com.prestige.models.Sales;
@@ -31,6 +28,8 @@ import java.util.List;
 public class PrestigeBasketsController {
 
     private PrestigeBasketsDAO prestigeBasketsDAO;
+
+    private PrestigeAllSalesDAO prestigeAllSalesDAO;
 
     private PrestigeClientsDAO prestigeClientsDAO;
 
@@ -279,7 +278,7 @@ public class PrestigeBasketsController {
         sales.setStockBeforeSale(prestigeProductsDAO.findStockBeforeSale(sales.getProduct(), basket));
         sales.setWholesalePrice(prestigeProductsDAO.findWholesalePrice(sales.getProduct()));
         sales.setCalculatedPrice(getCalculatedPrice(sales.getWholesalePrice()));
-        sales.setRecommendedPrice(prestigeProductsDAO.findRecommendedPrice(sales.getProduct(), sales.getCalculatedPrice()));
+        sales.setRecommendedPrice(prestigeProductsDAO.findRecommendedPrice(sales.getProduct(), sales.getCalculatedPrice(), basket));
     }
 
     private BigDecimal getCalculatedPrice(BigDecimal wholesalePrice) {
@@ -298,7 +297,9 @@ public class PrestigeBasketsController {
     }
 
     private EStep processProductQuantityAndPriceSelection(Basket basket, Model model, EStep step) {
-        // save into DB
+        Sales sales = basket.getSalesList().get(basket.getSalesList().size() - 1);
+
+        // save into prestige_all_sales
         return step;
     }
 

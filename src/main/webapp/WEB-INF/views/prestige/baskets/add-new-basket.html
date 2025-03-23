@@ -217,7 +217,7 @@
                             <div th:unless="${step.value == 'PRODUCT_ENGINE_MODEL_SELECTION'}">
                                 <td>
                                     <select required>
-                                        <option th:if="*{salesList[__${lastIndex}__].product.engineModel == null}" value="constant" selected th:text="(пусто)"></option>
+                                        <option th:if="*{salesList[__${lastIndex}__].product.engineModel == null}" value="constant" selected th:text="'(пусто)'"></option>
                                         <option th:unless="*{salesList[__${lastIndex}__].product.engineModel == null}" value="constant" selected th:text="*{salesList[__${lastIndex}__].product.engineModel}"></option>
                                     </select>
                                 </td>

@@ -416,12 +416,15 @@ public class PrestigeProductsDAO {
                            .setScale(2, RoundingMode.HALF_UP);
     }
 
-    public BigDecimal findRecommendedPrice(Product product, BigDecimal calculatedPrice) {
+    public BigDecimal findRecommendedPrice(Product product, BigDecimal calculatedPrice, Basket basket) {
         String sql =    "SELECT SUM(COALESCE(pas.quantity, 0) * COALESCE(pas.sold_price_smn, 0)) / " +
                                "SUM(COALESCE(pas.quantity, 1)) "; // 1 чтобы не было деления на 0
 
         sql +=          "FROM prestige_all_sales pas " +
-                        "WHERE pas.common_product_id = ? " +
+                        "JOIN prestige_baskets pb ON pb.id =  pas.basket_id " +
+                        "WHERE " +
+                            "pas.common_product_id = ? AND " +
+                            "pb.created_date_time > pb.created_date_time - INTERVAL '2 years' " +
                         "GROUP BY (pas.common_product_id)";
 
         try {
