@@ -4,17 +4,16 @@ import com.prestige.dao.common.CommonBrandNamesDAO;
 import com.prestige.dao.common.CommonProductNamesDAO;
 import com.prestige.dao.common.CommonProductsDAO;
 import com.prestige.dao.prestige.*;
-import com.prestige.models.Basket;
-import com.prestige.models.Brand;
-import com.prestige.models.Sales;
-import com.prestige.models.Settings;
+import com.prestige.models.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
@@ -54,17 +53,19 @@ public class PrestigeBasketsController {
         PRODUCT_OEM_ARTICLE_NUMBER_SELECTION("PRODUCT_OEM_ARTICLE_NUMBER_SELECTION"),
         PRODUCT_CROSS_ARTICLE_NUMBER_SELECTION("PRODUCT_CROSS_ARTICLE_NUMBER_SELECTION"),
         PRODUCT_BRAND_SELECTION("PRODUCT_BRAND_SELECTION"),
-        PRODUCT_QUANTITY_AND_PRICE_SELECTION("PRODUCT_QUANTITY_AND_PRICE_SELECTION");
+        PRODUCT_QUANTITY_AND_PRICE_SELECTION("PRODUCT_QUANTITY_AND_PRICE_SELECTION"),
+        PRODUCT_SELECTION_DONE("PRODUCT_SELECTION_DONE");
 
         private final String value;
     }
 
     @Autowired
-    public PrestigeBasketsController(PrestigeBasketsDAO prestigeBasketsDAO, PrestigeClientsDAO prestigeClientsDAO,
-                                     PrestigeProductsDAO prestigeProductsDAO, PrestigeSettingsDAO prestigeSettingsDAO,
-                                     CommonProductsDAO commonProductsDAO, CommonProductNamesDAO commonProductNamesDAO,
-                                     CommonBrandNamesDAO commonBrandNamesDAO) {
+    public PrestigeBasketsController(PrestigeBasketsDAO prestigeBasketsDAO, PrestigeAllSalesDAO prestigeAllSalesDAO,
+                                     PrestigeClientsDAO prestigeClientsDAO, PrestigeProductsDAO prestigeProductsDAO,
+                                     PrestigeSettingsDAO prestigeSettingsDAO, CommonProductsDAO commonProductsDAO,
+                                     CommonProductNamesDAO commonProductNamesDAO, CommonBrandNamesDAO commonBrandNamesDAO) {
         this.prestigeBasketsDAO = prestigeBasketsDAO;
+        this.prestigeAllSalesDAO = prestigeAllSalesDAO;
         this.prestigeClientsDAO = prestigeClientsDAO;
         this.prestigeProductsDAO = prestigeProductsDAO;
         this.prestigeSettingsDAO = prestigeSettingsDAO;
@@ -97,6 +98,8 @@ public class PrestigeBasketsController {
 //                return updateRetailProduct(retailProduct, bindingResult, redirectAttributes);
 //            case "delete":
 //                return deleteRetailProduct(retailProduct.getId());
+            case "patch":
+                return patchNewBasket(basket, bindingResult, redirectAttributes, model);
             default:
                 return saveNewBasket(basket, bindingResult, redirectAttributes, model);
         }
@@ -122,6 +125,7 @@ public class PrestigeBasketsController {
             case PRODUCT_BRAND_SELECTION:
                 return EStep.PRODUCT_QUANTITY_AND_PRICE_SELECTION;
             case PRODUCT_QUANTITY_AND_PRICE_SELECTION:
+                return EStep.PRODUCT_SELECTION_DONE;
             default:
                 throw new RuntimeException(String.format("Step is undefined: '%s'", step.getValue()));
         }
@@ -148,6 +152,8 @@ public class PrestigeBasketsController {
                 return processProductBrandSelection(basket, model, step);
             case PRODUCT_QUANTITY_AND_PRICE_SELECTION:
                 return processProductQuantityAndPriceSelection(basket, model, step);
+            case PRODUCT_SELECTION_DONE:
+                return processProductSelectionDone(basket, model, step);
             default:
                 throw new RuntimeException(String.format("Step is undefined: '%s'", step.getValue()));
         }
@@ -297,10 +303,34 @@ public class PrestigeBasketsController {
     }
 
     private EStep processProductQuantityAndPriceSelection(Basket basket, Model model, EStep step) {
-        Sales sales = basket.getSalesList().get(basket.getSalesList().size() - 1);
+        Sales newSales = basket.getSalesList().get(basket.getSalesList().size() - 1);
 
-        // save into prestige_all_sales
-        return step;
+        prestigeAllSalesDAO.saveNewPrestigeSale(basket, newSales);
+        return getNextStep(step);
+    }
+
+    private EStep processProductSelectionDone(Basket basket, Model model, EStep eStep) {
+        return eStep;
+    }
+
+    private String patchNewBasket(Basket basket, BindingResult bindingResult,
+                                  RedirectAttributes redirectAttributes, Model model) {
+
+        // обновляем кол-во и цену товаров и возвращаемся на страницу "/prestige/baskets"
+
+        if (bindingResult.hasErrors()) {
+            String errorMessage = "Возникла ошибка при сохранении корзины. Пожалуйста, попробуйте заново.";
+            redirectAttributes.addFlashAttribute("error", errorMessage);
+            return String.format("redirect:/prestige/baskets/%d", basket.getId());
+        }
+
+        prestigeAllSalesDAO.updateQuantityAndPrices(basket.getSalesList());
+
+
+//        return "prestige/baskets/";
+
+        model.addAttribute("step", EStep.PRODUCT_SELECTION_DONE);
+        return "prestige/baskets/add-new-basket";
     }
 
     private String saveNewBasket(Basket basket, BindingResult bindingResult,
@@ -316,5 +346,22 @@ public class PrestigeBasketsController {
         model.addAttribute("step", step);
 
         return "prestige/baskets/add-new-basket";
+    }
+
+    @GetMapping("/{basketId}")
+    public ModelAndView findBasketById(@PathVariable("basketId") Integer basketId, Model model) {
+        ModelAndView mav = new ModelAndView("prestige/baskets/add-new-basket");
+        Basket basket = prestigeBasketsDAO.findBasketById(basketId);
+
+        if (basket == null) {
+            mav.setViewName("errors/404");
+            mav.setStatus(HttpStatus.NOT_FOUND);
+            mav.addObject("previousPage", "/prestige/baskets");
+        }
+        else {
+            mav.addObject("basket", basket);
+            mav.addObject("step", EStep.PRODUCT_SELECTION_DONE);
+        }
+        return mav;
     }
 }

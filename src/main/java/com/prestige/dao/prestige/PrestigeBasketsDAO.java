@@ -38,6 +38,13 @@ public class PrestigeBasketsDAO {
         return jdbcTemplate.query(sql, new BasketMapper());
     }
 
+    public Basket findBasketById(Integer basketId) {
+        String sql =    "SELECT";
+
+        // STOPPED
+        return null;
+    }
+
     public void saveNewPrestigeBasket(Basket basket) {
         String sql =    "INSERT INTO prestige_baskets (" +
 

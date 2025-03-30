@@ -165,7 +165,29 @@
         </thead>
 
         <tbody>
-            <tr>
+
+            <tr th:each="sales, iterStat : ${basket.salesList}" th:if="${!iterStat.last or step.value == 'PRODUCT_SELECTION_DONE'}">
+                <td th:text="*{salesList[__${iterStat.index}__].product.productName.productName}"></td>
+                <td th:text="*{salesList[__${iterStat.index}__].product.carModel}"></td>
+                <td th:text="*{salesList[__${iterStat.index}__].product.engineModel}"></td>
+
+                <td th:text="*{salesList[__${iterStat.index}__].product.oemArticleNumber}"></td>
+                <td th:text="*{salesList[__${iterStat.index}__].product.crossArticleNumber}"></td>
+                <td th:text="*{salesList[__${iterStat.index}__].product.brand.brandName}"></td>
+                <td>
+                    <input type="number" step="1" th:field="*{salesList[__${iterStat.index}__].quantity}" required>
+                </td>
+                <td>
+                    <input type="number" step="any" th:field="*{salesList[__${iterStat.index}__].soldPrice}" required>
+                </td>
+                <td th:text="${basket.salesList[iterStat.index].quantity * basket.salesList[iterStat.index].soldPrice}"></td>
+                <td th:text="*{salesList[__${iterStat.index}__].stockBeforeSale}"></td>
+                <td th:text="*{salesList[__${iterStat.index}__].calculatedPrice}"></td>
+                <td th:text="*{salesList[__${iterStat.index}__].recommendedPrice}"></td>
+                <td th:text="*{salesList[__${iterStat.index}__].wholesalePrice}"></td>
+            </tr>
+
+            <tr th:if="${step.value != 'PRODUCT_SELECTION_DONE'}">
                 <div th:if="${#lists.isEmpty(basket.salesList)}">
                     <td th:each="i : ${#numbers.sequence(1, 13)}">...</td>
                 </div>
@@ -312,7 +334,13 @@
         </tbody>
     </table>
 
-    <button type="submit" name="method" value="post">Далее</button>
+    <div th:if="${step.value == 'PRODUCT_SELECTION_DONE'}">
+        <button type="submit" name="method" value="patch" style="margin-bottom: 10px;">Обновить и закрыть корзину</button>
+        <button type="submit" name="method" value="post">Добавить новый товар</button>
+    </div>
+    <div th:unless="${step.value == 'PRODUCT_SELECTION_DONE'}">
+        <button type="submit" name="method" value="post">Далее</button>
+    </div>
 </form>
 
 </body>
