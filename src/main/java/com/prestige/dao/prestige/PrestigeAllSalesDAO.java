@@ -1,6 +1,7 @@
 package com.prestige.dao.prestige;
 
 
+import com.prestige.dao.mappers.SalesMapper;
 import com.prestige.models.Basket;
 import com.prestige.models.Sales;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +52,7 @@ public class PrestigeAllSalesDAO {
     }
 
     public void updateQuantityAndPrices(List<Sales> salesList) {
-        String sql = "UPDATE prestige_all_sales SET quantity = ?, sold_price_smn = ? WHERE id = ?";
+        String sql =    "UPDATE prestige_all_sales SET quantity = ?, sold_price_smn = ? WHERE id = ?";
 
         jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
             @Override
@@ -67,5 +68,36 @@ public class PrestigeAllSalesDAO {
                 return salesList.size();
             }
         });
+    }
+
+    public List<Sales> findAllSalesByBasketId(Integer basketId) {
+        String sql =    "SELECT " +
+
+                            "pas.id, " +
+                            "pas.quantity, " +
+                            "pas.sold_price_smn, " +
+                            "pas.wholesale_price, " +
+
+                            "cp.id, " +
+                            "cpn.id, " +
+                            "cpn.product_name, " +
+                            "cp.car_model, " +
+                            "cp.engine_model, " +
+                            "cp.oem_article_number, " +
+                            "cp.cross_article_number, " +
+                            "cbn.id, " +
+                            "cbn.brand_name, " +
+                            "cp.notes " +
+
+                        "FROM prestige_all_sales pas " +
+
+                        "JOIN common_products cp ON pas.common_product_id = cp.id " +
+                        "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
+                        "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+
+                        "WHERE pas.basket_id = ? " +
+                        "ORDER BY (pas.id)";
+
+        return jdbcTemplate.query(sql, new Object[] {basketId}, new SalesMapper());
     }
 }

@@ -4,10 +4,14 @@ import com.prestige.dao.common.CommonBrandNamesDAO;
 import com.prestige.dao.common.CommonProductNamesDAO;
 import com.prestige.dao.common.CommonProductsDAO;
 import com.prestige.dao.prestige.*;
-import com.prestige.models.*;
+import com.prestige.models.Basket;
+import com.prestige.models.Brand;
+import com.prestige.models.Sales;
+import com.prestige.models.Settings;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,8 +22,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/prestige/baskets")
@@ -111,6 +115,7 @@ public class PrestigeBasketsController {
             case CLIENT_NAME_SELECTION:
                 return EStep.CLIENT_PHONE_NUMBER_SELECTION;
             case CLIENT_PHONE_NUMBER_SELECTION:
+            case PRODUCT_SELECTION_DONE:
                 return EStep.PRODUCT_NAME_SELECTION;
             case PRODUCT_NAME_SELECTION:
                 return EStep.PRODUCT_CAR_MODEL_SELECTION;
@@ -273,24 +278,53 @@ public class PrestigeBasketsController {
             sales.getProduct().setBrand(commonBrandNamesDAO.findBrandById(sales.getProduct().getBrand().getId()));
         }
         sales.getProduct().setId(commonProductsDAO.findProductId(sales.getProduct()));
-        setPrivateInfos(basket);
+        setPrivateInfos(basket, true);
 
         return getNextStep(step);
     }
 
-    private void setPrivateInfos(Basket basket) {
-        Sales sales = basket.getSalesList().get(basket.getSalesList().size() - 1);
+    private void setPrivateInfos(Basket basket, boolean onlyForLastSales) {
+        Set<Integer> productIds;
 
-        sales.setStockBeforeSale(prestigeProductsDAO.findStockBeforeSale(sales.getProduct(), basket));
-        sales.setWholesalePrice(prestigeProductsDAO.findWholesalePrice(sales.getProduct()));
-        sales.setCalculatedPrice(getCalculatedPrice(sales.getWholesalePrice()));
-        sales.setRecommendedPrice(prestigeProductsDAO.findRecommendedPrice(sales.getProduct(), sales.getCalculatedPrice(), basket));
-    }
+        if (basket.getSalesList().isEmpty()) {
+            return;
+        }
 
-    private BigDecimal getCalculatedPrice(BigDecimal wholesalePrice) {
+        if (onlyForLastSales) {
+            productIds = new HashSet<>();
+            productIds.add(basket.getSalesList().get(basket.getSalesList().size() - 1).getProduct().getId());
+        }
+        else {
+            productIds = basket.getSalesList().stream()
+                    .map(s -> s.getProduct().getId())
+                    .collect(Collectors.toCollection(HashSet::new));
+        }
+
+        Map<Integer, Integer> stockBeforeSaleMap = prestigeProductsDAO.findStockBeforeSale(productIds, basket);
+        Map<Integer, BigDecimal> wholeSalePriceMap = prestigeProductsDAO.findWholesalePrice(productIds);
         Settings exchangeRateSettings = prestigeSettingsDAO.findSettingsByName("exchangeRate");
         Settings magicValueSettings = prestigeSettingsDAO.findSettingsByName("magicValue");
+        Map<Integer, BigDecimal> recommendedPriceMap = prestigeProductsDAO.findRecommendedPrice(productIds, basket);
 
+        int salesListSize = basket.getSalesList().size();
+
+        for (int i = onlyForLastSales ? salesListSize - 1 : 0; i < salesListSize; i++) {
+            Sales sales = basket.getSalesList().get(i);
+
+            sales.setStockBeforeSale(stockBeforeSaleMap.get(sales.getProduct().getId()));
+            sales.setWholesalePrice(wholeSalePriceMap.get(sales.getProduct().getId()));
+            sales.setCalculatedPrice(getCalculatedPrice(sales.getWholesalePrice(), exchangeRateSettings, magicValueSettings));
+
+            if (recommendedPriceMap.get(sales.getProduct().getId()) == null) {
+                sales.setRecommendedPrice(sales.getCalculatedPrice());
+            }
+            else {
+                sales.setRecommendedPrice(recommendedPriceMap.get(sales.getProduct().getId()));
+            }
+        }
+    }
+
+    private BigDecimal getCalculatedPrice(BigDecimal wholesalePrice, Settings exchangeRateSettings, Settings magicValueSettings) {
         if (exchangeRateSettings == null || magicValueSettings == null) {
             throw new RuntimeException("Settings 'exchangeRate' or 'magicValue' doesn't exist. Please initialize it in the settings");
         }
@@ -310,7 +344,10 @@ public class PrestigeBasketsController {
     }
 
     private EStep processProductSelectionDone(Basket basket, Model model, EStep eStep) {
-        return eStep;
+        basket.getSalesList().add(new Sales());
+        model.addAttribute("allProductNames", prestigeProductsDAO.findAllProductNames());
+
+        return getNextStep(eStep);
     }
 
     private String patchNewBasket(Basket basket, BindingResult bindingResult,
@@ -326,11 +363,7 @@ public class PrestigeBasketsController {
 
         prestigeAllSalesDAO.updateQuantityAndPrices(basket.getSalesList());
 
-
-//        return "prestige/baskets/";
-
-        model.addAttribute("step", EStep.PRODUCT_SELECTION_DONE);
-        return "prestige/baskets/add-new-basket";
+        return "redirect:/prestige/baskets";
     }
 
     private String saveNewBasket(Basket basket, BindingResult bindingResult,
@@ -348,10 +381,23 @@ public class PrestigeBasketsController {
         return "prestige/baskets/add-new-basket";
     }
 
+    private Basket findBasketById(Integer basketId) {
+
+        try {
+            Basket basket = prestigeBasketsDAO.findBasketById(basketId);
+            basket.setSalesList(prestigeAllSalesDAO.findAllSalesByBasketId(basketId));
+            setPrivateInfos(basket, false);
+            return basket;
+        }
+        catch (DataAccessException e) {
+            return null;
+        }
+    }
+
     @GetMapping("/{basketId}")
     public ModelAndView findBasketById(@PathVariable("basketId") Integer basketId, Model model) {
         ModelAndView mav = new ModelAndView("prestige/baskets/add-new-basket");
-        Basket basket = prestigeBasketsDAO.findBasketById(basketId);
+        Basket basket = findBasketById(basketId);
 
         if (basket == null) {
             mav.setViewName("errors/404");

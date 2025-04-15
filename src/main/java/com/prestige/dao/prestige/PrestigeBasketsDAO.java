@@ -39,10 +39,15 @@ public class PrestigeBasketsDAO {
     }
 
     public Basket findBasketById(Integer basketId) {
-        String sql =    "SELECT";
+        String sql =    "SELECT " +
+                            "pb.id, pb.created_date_time, pb.last_changed_date_time, " +
+                            "pc.id, pc.name, pc.phone_number, " +
+                            "pb.total_sum, pb.notes " +
+                        "FROM prestige_baskets pb " +
+                        "JOIN prestige_clients pc on pb.client_id = pc.id " +
+                        "WHERE pb.id = ?";
 
-        // STOPPED
-        return null;
+        return jdbcTemplate.queryForObject(sql, new Object[] {basketId}, new BasketMapper());
     }
 
     public void saveNewPrestigeBasket(Basket basket) {

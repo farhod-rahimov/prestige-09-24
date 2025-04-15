@@ -11,11 +11,8 @@
             margin: 0;
             padding: 20px;
         }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+        h2, h3 {
+            margin-top: 0;
         }
         table {
             width: 100%;
@@ -34,6 +31,9 @@
             background-color: #4CAF50;
             color: white;
             text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 2;
         }
         td {
             text-align: left;
@@ -49,6 +49,23 @@
             border-radius: 5px;
             box-sizing: border-box;
         }
+               .client-table {
+            width: 50%;
+        }
+        .private-info {
+            background-color: #a8ada8;
+        }
+        .button-container {
+            position: sticky;
+            bottom: 0;
+            background-color: #fff;
+            padding: 15px;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            z-index: 10;
+        }
         button {
             background-color: #4CAF50; /* Зеленый цвет для кнопки "Сохранить" */
             color: white;
@@ -56,7 +73,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            width: 100%;
+            font-size: 16px;
         }
         button:hover {
             background-color: #45a049; /* Более темный зеленый при наведении */
@@ -334,11 +351,11 @@
         </tbody>
     </table>
 
-    <div th:if="${step.value == 'PRODUCT_SELECTION_DONE'}">
-        <button type="submit" name="method" value="patch" style="margin-bottom: 10px;">Обновить и закрыть корзину</button>
+    <div class="button-container" th:if="${step.value == 'PRODUCT_SELECTION_DONE'}">
+        <button type="submit" name="method" value="patch">Обновить и закрыть корзину</button>
         <button type="submit" name="method" value="post">Добавить новый товар</button>
     </div>
-    <div th:unless="${step.value == 'PRODUCT_SELECTION_DONE'}">
+    <div class="button-container" th:unless="${step.value == 'PRODUCT_SELECTION_DONE'}">
         <button type="submit" name="method" value="post">Далее</button>
     </div>
 </form>
