@@ -29,6 +29,27 @@ public class Basket {
 
     private List<Sales> salesList;
 
+    private EStatus status;
+
+    @AllArgsConstructor
+    @Getter
+    public enum EStatus {
+        SOLD(1),
+        DELETED(2),
+        PENDING(3);
+
+        private final Integer intValue;
+
+        public static EStatus fromIntValue(int intValue) {
+            for (EStatus status : EStatus.values()) {
+                if (status.intValue == intValue) {
+                    return status;
+                }
+            }
+            throw new IllegalArgumentException("Invalid status value: " + intValue);
+        }
+    }
+
     @Override
     public boolean equals(Object obj) {
         Basket other = (Basket)obj;
@@ -36,7 +57,8 @@ public class Basket {
         if (other != null && this != other) {
             return  other.id.equals(id) && other.createdDateTime.equals(createdDateTime) &&
                     other.lastChangedDateTime.equals(lastChangedDateTime) && other.client.equals(client) &&
-                    other.totalSum.equals(totalSum) && other.notes.equals(notes) && other.salesList.equals(salesList);
+                    other.totalSum.equals(totalSum) && other.notes.equals(notes) && other.salesList.equals(salesList) &&
+                    other.status.equals(status);
         }
         return false;
     }

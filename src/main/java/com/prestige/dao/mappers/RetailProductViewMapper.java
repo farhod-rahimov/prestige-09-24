@@ -6,6 +6,7 @@ import com.prestige.models.ProductName;
 import com.prestige.models.RetailProductView;
 import org.springframework.jdbc.core.RowMapper;
 
+import java.math.RoundingMode;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -22,6 +23,6 @@ public class RetailProductViewMapper implements RowMapper<RetailProductView> {
 
 
 
-        return new RetailProductView(product, rs.getBigDecimal(11), rs.getInt(12));
+        return new RetailProductView(product, rs.getBigDecimal(11).setScale(2, RoundingMode.HALF_UP), rs.getInt(12));
     }
 }

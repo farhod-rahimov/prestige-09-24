@@ -52,22 +52,29 @@ public class PrestigeAllSalesDAO {
     }
 
     public void updateQuantityAndPrices(List<Sales> salesList) {
-        String sql =    "UPDATE prestige_all_sales SET quantity = ?, sold_price_smn = ? WHERE id = ?";
+        int batchSize = 500;
+        int totalSize = salesList.size();
 
-        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
-            @Override
-            public void setValues(PreparedStatement ps, int i) throws SQLException {
-                Sales sales = salesList.get(i);
-                ps.setInt(1, sales.getQuantity());
-                ps.setBigDecimal(2, sales.getSoldPrice());
-                ps.setInt(3, sales.getId());
-            }
+        for (int i = 0; i < totalSize; i += batchSize) {
+            List<Sales> batch = salesList.subList(i, Math.min(i + batchSize, totalSize));
 
-            @Override
-            public int getBatchSize() {
-                return salesList.size();
-            }
-        });
+            String sql =    "UPDATE prestige_all_sales SET quantity = ?, sold_price_smn = ? WHERE id = ?";
+
+            jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+                @Override
+                public void setValues(PreparedStatement ps, int index) throws SQLException {
+                    Sales sales = batch.get(index);
+                    ps.setInt(1, sales.getQuantity());
+                    ps.setBigDecimal(2, sales.getSoldPrice());
+                    ps.setInt(3, sales.getId());
+                }
+
+                @Override
+                public int getBatchSize() {
+                    return batch.size();
+                }
+            });
+        }
     }
 
     public List<Sales> findAllSalesByBasketId(Integer basketId) {

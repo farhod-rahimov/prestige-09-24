@@ -72,7 +72,8 @@ create table if not exists sklad_baskets (
     last_changed_date_time TIMESTAMP not null,
 	client_id int references sklad_clients not null,
 	total_sum numeric(15, 4) not null,
-    notes TEXT
+    notes TEXT,
+    status int not null
 );
 
 create table if not exists sklad_all_sales (
@@ -104,7 +105,8 @@ create table if not exists prestige_baskets (
 	last_changed_date_time TIMESTAMP not null,
 	client_id int references prestige_clients not null,
 	total_sum numeric(15, 4) not null,
-    notes TEXT
+    notes TEXT,
+    status int not null
 );
 
 create table if not exists prestige_all_sales(

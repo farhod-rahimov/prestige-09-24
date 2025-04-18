@@ -66,17 +66,50 @@
             justify-content: center;
             z-index: 10;
         }
-        button {
-            background-color: #4CAF50; /* Зеленый цвет для кнопки "Сохранить" */
+        .btn {
             color: white;
-            padding: 10px 15px;
+            padding: 10px 20px;
             border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            border-radius: 6px;
             font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
         }
-        button:hover {
-            background-color: #45a049; /* Более темный зеленый при наведении */
+        .btn-green {
+            background-color: #66bb6a;
+        }
+        .btn-green:hover {
+            background-color: #57a95b;
+        }
+        .btn-blue {
+            background-color: #2196F3;
+        }
+        .btn-blue:hover {
+            background-color: #1976D2;
+        }
+        .btn-orange {
+            background-color: #ff9800;
+        }
+        .btn-orange:hover {
+            background-color: #fb8c00;
+        }
+        .btn-purple {
+            background-color: #ba68c8;
+        }
+        .btn-purple:hover {
+            background-color: #9c27b0;
+        }
+        .btn-red {
+            background-color: #f66f6f;
+        }
+        .btn-red:hover {
+            background-color: #f44336;
+        }
+        .btn-pink {
+            background-color: #f06292;
+        }
+        .btn-pink:hover {
+            background-color: #ec407a;
         }
         .error-message {
             color: red;
@@ -118,6 +151,8 @@
         <tr>
             <th>Имя клиента</th>
             <th>Телефон</th>
+            <th>Общая сумма корзины</th>
+            <th>Комментарий</th>
         </tr>
         </thead>
         <tbody>
@@ -129,9 +164,13 @@
                     </select>
                 </td>
                 <td>
-                    <select required>
-                        <option value="constant" selected>...</option>
-                    </select>
+                    <select required><option value="constant" selected>...</option></select>
+                </td>
+                <td>
+                    <input type="text" th:value="..." readonly>
+                </td>
+                <td>
+                    <input type="text" th:value="..." readonly>
                 </td>
             </div>
             <div th:unless="${step.value == 'CLIENT_NAME_SELECTION'}">
@@ -141,20 +180,32 @@
                     </select>
                 </td>
 
-                    <div th:if="${step.value == 'CLIENT_PHONE_NUMBER_SELECTION'}">
-                        <td>
-                            <select type="text" th:field="*{client.phoneNumber}" required>
-                                <option th:each="phoneNumber : ${allPhoneNumbers}" th:value="${phoneNumber}" th:text="${phoneNumber}">Выберите номер телефона</option>
-                            </select>
-                        </td>
-                    </div>
-                    <div th:unless="${step.value == 'CLIENT_PHONE_NUMBER_SELECTION'}">
-                        <td>
-                            <select required>
-                                <option value="constant" selected th:text="${basket.getClient().getPhoneNumber()}"></option>
-                            </select>
-                        </td>
-                    </div>
+                <div th:if="${step.value == 'CLIENT_PHONE_NUMBER_SELECTION'}">
+                    <td>
+                        <select type="text" th:field="*{client.phoneNumber}" required>
+                            <option th:each="phoneNumber : ${allPhoneNumbers}" th:value="${phoneNumber}" th:text="${phoneNumber}">Выберите номер телефона</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" th:value="..." readonly>
+                    </td>
+                    <td>
+                        <input type="text" th:value="..." readonly>
+                    </td>
+                </div>
+                <div th:unless="${step.value == 'CLIENT_PHONE_NUMBER_SELECTION'}">
+                    <td>
+                        <select required>
+                            <option value="constant" selected th:text="${basket.getClient().getPhoneNumber()}"></option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" th:value="${basket.getTotalSum()}" readonly>
+                    </td>
+                    <td>
+                        <input type="text" th:field="*{notes}">
+                    </td>
+                </div>
             </div>
         </tr>
         </tbody>
@@ -351,12 +402,32 @@
         </tbody>
     </table>
 
-    <div class="button-container" th:if="${step.value == 'PRODUCT_SELECTION_DONE'}">
-        <button type="submit" name="method" value="patch">Обновить и закрыть корзину</button>
-        <button type="submit" name="method" value="post">Добавить новый товар</button>
+    <div class="button-container" style="display: block;" th:if="${step.value == 'PRODUCT_SELECTION_DONE'}">
+
+        <div style="margin-bottom: 15px; text-align: center;">
+            <button type="submit" name="method" class="btn btn-blue" value="post">Добавить новый товар</button>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <button type="submit" name="method" class="btn btn-green" value="patch">Закрыть корзину с сохранением</button>
+            <button type="submit" name="method" class="btn btn-pink" value="close">Закрыть корзину без сохранения</button>
+            <button th:if="${basket.getStatus().getIntValue() == 1 or basket.getStatus().getIntValue() == 3}"
+                    type="submit" name="method" value="delete"
+                    onclick="return confirm('Вы уверены, что хотите удалить корзину?')"
+                    class="btn btn-red">Удалить корзину</button>
+
+            <button th:if="${basket.getStatus().getIntValue() == 2}"
+                    type="submit" name="method" value="markAsSold"
+                    class="btn btn-purple">Восстановить корзину</button>
+
+            <button th:if="${basket.getStatus().getIntValue() == 3}"
+                    type="submit" name="method" value="markAsSold"
+                    class="btn btn-orange">Продать корзину</button>
+        </div>
+
     </div>
     <div class="button-container" th:unless="${step.value == 'PRODUCT_SELECTION_DONE'}">
-        <button type="submit" name="method" value="post">Далее</button>
+        <button type="submit" name="method" class="btn btn-green" value="post">Далее</button>
     </div>
 </form>
 

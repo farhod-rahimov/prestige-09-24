@@ -30,7 +30,7 @@ public class PrestigeBasketsDAO {
         String sql =    "SELECT " +
                             "pb.id, pb.created_date_time, pb.last_changed_date_time, " +
                             "pc.id, pc.name, pc.phone_number, " +
-                            "pb.total_sum, pb.notes " +
+                            "pb.total_sum, pb.notes, pb.status " +
                         "FROM prestige_baskets pb " +
                         "JOIN prestige_clients pc on pb.client_id = pc.id " +
                         "ORDER BY (pb.id)";
@@ -42,7 +42,7 @@ public class PrestigeBasketsDAO {
         String sql =    "SELECT " +
                             "pb.id, pb.created_date_time, pb.last_changed_date_time, " +
                             "pc.id, pc.name, pc.phone_number, " +
-                            "pb.total_sum, pb.notes " +
+                            "pb.total_sum, pb.notes, pb.status " +
                         "FROM prestige_baskets pb " +
                         "JOIN prestige_clients pc on pb.client_id = pc.id " +
                         "WHERE pb.id = ?";
@@ -56,8 +56,10 @@ public class PrestigeBasketsDAO {
                             "created_date_time, " +
                             "last_changed_date_time, " +
                             "client_id, " +
-                            "total_sum" +
-                        ") VALUES (?, ?, ?, ?) RETURNING id";
+                            "total_sum, " +
+                            "notes, " +
+                            "status" +
+                        ") VALUES (?, ?, ?, ?, ?, ?) RETURNING id";
 
         basket.setCreatedDateTime(utils.getCurrentDateAndTime());
         basket.setLastChangedDateTime(utils.getCurrentDateAndTime());
@@ -71,10 +73,30 @@ public class PrestigeBasketsDAO {
             ps.setTimestamp(2, basket.getLastChangedDateTime());
             ps.setInt(3, basket.getClient().getId());
             ps.setBigDecimal(4, basket.getTotalSum());
+            ps.setString(5, basket.getNotes());
+            ps.setInt(6, basket.getStatus().getIntValue());
 
             return ps;
         }, keyHolder);
 
         basket.setId(keyHolder.getKey().intValue());
+    }
+
+    public void updateBasketTotalSum(Basket basket) {
+        String sql =    "UPDATE prestige_baskets SET total_sum = ?, last_changed_date_time = ? WHERE id = ?";
+
+        jdbcTemplate.update(sql, new Object[]{basket.getTotalSum(), utils.getCurrentDateAndTime(), basket.getId()});
+    }
+
+    public void updateBasketStatus(Basket basket) {
+        String sql =    "UPDATE prestige_baskets SET status = ?, last_changed_date_time = ? WHERE id = ?";
+
+        jdbcTemplate.update(sql, new Object[]{basket.getStatus().getIntValue(), utils.getCurrentDateAndTime(), basket.getId()});
+    }
+
+    public void updateBasketNotes(Basket basket) {
+        String sql =    "UPDATE prestige_baskets SET notes = ?, last_changed_date_time = ? WHERE id = ?";
+
+        jdbcTemplate.update(sql, new Object[]{basket.getNotes(), utils.getCurrentDateAndTime(), basket.getId()});
     }
 }

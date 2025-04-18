@@ -98,12 +98,14 @@ public class PrestigeBasketsController {
                                        Model model) {
 
         switch (method) {
-//            case "put":
-//                return updateRetailProduct(retailProduct, bindingResult, redirectAttributes);
-//            case "delete":
-//                return deleteRetailProduct(retailProduct.getId());
+            case "markAsSold":
+                return markAsSoldBasket(basket, bindingResult, redirectAttributes);
+            case "delete":
+                return deleteBasket(basket, bindingResult, redirectAttributes);
+            case "close":
+                return "redirect:/prestige/baskets";
             case "patch":
-                return patchNewBasket(basket, bindingResult, redirectAttributes, model);
+                return patchBasket(basket, bindingResult, redirectAttributes, model);
             default:
                 return saveNewBasket(basket, bindingResult, redirectAttributes, model);
         }
@@ -181,6 +183,7 @@ public class PrestigeBasketsController {
         basket.getClient().setId(prestigeClientsDAO.findClientId(basket.getClient()));
         basket.setSalesList(new LinkedList<>());
         basket.getSalesList().add(new Sales());
+        basket.setStatus(Basket.EStatus.PENDING);
 
         prestigeBasketsDAO.saveNewPrestigeBasket(basket);
         model.addAttribute("allProductNames", prestigeProductsDAO.findAllProductNames());
@@ -336,10 +339,22 @@ public class PrestigeBasketsController {
                              .multiply(exchangeRate).setScale(2, RoundingMode.HALF_UP);
     }
 
+    private void updateBasketTotalSum(Basket basket) {
+        List<Sales> salesList = basket.getSalesList();
+        BigDecimal totalSum = new BigDecimal(0);
+
+        for (Sales sales : salesList) {
+            totalSum = totalSum.add(sales.getSoldPrice().multiply(BigDecimal.valueOf(sales.getQuantity())));
+        }
+        basket.setTotalSum(totalSum.setScale(2, RoundingMode.HALF_UP));
+        prestigeBasketsDAO.updateBasketTotalSum(basket);
+    }
+
     private EStep processProductQuantityAndPriceSelection(Basket basket, Model model, EStep step) {
         Sales newSales = basket.getSalesList().get(basket.getSalesList().size() - 1);
 
         prestigeAllSalesDAO.saveNewPrestigeSale(basket, newSales);
+        updateBasketTotalSum(basket);
         return getNextStep(step);
     }
 
@@ -350,7 +365,42 @@ public class PrestigeBasketsController {
         return getNextStep(eStep);
     }
 
-    private String patchNewBasket(Basket basket, BindingResult bindingResult,
+    private String changeBasketStatus(Basket basket, BindingResult bindingResult,
+                                      RedirectAttributes redirectAttributes, String errorMsg, Basket.EStatus newStatus) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("error", errorMsg);
+            return String.format("redirect:/prestige/baskets/%d", basket.getId());
+        }
+
+        patchBasketInternal(basket); // перед обновлением статуса корзины обязательно обновить ее
+        basket.setStatus(newStatus);
+        prestigeBasketsDAO.updateBasketStatus(basket);
+
+        return "redirect:/prestige/baskets";
+    }
+
+    private String deleteBasket(Basket basket, BindingResult bindingResult,
+                               RedirectAttributes redirectAttributes) {
+        String errorMsg = "Возникла ошибка при удалении корзины. Пожалуйста, попробуйте заново.";
+
+        return changeBasketStatus(basket, bindingResult, redirectAttributes, errorMsg, Basket.EStatus.DELETED);
+    }
+
+    private String markAsSoldBasket(Basket basket, BindingResult bindingResult,
+                                 RedirectAttributes redirectAttributes) {
+        String errorMsg = String.format("Возникла ошибка при %s корзины. Пожалуйста, попробуйте заново.",
+                basket.getStatus() == Basket.EStatus.DELETED ? "восстановлении" : "продаже");
+
+        return changeBasketStatus(basket, bindingResult, redirectAttributes, errorMsg, Basket.EStatus.SOLD);
+    }
+
+    private void patchBasketInternal(Basket basket) {
+        prestigeAllSalesDAO.updateQuantityAndPrices(basket.getSalesList());
+        prestigeBasketsDAO.updateBasketNotes(basket);
+        updateBasketTotalSum(basket);
+    }
+
+    private String patchBasket(Basket basket, BindingResult bindingResult,
                                   RedirectAttributes redirectAttributes, Model model) {
 
         // обновляем кол-во и цену товаров и возвращаемся на страницу "/prestige/baskets"
@@ -361,7 +411,7 @@ public class PrestigeBasketsController {
             return String.format("redirect:/prestige/baskets/%d", basket.getId());
         }
 
-        prestigeAllSalesDAO.updateQuantityAndPrices(basket.getSalesList());
+        patchBasketInternal(basket);
 
         return "redirect:/prestige/baskets";
     }
