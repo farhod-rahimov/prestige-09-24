@@ -34,9 +34,12 @@ public class PrestigeProductsDAO {
         String sql =    "WITH pas AS (" +
                             "SELECT " +
                                 "common_product_id, " +
+                                "basket_id, " +
                                 "SUM(quantity) AS total_quantity " +
-                            "FROM prestige_all_sales " +
-                            "GROUP BY (common_product_id)) " +
+                            "FROM prestige_all_sales pas " +
+                            "JOIN prestige_baskets pb ON pas.basket_id = pb.id " +
+                            "WHERE pb.status = " + Basket.EStatus.SOLD.getIntValue() + " " +
+                            "GROUP BY (common_product_id, basket_id)) " +
 
                         "SELECT " +
                             "cp.id as cp_id, " +
@@ -381,7 +384,8 @@ public class PrestigeProductsDAO {
                                      "FROM prestige_all_sales pas " +
                                      "JOIN prestige_baskets pb on pas.basket_id = pb.id " +
                                      "WHERE pas.common_product_id = cp.id AND " +
-                                           "pb.created_date_time < ?), 0))" +
+                                            "pb.status = " + Basket.EStatus.SOLD.getIntValue() + " AND " +
+                                            "pb.created_date_time < ?), 0))" +
                             ") AS stock_before_sale " +
                         "FROM common_products cp " +
                         "WHERE cp.id IN (" + inClause + ")";
@@ -431,7 +435,9 @@ public class PrestigeProductsDAO {
                                         "COALESCE(SUM(pas.quantity), 0) AS total_sold, " +
                                         "COALESCE(SUM(pas.quantity * pas.wholesale_price), 0) AS total_sold_value " +
                                     "FROM prestige_all_sales pas " +
-                                    "WHERE pas.common_product_id IN (" + inClause + ") " +
+                                    "JOIN prestige_baskets pb ON pb.id = pas.basket_id " +
+                                    "WHERE pas.common_product_id IN (" + inClause + ") AND " +
+                                            "pb.status = " + Basket.EStatus.SOLD.getIntValue() + " " +
                                     "GROUP BY pas_id) " +
 
                                 "SELECT " +
@@ -481,7 +487,8 @@ public class PrestigeProductsDAO {
                                 "SELECT created_date_time " +
                                 "FROM prestige_baskets " +
                                 "WHERE id = ? " +
-                            ")" +
+                            ") AND " +
+                            "pb.status = " + Basket.EStatus.SOLD.getIntValue() + " " +
                         "GROUP BY (pas.common_product_id)";
 
         List<Object> bindings = new ArrayList();
