@@ -96,7 +96,7 @@ public class CommonProductNamesDAO {
     }
 
     public void deleteProductNameById(Integer productNameId) {
-        String sql = "DELETE from common_product_names WHERE id = ?";
+        String sql = "DELETE FROM common_product_names WHERE id = ?";
 
         jdbcTemplate.update(sql, new Object[]{productNameId});
     }

@@ -205,7 +205,7 @@ public class CommonProductsDAO {
     }
 
     public void deleteProductById(Integer productId) {
-        String sql = "DELETE from common_products WHERE id = ?";
+        String sql = "DELETE FROM common_products WHERE id = ?";
 
         jdbcTemplate.update(sql, productId);
     }

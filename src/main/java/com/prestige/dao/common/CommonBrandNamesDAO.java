@@ -109,7 +109,7 @@ public class CommonBrandNamesDAO {
     }
 
     public void deleteBrandById(Integer brandId) {
-        String sql = "DELETE from common_brand_names WHERE id = ?";
+        String sql = "DELETE FROM common_brand_names WHERE id = ?";
 
         jdbcTemplate.update(sql, new Object[]{brandId});
     }

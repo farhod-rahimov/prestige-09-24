@@ -229,6 +229,7 @@
                 <th class="private-info">(INNER * magicValue * exchangeRate, SMN)</th>
                 <th class="private-info">(INNER RECOMMENDED, SMN)</th>
                 <th class="private-info">(INNER)</th>
+                <th class="private-info"></th>
             </tr>
         </thead>
 
@@ -253,11 +254,15 @@
                 <td th:text="*{salesList[__${iterStat.index}__].calculatedPrice}"></td>
                 <td th:text="*{salesList[__${iterStat.index}__].recommendedPrice}"></td>
                 <td th:text="*{salesList[__${iterStat.index}__].wholesalePrice}"></td>
+
+                <td>
+                    <input type="checkbox" name="selectedSalesIds" th:value="*{salesList[__${iterStat.index}__].id}">
+                </td>
             </tr>
 
             <tr th:if="${step.value != 'PRODUCT_SELECTION_DONE'}">
                 <div th:if="${#lists.isEmpty(basket.salesList)}">
-                    <td th:each="i : ${#numbers.sequence(1, 13)}">...</td>
+                    <td th:each="i : ${#numbers.sequence(1, 14)}">...</td>
                 </div>
                 <div th:unless="${#lists.isEmpty(basket.salesList)}" th:with="lastIndex=${basket.salesList.size() - 1}">
                     <div th:if="${step.value == 'PRODUCT_NAME_SELECTION'}">
@@ -268,7 +273,7 @@
                                 </option>
                             </select>
                         </td>
-                        <td th:each="i : ${#numbers.sequence(1, 12)}">...</td>
+                        <td th:each="i : ${#numbers.sequence(1, 13)}">...</td>
                     </div>
                     <div th:unless="${step.value == 'PRODUCT_NAME_SELECTION'}">
                         <td>
@@ -285,7 +290,7 @@
                                     </option>
                                 </select>
                             </td>
-                            <td th:each="i : ${#numbers.sequence(1, 11)}">...</td>
+                            <td th:each="i : ${#numbers.sequence(1, 12)}">...</td>
                         </div>
                         <div th:unless="${step.value == 'PRODUCT_CAR_MODEL_SELECTION'}">
                             <td>
@@ -302,7 +307,7 @@
                                         </option>
                                     </select>
                                 </td>
-                                <td th:each="i : ${#numbers.sequence(1, 10)}">...</td>
+                                <td th:each="i : ${#numbers.sequence(1, 11)}">...</td>
                             </div>
                             <div th:unless="${step.value == 'PRODUCT_ENGINE_MODEL_SELECTION'}">
                                 <td>
@@ -320,7 +325,7 @@
                                             </option>
                                         </select>
                                     </td>
-                                    <td th:each="i : ${#numbers.sequence(1, 9)}">...</td>
+                                    <td th:each="i : ${#numbers.sequence(1, 10)}">...</td>
                                 </div>
                                 <div th:unless="${step.value == 'PRODUCT_OEM_ARTICLE_NUMBER_SELECTION'}">
                                     <td>
@@ -338,7 +343,7 @@
                                                 </option>
                                             </select>
                                         </td>
-                                        <td th:each="i : ${#numbers.sequence(1, 8)}">...</td>
+                                        <td th:each="i : ${#numbers.sequence(1, 9)}">...</td>
                                     </div>
                                     <div th:unless="${step.value == 'PRODUCT_CROSS_ARTICLE_NUMBER_SELECTION'}">
                                         <td>
@@ -356,7 +361,7 @@
                                                     </option>
                                                 </select>
                                             </td>
-                                            <td th:each="i : ${#numbers.sequence(1, 7)}">...</td>
+                                            <td th:each="i : ${#numbers.sequence(1, 8)}">...</td>
                                         </div>
                                         <div th:unless="${step.value == 'PRODUCT_BRAND_SELECTION'}">
                                             <td>
@@ -390,6 +395,7 @@
                                                 <td>
                                                     <input type="text" th:value="*{salesList[__${lastIndex}__].wholesalePrice}" readonly>
                                                 </td>
+                                                <td>...</td>
                                             </div>
                                         </div>
                                     </div>
@@ -406,11 +412,21 @@
 
         <div style="margin-bottom: 15px; text-align: center;">
             <button type="submit" name="method" class="btn btn-blue" value="post">Добавить новый товар</button>
+
+            <button type="submit" name="method" value="deleteSelected"
+                    onclick="return confirm('Удалить выбранные товары?')"
+                    class="btn btn-red">Удалить выбранные товары</button>
         </div>
 
         <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <button th:if="${basket.getStatus().getIntValue() == 3}"
+                    type="submit" name="method" value="markAsSold"
+                    class="btn btn-orange">Продать корзину</button>
+
             <button type="submit" name="method" class="btn btn-green" value="patch">Закрыть корзину с сохранением</button>
+
             <button type="submit" name="method" class="btn btn-pink" value="close">Закрыть корзину без сохранения</button>
+
             <button th:if="${basket.getStatus().getIntValue() == 1 or basket.getStatus().getIntValue() == 3}"
                     type="submit" name="method" value="delete"
                     onclick="return confirm('Вы уверены, что хотите удалить корзину?')"
@@ -419,10 +435,6 @@
             <button th:if="${basket.getStatus().getIntValue() == 2}"
                     type="submit" name="method" value="markAsSold"
                     class="btn btn-purple">Восстановить корзину</button>
-
-            <button th:if="${basket.getStatus().getIntValue() == 3}"
-                    type="submit" name="method" value="markAsSold"
-                    class="btn btn-orange">Продать корзину</button>
         </div>
 
     </div>

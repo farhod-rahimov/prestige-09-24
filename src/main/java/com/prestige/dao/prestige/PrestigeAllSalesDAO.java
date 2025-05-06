@@ -107,4 +107,21 @@ public class PrestigeAllSalesDAO {
 
         return jdbcTemplate.query(sql, new Object[] {basketId}, new SalesMapper());
     }
+
+    public void deleteSalesIds(List<Integer> salesIds) {
+        String sql =    "DELETE FROM prestige_all_sales WHERE id = ?";
+
+        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+
+            @Override
+            public void setValues(PreparedStatement ps, int index) throws SQLException {
+                ps.setInt(1, salesIds.get(index));
+            }
+
+            @Override
+            public int getBatchSize() {
+                return salesIds.size();
+            }
+        });
+    }
 }

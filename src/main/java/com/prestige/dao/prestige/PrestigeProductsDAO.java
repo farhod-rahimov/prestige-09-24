@@ -116,7 +116,7 @@ public class PrestigeProductsDAO {
     }
 
     public void deletePrestigeProductById(Integer prestigeProductId) {
-        String sql = "DELETE from prestige_products WHERE id = ?";
+        String sql = "DELETE FROM prestige_products WHERE id = ?";
 
         jdbcTemplate.update(sql, prestigeProductId);
     }

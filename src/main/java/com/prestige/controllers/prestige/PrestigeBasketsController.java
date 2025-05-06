@@ -93,13 +93,18 @@ public class PrestigeBasketsController {
     }
 
     @PostMapping()
-    public String postMethodDispatcher(@ModelAttribute("basket") Basket basket, BindingResult bindingResult,
-                                       @RequestParam("method") String method, RedirectAttributes redirectAttributes,
+    public String postMethodDispatcher(@ModelAttribute("basket") Basket basket,
+                                       @RequestParam("method") String method,
+                                       @RequestParam(value = "selectedSalesIds", required = false) List<Integer> selectedSalesIds,
+                                       BindingResult bindingResult,
+                                       RedirectAttributes redirectAttributes,
                                        Model model) {
 
         switch (method) {
             case "markAsSold":
                 return markAsSoldBasket(basket, bindingResult, redirectAttributes);
+            case "deleteSelected":
+                return deleteSelected(basket, selectedSalesIds);
             case "delete":
                 return deleteBasket(basket, bindingResult, redirectAttributes);
             case "close":
@@ -392,6 +397,15 @@ public class PrestigeBasketsController {
                 basket.getStatus() == Basket.EStatus.DELETED ? "восстановлении" : "продаже");
 
         return changeBasketStatus(basket, bindingResult, redirectAttributes, errorMsg, Basket.EStatus.SOLD);
+    }
+
+    private String deleteSelected(Basket basket, List<Integer> selectedSalesIds) {
+
+        // удалять из листа удаляемые объекты не имеет значения, потому что данные загрузятся заново после редиректа
+        // достаточно удалить из БД
+
+        prestigeAllSalesDAO.deleteSalesIds(selectedSalesIds);
+        return "redirect:/prestige/baskets/" + basket.getId();
     }
 
     private void patchBasketInternal(Basket basket) {

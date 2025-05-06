@@ -91,7 +91,7 @@ public class PrestigeSettingsDAO {
     }
 
     public void deleteSettingsById(Integer settingsId) {
-        String sql = "DELETE from prestige_settings WHERE id = ?";
+        String sql = "DELETE FROM prestige_settings WHERE id = ?";
 
         jdbcTemplate.update(sql, new Object[]{settingsId});
     }
