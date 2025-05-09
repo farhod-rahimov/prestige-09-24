@@ -1,5 +1,6 @@
 package com.prestige.controllers.prestige;
 
+import com.prestige.dao.Utils;
 import com.prestige.dao.common.CommonBrandNamesDAO;
 import com.prestige.dao.common.CommonProductNamesDAO;
 import com.prestige.dao.common.CommonProductsDAO;
@@ -27,7 +28,7 @@ import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/prestige/baskets")
-@SessionAttributes({"step", "basket"})
+@SessionAttributes({"step", "basket", "utils"})
 public class PrestigeBasketsController {
 
     private PrestigeBasketsDAO prestigeBasketsDAO;
@@ -45,6 +46,8 @@ public class PrestigeBasketsController {
     private CommonProductNamesDAO commonProductNamesDAO;
 
     private CommonBrandNamesDAO commonBrandNamesDAO;
+
+    private Utils utils;
 
     @AllArgsConstructor
     @Getter
@@ -68,7 +71,8 @@ public class PrestigeBasketsController {
     public PrestigeBasketsController(PrestigeBasketsDAO prestigeBasketsDAO, PrestigeAllSalesDAO prestigeAllSalesDAO,
                                      PrestigeClientsDAO prestigeClientsDAO, PrestigeProductsDAO prestigeProductsDAO,
                                      PrestigeSettingsDAO prestigeSettingsDAO, CommonProductsDAO commonProductsDAO,
-                                     CommonProductNamesDAO commonProductNamesDAO, CommonBrandNamesDAO commonBrandNamesDAO) {
+                                     CommonProductNamesDAO commonProductNamesDAO, CommonBrandNamesDAO commonBrandNamesDAO,
+                                     Utils utils) {
         this.prestigeBasketsDAO = prestigeBasketsDAO;
         this.prestigeAllSalesDAO = prestigeAllSalesDAO;
         this.prestigeClientsDAO = prestigeClientsDAO;
@@ -77,6 +81,8 @@ public class PrestigeBasketsController {
         this.commonProductsDAO = commonProductsDAO;
         this.commonProductNamesDAO = commonProductNamesDAO;
         this.commonBrandNamesDAO = commonBrandNamesDAO;
+
+        this.utils = utils;
     }
 
     @GetMapping
@@ -88,6 +94,7 @@ public class PrestigeBasketsController {
     @GetMapping("/add")
     public String addNewBasketGet(Model model) {
         model.addAttribute("basket", new Basket());
+        model.addAttribute("utils", utils);
         model.addAttribute("step", EStep.CLIENT_NAME_SELECTION);
         model.addAttribute("allClientNames", prestigeClientsDAO.findUniqueClientNames());
         return "prestige/baskets/add-new-basket";
