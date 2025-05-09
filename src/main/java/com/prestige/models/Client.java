@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -19,11 +21,12 @@ public class Client {
 
     @Override
     public boolean equals(Object obj) {
-        Client other = (Client)obj;
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
 
-        if (other != null && this != other) {
-            return other.id.equals(id) && other.name.equals(name) && other.phoneNumber.equals(phoneNumber);
-        }
-        return false;
+        Client other = (Client)obj;
+        return  Objects.equals(id, other.id) &&
+                Objects.equals(name, other.name) &&
+                Objects.equals(phoneNumber, other.phoneNumber);
     }
 }

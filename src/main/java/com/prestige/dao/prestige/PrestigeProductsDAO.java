@@ -236,15 +236,66 @@ public class PrestigeProductsDAO {
         }
     }
 
-    public List<ProductName> findAllProductNames() {
+    private List<ProductName> findAllProductNamesInternal(BasketFilter filter) {
         String sql =    "SELECT cpn.id, cpn.product_name " +
+
                         "FROM prestige_products pp " +
+
                         "JOIN common_products cp ON pp.common_product_id = cp.id " +
                         "JOIN common_product_names cpn ON cpn.id = cp.product_name_id " +
-                        "GROUP BY (cpn.id) " +
+                        "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+
+                        "WHERE 1 = 1 ";
+
+        List<Object> bindings = new ArrayList();
+
+        if (filter != null) {
+            if (!filter.getProductName().isEmpty()) {
+                sql += "AND cpn.product_name ILIKE ? ESCAPE '\\' ";
+                bindings.add(filter.getProductName());
+            }
+
+            if (!filter.getCarModel().isEmpty()) {
+                sql += "AND cp.car_model ILIKE ? ESCAPE '\\' ";
+                bindings.add(filter.getCarModel());
+            }
+
+            if (!filter.getEngineModel().isEmpty()) {
+                sql += "AND cp.engine_model ILIKE ? ESCAPE '\\' ";
+                bindings.add(filter.getEngineModel());
+            }
+
+            if (!filter.getOemArticleNumber().isEmpty()) {
+                sql += "AND cp.oem_article_number ILIKE ? ESCAPE '\\' ";
+                bindings.add(filter.getOemArticleNumber());
+            }
+
+            if (!filter.getCrossArticleNumber().isEmpty()) {
+                sql += "AND cp.cross_article_number ILIKE ? ESCAPE '\\' ";
+                bindings.add(filter.getCrossArticleNumber());
+            }
+
+            if (!filter.getBrand().isEmpty()) {
+                sql += "AND cbn.brand_name ILIKE ? ESCAPE '\\' ";
+                bindings.add(filter.getBrand());
+            }
+        }
+
+        sql +=          "GROUP BY (cpn.id) " +
                         "ORDER BY (cpn.product_name)";
 
-        return jdbcTemplate.query(sql, new ProductNameMapper());
+        if (bindings.isEmpty()) {
+            return jdbcTemplate.query(sql, new ProductNameMapper());
+        }
+        return jdbcTemplate.query(sql, bindings.toArray(), new ProductNameMapper());
+    }
+
+    public List<ProductName> findAllProductNames() {
+        return findAllProductNamesInternal(null);
+    }
+
+    public List<ProductName> findAllProductNamesWithFilter(BasketFilter filter) {
+        return findAllProductNamesInternal(filter);
     }
 
     public List<String> findAvailableCarModels(Product product) {

@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -33,12 +34,24 @@ public class Sales {
 
     @Override
     public boolean equals(Object obj) {
-        Sales other = (Sales)obj;
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
 
-        if (other != null && this != other) {
-            return  other.id.equals(id) && other.product.equals(product) &&
-                    other.quantity.equals(quantity) && other.soldPrice.equals(soldPrice);
-        }
-        return false;
+        Sales other = (Sales)obj;
+        return  Objects.equals(id, other.id) &&
+                Objects.equals(product, other.product) &&
+                Objects.equals(quantity, other.quantity) &&
+                Objects.equals(soldPrice, other.soldPrice) &&
+                Objects.equals(stockBeforeSale, other.stockBeforeSale) &&
+                Objects.equals(calculatedPrice, other.calculatedPrice) &&
+                Objects.equals(recommendedPrice, other.recommendedPrice) &&
+                Objects.equals(wholesalePrice, other.wholesalePrice);
+    }
+
+    public boolean equalsOnlyProduct(Sales other) {
+        if (this == other) return true;
+        if (other == null) return false;
+
+        return Objects.equals(product, other.product);
     }
 }

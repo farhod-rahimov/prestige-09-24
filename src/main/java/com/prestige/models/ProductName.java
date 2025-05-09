@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -17,11 +19,11 @@ public class ProductName {
 
     @Override
     public boolean equals(Object obj) {
-        ProductName other = (ProductName)obj;
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
 
-        if (other != null && this != other) {
-            return other.id.equals(id) && other.productName.equals(productName);
-        }
-        return false;
+        ProductName other = (ProductName)obj;
+        return  Objects.equals(id, other.id) &&
+                Objects.equals(productName, other.productName);
     }
 }

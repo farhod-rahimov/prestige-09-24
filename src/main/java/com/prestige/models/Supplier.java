@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -23,12 +25,10 @@ public class Supplier extends Client {
 
     @Override
     public boolean equals(Object obj) {
-        Supplier other = (Supplier)obj;
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
 
-        if (other != null && this != other) {
-            return  super.equals(other) &&
-                    other.storeName.equals(storeName);
-        }
-        return false;
+        Supplier other = (Supplier)obj;
+        return  super.equals(other) && Objects.equals(storeName, other.storeName);
     }
 }

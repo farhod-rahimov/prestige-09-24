@@ -134,6 +134,12 @@
         .client-table {
             width: 50%;
         }
+        input[type="checkbox"].styled-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #4CAF50;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -256,7 +262,8 @@
                 <td th:text="*{salesList[__${iterStat.index}__].wholesalePrice}"></td>
 
                 <td>
-                    <input type="checkbox" name="selectedSalesIds" th:value="*{salesList[__${iterStat.index}__].id}">
+                    <input type="checkbox" name="selectedSalesIds" class="styled-checkbox"
+                           th:value="*{salesList[__${iterStat.index}__].id}">
                 </td>
             </tr>
 
@@ -265,137 +272,164 @@
                     <td th:each="i : ${#numbers.sequence(1, 14)}">...</td>
                 </div>
                 <div th:unless="${#lists.isEmpty(basket.salesList)}" th:with="lastIndex=${basket.salesList.size() - 1}">
-                    <div th:if="${step.value == 'PRODUCT_NAME_SELECTION'}">
+                    <div th:if="${step.value == 'PRODUCT_SELECTION_WITH_FILTER'}">
                         <td>
-                            <select type="text" th:field="*{salesList[__${lastIndex}__].product.productName.id}" required>
-                                <option th:each="productName : ${allProductNames}" th:value="${productName.id}" th:text="${productName.productName}">
-                                    Выберите название товара
-                                </option>
-                            </select>
+                            <input type="text" th:field="*{filter.productName}">
                         </td>
-                        <td th:each="i : ${#numbers.sequence(1, 13)}">...</td>
+                        <td>
+                            <input type="text" th:field="*{filter.carModel}">
+                        </td>
+                        <td>
+                            <input type="text" th:field="*{filter.engineModel}">
+                        </td>
+                        <td>
+                            <input type="text" th:field="*{filter.oemArticleNumber}">
+                        </td>
+                        <td>
+                            <input type="text" th:field="*{filter.crossArticleNumber}">
+                        </td>
+                        <td>
+                            <input type="text" th:field="*{filter.brand}">
+                        </td>
+                        <td th:each="i : ${#numbers.sequence(1, 7)}">...</td>
                     </div>
-                    <div th:unless="${step.value == 'PRODUCT_NAME_SELECTION'}">
-                        <td>
-                            <select required>
-                                <option value="constant" selected th:text="*{salesList[__${lastIndex}__].product.productName.productName}"></option>
-                            </select>
-                        </td>
-
-                        <div th:if="${step.value == 'PRODUCT_CAR_MODEL_SELECTION'}">
-                            <td>
-                                <select type="text" th:field="*{salesList[__${lastIndex}__].product.carModel}" required>
-                                    <option th:each="carModel : ${allCarModels}" th:value="${carModel}" th:text="${carModel}">
-                                        Выберите модель машины
-                                    </option>
-                                </select>
-                            </td>
+                    <div th:unless="${step.value == 'PRODUCT_SELECTION_WITH_FILTER'}">
+                        <div th:if="${step.value == 'PRODUCT_NAME_SELECTION'}">
+                            <div th:if="${#lists.isEmpty(allProductNames)}">
+                                <td>Нет товаров для выбора</td>
+                            </div>
+                            <div th:unless="${#lists.isEmpty(allProductNames)}">
+                                <td>
+                                    <select type="text" th:field="*{salesList[__${lastIndex}__].product.productName.id}" required>
+                                        <option th:each="productName : ${allProductNames}" th:value="${productName.id}" th:text="${productName.productName}">
+                                            Выберите название товара
+                                        </option>
+                                    </select>
+                                </td>
+                            </div>
                             <td th:each="i : ${#numbers.sequence(1, 12)}">...</td>
                         </div>
-                        <div th:unless="${step.value == 'PRODUCT_CAR_MODEL_SELECTION'}">
+                        <div th:unless="${step.value == 'PRODUCT_NAME_SELECTION'}">
                             <td>
                                 <select required>
-                                    <option value="constant" selected th:text="*{salesList[__${lastIndex}__].product.carModel}"></option>
+                                    <option value="constant" selected th:text="*{salesList[__${lastIndex}__].product.productName.productName}"></option>
                                 </select>
                             </td>
 
-                            <div th:if="${step.value == 'PRODUCT_ENGINE_MODEL_SELECTION'}">
+                            <div th:if="${step.value == 'PRODUCT_CAR_MODEL_SELECTION'}">
                                 <td>
-                                    <select type="text" th:field="*{salesList[__${lastIndex}__].product.engineModel}" required>
-                                        <option th:each="engineModel : ${allEngineModels}" th:value="${engineModel}" th:text="${engineModel}">
-                                            Выберите модель мотора
+                                    <select type="text" th:field="*{salesList[__${lastIndex}__].product.carModel}" required>
+                                        <option th:each="carModel : ${allCarModels}" th:value="${carModel}" th:text="${carModel}">
+                                            Выберите модель машины
                                         </option>
                                     </select>
                                 </td>
                                 <td th:each="i : ${#numbers.sequence(1, 11)}">...</td>
                             </div>
-                            <div th:unless="${step.value == 'PRODUCT_ENGINE_MODEL_SELECTION'}">
+                            <div th:unless="${step.value == 'PRODUCT_CAR_MODEL_SELECTION'}">
                                 <td>
                                     <select required>
-                                        <option th:if="*{salesList[__${lastIndex}__].product.engineModel == null}" value="constant" selected th:text="'(пусто)'"></option>
-                                        <option th:unless="*{salesList[__${lastIndex}__].product.engineModel == null}" value="constant" selected th:text="*{salesList[__${lastIndex}__].product.engineModel}"></option>
+                                        <option value="constant" selected th:text="*{salesList[__${lastIndex}__].product.carModel}"></option>
                                     </select>
                                 </td>
 
-                                <div th:if="${step.value == 'PRODUCT_OEM_ARTICLE_NUMBER_SELECTION'}">
+                                <div th:if="${step.value == 'PRODUCT_ENGINE_MODEL_SELECTION'}">
                                     <td>
-                                        <select type="text" th:field="*{salesList[__${lastIndex}__].product.oemArticleNumber}" required>
-                                            <option th:each="oemArticleNumber : ${allOemArticleNumbers}" th:value="${oemArticleNumber}" th:text="${oemArticleNumber}">
-                                                Выберите OEM артикул
+                                        <select type="text" th:field="*{salesList[__${lastIndex}__].product.engineModel}" required>
+                                            <option th:each="engineModel : ${allEngineModels}" th:value="${engineModel}" th:text="${engineModel}">
+                                                Выберите модель мотора
                                             </option>
                                         </select>
                                     </td>
                                     <td th:each="i : ${#numbers.sequence(1, 10)}">...</td>
                                 </div>
-                                <div th:unless="${step.value == 'PRODUCT_OEM_ARTICLE_NUMBER_SELECTION'}">
+                                <div th:unless="${step.value == 'PRODUCT_ENGINE_MODEL_SELECTION'}">
                                     <td>
                                         <select required>
-                                            <option th:if="*{salesList[__${lastIndex}__].product.oemArticleNumber == null}" value="constant" selected th:text="'(пусто)'"></option>
-                                            <option th:unless="*{salesList[__${lastIndex}__].product.oemArticleNumber == null}" value="constant" selected th:text="*{salesList[__${lastIndex}__].product.oemArticleNumber}"></option>
+                                            <option th:if="*{salesList[__${lastIndex}__].product.engineModel == null}" value="constant" selected th:text="'(пусто)'"></option>
+                                            <option th:unless="*{salesList[__${lastIndex}__].product.engineModel == null}" value="constant" selected th:text="*{salesList[__${lastIndex}__].product.engineModel}"></option>
                                         </select>
                                     </td>
 
-                                    <div th:if="${step.value == 'PRODUCT_CROSS_ARTICLE_NUMBER_SELECTION'}">
+                                    <div th:if="${step.value == 'PRODUCT_OEM_ARTICLE_NUMBER_SELECTION'}">
                                         <td>
-                                            <select type="text" th:field="*{salesList[__${lastIndex}__].product.crossArticleNumber}" required>
-                                                <option th:each="crossArticleNumber : ${allCrossArticleNumbers}" th:value="${crossArticleNumber}" th:text="${crossArticleNumber}">
-                                                    Выберите КРОСС артикул
+                                            <select type="text" th:field="*{salesList[__${lastIndex}__].product.oemArticleNumber}" required>
+                                                <option th:each="oemArticleNumber : ${allOemArticleNumbers}" th:value="${oemArticleNumber}" th:text="${oemArticleNumber}">
+                                                    Выберите OEM артикул
                                                 </option>
                                             </select>
                                         </td>
                                         <td th:each="i : ${#numbers.sequence(1, 9)}">...</td>
                                     </div>
-                                    <div th:unless="${step.value == 'PRODUCT_CROSS_ARTICLE_NUMBER_SELECTION'}">
+                                    <div th:unless="${step.value == 'PRODUCT_OEM_ARTICLE_NUMBER_SELECTION'}">
                                         <td>
                                             <select required>
-                                                <option th:if="*{salesList[__${lastIndex}__].product.crossArticleNumber == null}" value="constant" selected th:text="'(пусто)'"></option>
-                                                <option th:unless="*{salesList[__${lastIndex}__].product.crossArticleNumber == null}" value="constant" selected th:text="*{salesList[__${lastIndex}__].product.crossArticleNumber}"></option>
+                                                <option th:if="*{salesList[__${lastIndex}__].product.oemArticleNumber == null}" value="constant" selected th:text="'(пусто)'"></option>
+                                                <option th:unless="*{salesList[__${lastIndex}__].product.oemArticleNumber == null}" value="constant" selected th:text="*{salesList[__${lastIndex}__].product.oemArticleNumber}"></option>
                                             </select>
                                         </td>
 
-                                        <div th:if="${step.value == 'PRODUCT_BRAND_SELECTION'}">
+                                        <div th:if="${step.value == 'PRODUCT_CROSS_ARTICLE_NUMBER_SELECTION'}">
                                             <td>
-                                                <select type="text" th:field="*{salesList[__${lastIndex}__].product.brand.id}" required>
-                                                    <option th:each="brand : ${allBrands}" th:value="${brand.id}" th:text="${brand.brandName}">
-                                                        Выберите бренд
+                                                <select type="text" th:field="*{salesList[__${lastIndex}__].product.crossArticleNumber}" required>
+                                                    <option th:each="crossArticleNumber : ${allCrossArticleNumbers}" th:value="${crossArticleNumber}" th:text="${crossArticleNumber}">
+                                                        Выберите КРОСС артикул
                                                     </option>
                                                 </select>
                                             </td>
                                             <td th:each="i : ${#numbers.sequence(1, 8)}">...</td>
                                         </div>
-                                        <div th:unless="${step.value == 'PRODUCT_BRAND_SELECTION'}">
+                                        <div th:unless="${step.value == 'PRODUCT_CROSS_ARTICLE_NUMBER_SELECTION'}">
                                             <td>
                                                 <select required>
-                                                    <option value="constant" selected th:text="*{salesList[__${lastIndex}__].product.brand.brandName}"></option>
+                                                    <option th:if="*{salesList[__${lastIndex}__].product.crossArticleNumber == null}" value="constant" selected th:text="'(пусто)'"></option>
+                                                    <option th:unless="*{salesList[__${lastIndex}__].product.crossArticleNumber == null}" value="constant" selected th:text="*{salesList[__${lastIndex}__].product.crossArticleNumber}"></option>
                                                 </select>
                                             </td>
 
-                                            <div th:if="${step.value == 'PRODUCT_QUANTITY_AND_PRICE_SELECTION'}">
+                                            <div th:if="${step.value == 'PRODUCT_BRAND_SELECTION'}">
                                                 <td>
-                                                    <input type="number" step="1" id="quantity" th:field="*{salesList[__${lastIndex}__].quantity}" required>
+                                                    <select type="text" th:field="*{salesList[__${lastIndex}__].product.brand.id}" required>
+                                                        <option th:each="brand : ${allBrands}" th:value="${brand.id}" th:text="${brand.brandName}">
+                                                            Выберите бренд
+                                                        </option>
+                                                    </select>
                                                 </td>
+                                                <td th:each="i : ${#numbers.sequence(1, 7)}">...</td>
+                                            </div>
+                                            <div th:unless="${step.value == 'PRODUCT_BRAND_SELECTION'}">
                                                 <td>
-                                                    <input type="number" step="any" id="price" th:field="*{salesList[__${lastIndex}__].soldPrice}" required>
+                                                    <select required>
+                                                        <option value="constant" selected th:text="*{salesList[__${lastIndex}__].product.brand.brandName}"></option>
+                                                    </select>
                                                 </td>
-                                                <td>
-                                                    <input th:if="${basket.salesList[lastIndex].quantity == null}" type="text" th:value="0" readonly>
-                                                    <input th:unless="${basket.salesList[lastIndex].quantity == null}" type="text"
-                                                           th:value="${basket.salesList[lastIndex].quantity * basket.salesList[lastIndex].soldPrice}" readonly>
-                                                </td>
-                                                </td>
-                                                <td>
-                                                    <input type="text" th:value="*{salesList[__${lastIndex}__].stockBeforeSale}" readonly>
-                                                </td>
-                                                <td>
-                                                    <input type="text" th:value="*{salesList[__${lastIndex}__].calculatedPrice}" readonly>
-                                                </td>
-                                                <td>
-                                                    <input type="text" th:value="*{salesList[__${lastIndex}__].recommendedPrice}" readonly>
-                                                </td>
-                                                <td>
-                                                    <input type="text" th:value="*{salesList[__${lastIndex}__].wholesalePrice}" readonly>
-                                                </td>
-                                                <td>...</td>
+
+                                                <div th:if="${step.value == 'PRODUCT_QUANTITY_AND_PRICE_SELECTION'}">
+                                                    <td>
+                                                        <input type="number" step="1" id="quantity" th:field="*{salesList[__${lastIndex}__].quantity}" required>
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" step="any" id="price" th:field="*{salesList[__${lastIndex}__].soldPrice}" required>
+                                                    </td>
+                                                    <td>
+                                                        <input th:if="${basket.salesList[lastIndex].quantity == null}" type="text" th:value="0" readonly>
+                                                        <input th:unless="${basket.salesList[lastIndex].quantity == null}" type="text"
+                                                               th:value="${basket.salesList[lastIndex].quantity * basket.salesList[lastIndex].soldPrice}" readonly>
+                                                    </td>
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" th:value="*{salesList[__${lastIndex}__].stockBeforeSale}" readonly>
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" th:value="*{salesList[__${lastIndex}__].calculatedPrice}" readonly>
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" th:value="*{salesList[__${lastIndex}__].recommendedPrice}" readonly>
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" th:value="*{salesList[__${lastIndex}__].wholesalePrice}" readonly>
+                                                    </td>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -403,6 +437,9 @@
                             </div>
                         </div>
                     </div>
+                    <td>
+                        <button type="submit" name="method" class="btn btn-red" value="resetAddingNewProduct">Удалить</button>
+                    </td>
                 </div>
             </tr>
         </tbody>
@@ -440,6 +477,15 @@
     </div>
     <div class="button-container" th:unless="${step.value == 'PRODUCT_SELECTION_DONE'}">
         <button type="submit" name="method" class="btn btn-green" value="post">Далее</button>
+
+        <button th:if="${step.value == 'PRODUCT_NAME_SELECTION'}"
+                type="submit" name="method" class="btn btn-orange"
+                value="changeSearchType">Изменить выбор товаров через ФИЛЬТР</button>
+
+        <button th:if="${step.value == 'PRODUCT_SELECTION_WITH_FILTER'}"
+                type="submit" name="method" class="btn btn-orange"
+                value="changeSearchType">Изменить выбор товаров через СПИСОК</button>
+
     </div>
 </form>
 

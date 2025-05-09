@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -21,13 +22,12 @@ public class RetailProductView {
 
     @Override
     public boolean equals(Object obj) {
-        RetailProductView other = (RetailProductView)obj;
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
 
-        if (other != null && this != other) {
-            return  other.product.equals(product) &&
-                    other.priceDollar.equals(priceDollar) &&
-                    other.stockBalance.equals(stockBalance);
-        }
-        return false;
+        RetailProductView other = (RetailProductView)obj;
+        return  Objects.equals(product, other.product) &&
+                Objects.equals(priceDollar, other.priceDollar) &&
+                Objects.equals(stockBalance, other.stockBalance);
     }
 }

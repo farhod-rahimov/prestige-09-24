@@ -5,9 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
+import java.util.Objects;
 
 
 @Getter
@@ -22,11 +20,11 @@ public class Brand {
 
     @Override
     public boolean equals(Object obj) {
-        Brand other = (Brand)obj;
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
 
-        if (other != null && this != other) {
-            return other.id.equals(id) && other.brandName.equals(brandName);
-        }
-        return false;
+        Brand other = (Brand)obj;
+        return  Objects.equals(id, other.id) &&
+                Objects.equals(brandName, other.brandName);
     }
 }

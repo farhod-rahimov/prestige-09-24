@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -19,11 +21,12 @@ public class Settings {
 
     @Override
     public boolean equals(Object obj) {
-        Settings other = (Settings)obj;
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
 
-        if (other != null && this != other) {
-            return other.id.equals(id) && other.key.equals(key) && other.value.equals(value);
-        }
-        return false;
+        Settings other = (Settings)obj;
+        return  Objects.equals(id, other.id) &&
+                Objects.equals(key, other.key) &&
+                Objects.equals(value, other.value);
     }
 }

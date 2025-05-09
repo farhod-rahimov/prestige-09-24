@@ -51,6 +51,7 @@ public class PrestigeBasketsController {
     private enum EStep {
         CLIENT_NAME_SELECTION("CLIENT_NAME_SELECTION"),
         CLIENT_PHONE_NUMBER_SELECTION("CLIENT_PHONE_NUMBER_SELECTION"),
+        PRODUCT_SELECTION_WITH_FILTER("PRODUCT_SELECTION_WITH_FILTER"),
         PRODUCT_NAME_SELECTION("PRODUCT_NAME_SELECTION"),
         PRODUCT_CAR_MODEL_SELECTION("PRODUCT_CAR_MODEL_SELECTION"),
         PRODUCT_ENGINE_MODEL_SELECTION("PRODUCT_ENGINE_MODEL_SELECTION"),
@@ -101,6 +102,10 @@ public class PrestigeBasketsController {
                                        Model model) {
 
         switch (method) {
+            case "resetAddingNewProduct":
+                return resetAddingNewProduct(basket, model);
+            case "changeSearchType":
+                return changeSearchType(basket, model);
             case "markAsSold":
                 return markAsSoldBasket(basket, bindingResult, redirectAttributes);
             case "deleteSelected":
@@ -123,6 +128,7 @@ public class PrestigeBasketsController {
                 return EStep.CLIENT_PHONE_NUMBER_SELECTION;
             case CLIENT_PHONE_NUMBER_SELECTION:
             case PRODUCT_SELECTION_DONE:
+            case PRODUCT_SELECTION_WITH_FILTER:
                 return EStep.PRODUCT_NAME_SELECTION;
             case PRODUCT_NAME_SELECTION:
                 return EStep.PRODUCT_CAR_MODEL_SELECTION;
@@ -150,6 +156,8 @@ public class PrestigeBasketsController {
                 return processClientNameSelection(basket, model, step);
             case CLIENT_PHONE_NUMBER_SELECTION:
                 return processPhoneNumberSelection(basket, model, step);
+            case PRODUCT_SELECTION_WITH_FILTER:
+                return processProductSelectionWithFilter(basket, model, step);
             case PRODUCT_NAME_SELECTION:
                 return processProductNameSelection(basket, model, step);
             case PRODUCT_CAR_MODEL_SELECTION:
@@ -193,6 +201,12 @@ public class PrestigeBasketsController {
         prestigeBasketsDAO.saveNewPrestigeBasket(basket);
         model.addAttribute("allProductNames", prestigeProductsDAO.findAllProductNames());
 
+        return getNextStep(step);
+    }
+
+    private EStep processProductSelectionWithFilter(Basket basket, Model model, EStep step) {
+        basket.getFilter().prepareAllFields();
+        model.addAttribute("allProductNames", prestigeProductsDAO.findAllProductNamesWithFilter(basket.getFilter()));
         return getNextStep(step);
     }
 
@@ -288,6 +302,23 @@ public class PrestigeBasketsController {
         sales.getProduct().setId(commonProductsDAO.findProductId(sales.getProduct()));
         setPrivateInfos(basket, true);
 
+        for (int i = 0; i < basket.getSalesList().size() - 1; i++) {
+
+            if (sales.equalsOnlyProduct(basket.getSalesList().get(i))) {
+                basket.getSalesList().remove(basket.getSalesList().size() - 1);
+
+                String errorMsg = String.format("|%s| |%s| |%s| |%s| |%s| |%s| уже есть в корзине!",
+                        sales.getProduct().getProductName().getProductName(),
+                        sales.getProduct().getCarModel(),
+                        sales.getProduct().getEngineModel(),
+                        sales.getProduct().getOemArticleNumber(),
+                        sales.getProduct().getCrossArticleNumber(),
+                        sales.getProduct().getBrand().getBrandName());
+
+                model.addAttribute("error", errorMsg);
+                return EStep.PRODUCT_SELECTION_DONE;
+            }
+        }
         return getNextStep(step);
     }
 
@@ -389,6 +420,31 @@ public class PrestigeBasketsController {
         String errorMsg = "Возникла ошибка при удалении корзины. Пожалуйста, попробуйте заново.";
 
         return changeBasketStatus(basket, bindingResult, redirectAttributes, errorMsg, Basket.EStatus.DELETED);
+    }
+
+    private String resetAddingNewProduct(Basket basket, Model model) {
+        basket.getSalesList().remove(basket.getSalesList().size() - 1);
+        model.addAttribute("step", EStep.PRODUCT_SELECTION_DONE);
+
+        return "prestige/baskets/add-new-basket";
+    }
+
+    private String changeSearchType(Basket basket, Model model) {
+        EStep step = (EStep)model.getAttribute("step");
+
+        if (step == EStep.PRODUCT_NAME_SELECTION) {
+            step = EStep.PRODUCT_SELECTION_WITH_FILTER;
+
+            if (basket.getFilter() != null) {
+                basket.getFilter().clear();
+            }
+        }
+        else {
+            step = EStep.PRODUCT_NAME_SELECTION;
+            model.addAttribute("allProductNames", prestigeProductsDAO.findAllProductNames());
+        }
+        model.addAttribute("step", step);
+        return "prestige/baskets/add-new-basket";
     }
 
     private String markAsSoldBasket(Basket basket, BindingResult bindingResult,

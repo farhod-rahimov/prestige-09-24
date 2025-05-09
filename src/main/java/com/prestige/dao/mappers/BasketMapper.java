@@ -17,6 +17,7 @@ public class BasketMapper implements RowMapper<Basket> {
         Basket.EStatus status = Basket.EStatus.fromIntValue(rs.getInt(9));
 
         return new Basket(rs.getInt(1), rs.getTimestamp(2), rs.getTimestamp(3),
-                            client, rs.getBigDecimal(7).setScale(2, RoundingMode.HALF_UP), rs.getString(8), null, status);
+                          client, rs.getBigDecimal(7).setScale(2, RoundingMode.HALF_UP),
+                          rs.getString(8), null, status, null);
     }
 }

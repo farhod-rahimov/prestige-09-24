@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -33,14 +34,13 @@ public class RetailProduct extends RetailProductView {
 
     @Override
     public boolean equals(Object obj) {
-        RetailProduct other = (RetailProduct)obj;
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
 
-        if (other != null && this != other) {
-            return  super.equals(other) &&
-                    other.id.equals(id) &&
-                    other.deliveryDateTime.equals(deliveryDateTime) &&
-                    other.supplier.equals(supplier);
-        }
-        return false;
+        RetailProduct other = (RetailProduct)obj;
+        return  super.equals(other) &&
+                Objects.equals(id, other.id) &&
+                Objects.equals(deliveryDateTime, other.deliveryDateTime) &&
+                Objects.equals(supplier, other.supplier);
     }
 }

@@ -5,9 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
+import java.util.Objects;
 
 
 @Getter
@@ -34,14 +32,17 @@ public class Product {
 
     @Override
     public boolean equals(Object obj) {
-        Product other = (Product)obj;
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
 
-        if (other != null && this != other) {
-            return  other.id.equals(id) && other.productName.equals(productName) &&
-                    other.carModel.equals(carModel) && other.engineModel.equals(engineModel) &&
-                    other.oemArticleNumber.equals(oemArticleNumber) && other.crossArticleNumber.equals(crossArticleNumber) &&
-                    other.brand.equals(brand) && other.notes.equals(notes);
-        }
-        return false;
+        Product other = (Product)obj;
+        return  Objects.equals(id, other.id) &&
+                Objects.equals(productName, other.productName) &&
+                Objects.equals(carModel, other.carModel) &&
+                Objects.equals(engineModel, other.engineModel) &&
+                Objects.equals(oemArticleNumber, other.oemArticleNumber) &&
+                Objects.equals(crossArticleNumber, other.crossArticleNumber) &&
+                Objects.equals(brand, other.brand) &&
+                Objects.equals(notes, other.notes);
     }
 }

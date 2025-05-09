@@ -8,6 +8,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -31,6 +32,8 @@ public class Basket {
 
     private EStatus status;
 
+    private BasketFilter filter;
+
     @AllArgsConstructor
     @Getter
     public enum EStatus {
@@ -52,14 +55,18 @@ public class Basket {
 
     @Override
     public boolean equals(Object obj) {
-        Basket other = (Basket)obj;
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
 
-        if (other != null && this != other) {
-            return  other.id.equals(id) && other.createdDateTime.equals(createdDateTime) &&
-                    other.lastChangedDateTime.equals(lastChangedDateTime) && other.client.equals(client) &&
-                    other.totalSum.equals(totalSum) && other.notes.equals(notes) && other.salesList.equals(salesList) &&
-                    other.status.equals(status);
-        }
-        return false;
+        Basket other = (Basket)obj;
+        return  Objects.equals(id, other.id) &&
+                Objects.equals(createdDateTime, other.createdDateTime) &&
+                Objects.equals(lastChangedDateTime, other.lastChangedDateTime) &&
+                Objects.equals(client, other.client) &&
+                Objects.equals(totalSum, other.totalSum) &&
+                Objects.equals(notes, other.notes) &&
+                Objects.equals(salesList, other.salesList) &&
+                Objects.equals(status, other.status) &&
+                Objects.equals(filter, other.filter);
     }
 }
