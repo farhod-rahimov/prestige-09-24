@@ -1,9 +1,6 @@
 package com.prestige.dao.prestige;
 
-import com.prestige.dao.mappers.BrandMapper;
-import com.prestige.dao.mappers.ProductNameMapper;
-import com.prestige.dao.mappers.RetailProductMapper;
-import com.prestige.dao.mappers.RetailProductViewMapper;
+import com.prestige.dao.mappers.*;
 import com.prestige.models.*;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +67,42 @@ public class PrestigeProductsDAO {
                                     "cp.oem_article_number, cp.cross_article_number) ";
 
         return jdbcTemplate.query(sql, new RetailProductViewMapper());
+    }
+
+    public List<Sales> findAllPrestigeProductsWrappedInSales(List<Integer> excludeProductIds) {
+        String sql =    "SELECT " +
+
+                            "cp.id, " +
+                            "cpn.id, " +
+                            "cpn.product_name, " +
+                            "cp.car_model, " +
+                            "cp.engine_model, " +
+                            "cp.oem_article_number, " +
+                            "cp.cross_article_number, " +
+                            "cbn.id, " +
+                            "cbn.brand_name, " +
+                            "cp.notes " +
+
+                        "FROM prestige_products pp " +
+                        "JOIN common_products cp ON cp.id = pp.common_product_id " +
+                        "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
+                        "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id ";
+
+        if (!excludeProductIds.isEmpty()) {
+            String inClause = excludeProductIds.stream().map(id -> "?").collect(Collectors.joining(", "));
+            sql +=      "WHERE cp.id NOT IN ("+ inClause +") ";
+        }
+
+        sql +=          "GROUP BY   (cp.id, cpn.id, cpn.product_name, cp.car_model, cp.engine_model, " +
+                                    "cp.oem_article_number, cp.cross_article_number, cbn.id, cbn.brand_name) " +
+
+                        "ORDER BY   (cpn.product_name, cp.car_model, cp.engine_model, " +
+                                    "cp.oem_article_number, cp.cross_article_number, cbn.brand_name)";
+
+        if (!excludeProductIds.isEmpty()) {
+            return jdbcTemplate.query(sql, excludeProductIds.toArray(), new ProductMapperWrappedInSales());
+        }
+        return jdbcTemplate.query(sql, new ProductMapperWrappedInSales());
     }
 
     public void saveNewPrestigeProduct(RetailProduct retailProduct) {

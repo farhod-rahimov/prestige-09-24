@@ -54,6 +54,7 @@ public class PrestigeBasketsController {
     private enum EStep {
         CLIENT_NAME_SELECTION("CLIENT_NAME_SELECTION"),
         CLIENT_PHONE_NUMBER_SELECTION("CLIENT_PHONE_NUMBER_SELECTION"),
+        PRODUCT_SELECTION_WITH_FULL_LIST("PRODUCT_SELECTION_WITH_FULL_LIST"),
         PRODUCT_SELECTION_WITH_FILTER("PRODUCT_SELECTION_WITH_FILTER"),
         PRODUCT_NAME_SELECTION("PRODUCT_NAME_SELECTION"),
         PRODUCT_CAR_MODEL_SELECTION("PRODUCT_CAR_MODEL_SELECTION"),
@@ -109,6 +110,8 @@ public class PrestigeBasketsController {
                                        Model model) {
 
         switch (method) {
+            case "changeBasketType":
+                return changeBasketType(basket, model);
             case "resetAddingNewProduct":
                 return resetAddingNewProduct(basket, model);
             case "changeSearchType":
@@ -134,6 +137,7 @@ public class PrestigeBasketsController {
             case CLIENT_NAME_SELECTION:
                 return EStep.CLIENT_PHONE_NUMBER_SELECTION;
             case CLIENT_PHONE_NUMBER_SELECTION:
+                return EStep.PRODUCT_SELECTION_DONE;
             case PRODUCT_SELECTION_DONE:
             case PRODUCT_SELECTION_WITH_FILTER:
                 return EStep.PRODUCT_NAME_SELECTION;
@@ -163,6 +167,8 @@ public class PrestigeBasketsController {
                 return processClientNameSelection(basket, model, step);
             case CLIENT_PHONE_NUMBER_SELECTION:
                 return processPhoneNumberSelection(basket, model, step);
+            case PRODUCT_SELECTION_WITH_FULL_LIST:
+                return processProductSelectionWithFullList(basket, model, step);
             case PRODUCT_SELECTION_WITH_FILTER:
                 return processProductSelectionWithFilter(basket, model, step);
             case PRODUCT_NAME_SELECTION:
@@ -202,13 +208,17 @@ public class PrestigeBasketsController {
     private EStep processPhoneNumberSelection(Basket basket, Model model, EStep step) {
         basket.getClient().setId(prestigeClientsDAO.findClientId(basket.getClient()));
         basket.setSalesList(new LinkedList<>());
-        basket.getSalesList().add(new Sales());
         basket.setStatus(Basket.EStatus.PENDING);
 
         prestigeBasketsDAO.saveNewPrestigeBasket(basket);
-        model.addAttribute("allProductNames", prestigeProductsDAO.findAllProductNames());
 
         return getNextStep(step);
+    }
+
+    private EStep processProductSelectionWithFullList(Basket basket, Model model, EStep step) {
+        prestigeAllSalesDAO.updateQuantityAndPrices(basket.getSalesListForUpdate());
+        prestigeAllSalesDAO.saveNewPrestigeSalesList(basket, basket.getSalesListForSave());
+        return step;
     }
 
     private EStep processProductSelectionWithFilter(Basket basket, Model model, EStep step) {
@@ -241,6 +251,7 @@ public class PrestigeBasketsController {
             return processProductEngineModelSelection(basket, model, getNextStep(step));
         }
         else if (allEngineModelsList.isEmpty()) {
+            sales.getProduct().setEngineModel("");
             return processProductEngineModelSelection(basket, model, getNextStep(step));
         }
         else {
@@ -258,6 +269,7 @@ public class PrestigeBasketsController {
             return processProductOemArticleNumberSelection(basket, model, getNextStep(step));
         }
         else if (allOemArticleNumbersList.isEmpty()) {
+            sales.getProduct().setOemArticleNumber("");
             return processProductOemArticleNumberSelection(basket, model, getNextStep(step));
         }
         else {
@@ -275,6 +287,7 @@ public class PrestigeBasketsController {
             return processProductCrossArticleNumberSelection(basket, model, getNextStep(step));
         }
         else if (allCrossArticleNumbersList.isEmpty()) {
+            sales.getProduct().setCrossArticleNumber("");
             return processProductCrossArticleNumberSelection(basket, model, getNextStep(step));
         }
         else {
@@ -291,9 +304,6 @@ public class PrestigeBasketsController {
             sales.getProduct().setBrand(allBrandsList.get(0));
             return processProductBrandSelection(basket, model, getNextStep(step));
         }
-        else if (allBrandsList.isEmpty()) {
-            return processProductBrandSelection(basket, model, getNextStep(step));
-        }
         else {
             model.addAttribute("allBrands", allBrandsList);
         }
@@ -307,11 +317,12 @@ public class PrestigeBasketsController {
             sales.getProduct().setBrand(commonBrandNamesDAO.findBrandById(sales.getProduct().getBrand().getId()));
         }
         sales.getProduct().setId(commonProductsDAO.findProductId(sales.getProduct()));
-        setPrivateInfos(basket, true);
+
+        setPrivateInfos(basket, basket.getSalesList(), true);
 
         for (int i = 0; i < basket.getSalesList().size() - 1; i++) {
 
-            if (sales.equalsOnlyProduct(basket.getSalesList().get(i))) {
+            if (sales.equalsOnlyProductWithoutNotes(basket.getSalesList().get(i))) {
                 basket.getSalesList().remove(basket.getSalesList().size() - 1);
 
                 String errorMsg = String.format("|%s| |%s| |%s| |%s| |%s| |%s| уже есть в корзине!",
@@ -329,19 +340,19 @@ public class PrestigeBasketsController {
         return getNextStep(step);
     }
 
-    private void setPrivateInfos(Basket basket, boolean onlyForLastSales) {
+    private void setPrivateInfos(Basket basket, List<Sales> salesList, boolean onlyForLastSales) {
         Set<Integer> productIds;
 
-        if (basket.getSalesList().isEmpty()) {
+        if (salesList.isEmpty()) {
             return;
         }
 
         if (onlyForLastSales) {
             productIds = new HashSet<>();
-            productIds.add(basket.getSalesList().get(basket.getSalesList().size() - 1).getProduct().getId());
+            productIds.add(salesList.get(salesList.size() - 1).getProduct().getId());
         }
         else {
-            productIds = basket.getSalesList().stream()
+            productIds = salesList.stream()
                     .map(s -> s.getProduct().getId())
                     .collect(Collectors.toCollection(HashSet::new));
         }
@@ -352,10 +363,10 @@ public class PrestigeBasketsController {
         Settings magicValueSettings = prestigeSettingsDAO.findSettingsByName("magicValue");
         Map<Integer, BigDecimal> recommendedPriceMap = prestigeProductsDAO.findRecommendedPrice(productIds, basket);
 
-        int salesListSize = basket.getSalesList().size();
+        int salesListSize = salesList.size();
 
         for (int i = onlyForLastSales ? salesListSize - 1 : 0; i < salesListSize; i++) {
-            Sales sales = basket.getSalesList().get(i);
+            Sales sales = salesList.get(i);
 
             sales.setStockBeforeSale(stockBeforeSaleMap.get(sales.getProduct().getId()));
             sales.setWholesalePrice(wholeSalePriceMap.get(sales.getProduct().getId()));
@@ -383,7 +394,7 @@ public class PrestigeBasketsController {
     }
 
     private void updateBasketTotalSum(Basket basket) {
-        List<Sales> salesList = basket.getSalesList();
+        List<Sales> salesList = basket.getSalesListForUpdate();
         BigDecimal totalSum = new BigDecimal(0);
 
         for (Sales sales : salesList) {
@@ -429,6 +440,32 @@ public class PrestigeBasketsController {
         return changeBasketStatus(basket, bindingResult, redirectAttributes, errorMsg, Basket.EStatus.DELETED);
     }
 
+    private String changeBasketType(Basket basket, Model model) {
+        EStep step = (EStep)model.getAttribute("step");
+        List<Sales> salesList = basket.getSalesList();
+
+        if (step == EStep.PRODUCT_SELECTION_DONE) {
+            step = EStep.PRODUCT_SELECTION_WITH_FULL_LIST;
+
+            List<Integer> excludeProductIds = new ArrayList<>(salesList.size());
+            for (Sales sales : basket.getSalesList()) {
+                excludeProductIds.add(sales.getProduct().getId());
+            }
+            List<Sales> fullSalesList = prestigeProductsDAO.findAllPrestigeProductsWrappedInSales(excludeProductIds);
+            setPrivateInfos(basket, fullSalesList, false);
+
+            salesList.addAll(fullSalesList);
+        }
+        else {
+            step = EStep.PRODUCT_SELECTION_DONE;
+            model.addAttribute("allProductNames", prestigeProductsDAO.findAllProductNames());
+            basket.setSalesList(basket.getSalesListForUpdate()); // delete all unsaved sales
+        }
+
+        model.addAttribute("step", step);
+        return "prestige/baskets/add-new-basket";
+    }
+
     private String resetAddingNewProduct(Basket basket, Model model) {
         basket.getSalesList().remove(basket.getSalesList().size() - 1);
         model.addAttribute("step", EStep.PRODUCT_SELECTION_DONE);
@@ -439,7 +476,7 @@ public class PrestigeBasketsController {
     private String changeSearchType(Basket basket, Model model) {
         EStep step = (EStep)model.getAttribute("step");
 
-        if (step == EStep.PRODUCT_NAME_SELECTION) {
+        if (step == EStep.PRODUCT_SELECTION_DONE) {
             step = EStep.PRODUCT_SELECTION_WITH_FILTER;
 
             if (basket.getFilter() != null) {
@@ -447,7 +484,7 @@ public class PrestigeBasketsController {
             }
         }
         else {
-            step = EStep.PRODUCT_NAME_SELECTION;
+            step = EStep.PRODUCT_SELECTION_DONE;
             model.addAttribute("allProductNames", prestigeProductsDAO.findAllProductNames());
         }
         model.addAttribute("step", step);
@@ -463,16 +500,18 @@ public class PrestigeBasketsController {
     }
 
     private String deleteSelected(Basket basket, List<Integer> selectedSalesIds) {
-
-        // удалять из листа удаляемые объекты не имеет значения, потому что данные загрузятся заново после редиректа
-        // достаточно удалить из БД
+        for (Integer salesId : selectedSalesIds) {
+            basket.getSalesList().removeIf(sales -> sales.getId().equals(salesId));
+        }
 
         prestigeAllSalesDAO.deleteSalesIds(selectedSalesIds);
+        updateBasketTotalSum(basket);
         return "redirect:/prestige/baskets/" + basket.getId();
     }
 
     private void patchBasketInternal(Basket basket) {
-        prestigeAllSalesDAO.updateQuantityAndPrices(basket.getSalesList());
+        prestigeAllSalesDAO.saveNewPrestigeSalesList(basket, basket.getSalesListForSave());
+        prestigeAllSalesDAO.updateQuantityAndPrices(basket.getSalesListForUpdate());
         prestigeBasketsDAO.updateBasketNotes(basket);
         updateBasketTotalSum(basket);
     }
@@ -513,7 +552,7 @@ public class PrestigeBasketsController {
         try {
             Basket basket = prestigeBasketsDAO.findBasketById(basketId);
             basket.setSalesList(prestigeAllSalesDAO.findAllSalesByBasketId(basketId));
-            setPrivateInfos(basket, false);
+            setPrivateInfos(basket, basket.getSalesList(), false);
             return basket;
         }
         catch (DataAccessException e) {

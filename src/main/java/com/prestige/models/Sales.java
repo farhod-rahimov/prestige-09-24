@@ -32,6 +32,12 @@ public class Sales {
 
     private BigDecimal wholesalePrice;
 
+    public Sales(Product product) {
+        this.product = product;
+        this.quantity = new Integer(0);
+        this.soldPrice = new BigDecimal(0);
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
@@ -48,10 +54,10 @@ public class Sales {
                 Objects.equals(wholesalePrice, other.wholesalePrice);
     }
 
-    public boolean equalsOnlyProduct(Sales other) {
+    public boolean equalsOnlyProductWithoutNotes(Sales other) {
         if (this == other) return true;
         if (other == null) return false;
 
-        return Objects.equals(product, other.product);
+        return product.equalsWithoutNotes(other.product);
     }
 }

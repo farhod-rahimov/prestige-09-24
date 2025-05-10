@@ -240,7 +240,7 @@
         </thead>
 
         <tbody>
-            <tr th:if="${step.value != 'PRODUCT_SELECTION_DONE'}">
+            <tr th:if="${step.value != 'PRODUCT_SELECTION_DONE' and step.value != 'PRODUCT_SELECTION_WITH_FULL_LIST'}">
                 <div th:if="${#lists.isEmpty(basket.salesList)}">
                     <td th:each="i : ${#numbers.sequence(1, 14)}">...</td>
                 </div>
@@ -416,40 +416,63 @@
                 </div>
             </tr>
 
-            <tr th:each="sales, iterStat : ${basket.salesList}" th:if="${!iterStat.last or step.value == 'PRODUCT_SELECTION_DONE'}">
-                <td th:text="*{salesList[__${iterStat.index}__].product.productName.productName}"></td>
-                <td th:text="*{salesList[__${iterStat.index}__].product.carModel}"></td>
-                <td th:text="*{salesList[__${iterStat.index}__].product.engineModel}"></td>
+            <div th:if="${basket.salesList != null and !basket.salesList.isEmpty()}">
+                <tr th:each="sales, iterStat : ${basket.salesList}"
+                    th:if="${!iterStat.last or step.value == 'PRODUCT_SELECTION_DONE' or step.value == 'PRODUCT_SELECTION_WITH_FULL_LIST'}">
 
-                <td th:text="*{salesList[__${iterStat.index}__].product.oemArticleNumber}"></td>
-                <td th:text="*{salesList[__${iterStat.index}__].product.crossArticleNumber}"></td>
-                <td th:text="*{salesList[__${iterStat.index}__].product.brand.brandName}"></td>
-                <td>
-                    <input type="number" step="1" th:field="*{salesList[__${iterStat.index}__].quantity}" required>
-                </td>
-                <td>
-                    <input type="number" step="any" th:field="*{salesList[__${iterStat.index}__].soldPrice}" required>
-                </td>
-                <td th:text="${basket.salesList[iterStat.index].quantity * basket.salesList[iterStat.index].soldPrice}"></td>
-                <td th:text="*{salesList[__${iterStat.index}__].stockBeforeSale}"></td>
-                <td th:text="*{salesList[__${iterStat.index}__].calculatedPrice}"></td>
-                <td th:text="*{salesList[__${iterStat.index}__].recommendedPrice}"></td>
-                <td th:text="*{salesList[__${iterStat.index}__].wholesalePrice}"></td>
+                    <td th:text="*{salesList[__${iterStat.index}__].product.productName.productName}"></td>
+                    <td th:text="*{salesList[__${iterStat.index}__].product.carModel}"></td>
+                    <td th:text="*{salesList[__${iterStat.index}__].product.engineModel}"></td>
 
-                <td>
-                    <input type="checkbox" name="selectedSalesIds" class="styled-checkbox"
-                           th:value="*{salesList[__${iterStat.index}__].id}">
-                </td>
-            </tr>
+                    <td th:text="*{salesList[__${iterStat.index}__].product.oemArticleNumber}"></td>
+                    <td th:text="*{salesList[__${iterStat.index}__].product.crossArticleNumber}"></td>
+                    <td th:text="*{salesList[__${iterStat.index}__].product.brand.brandName}"></td>
+                    <td>
+                        <input type="number" step="1" th:field="*{salesList[__${iterStat.index}__].quantity}" required>
+                    </td>
+                    <td>
+                        <input type="number" step="any" th:field="*{salesList[__${iterStat.index}__].soldPrice}" required>
+                    </td>
+                    <td th:text="${basket.salesList[iterStat.index].quantity * basket.salesList[iterStat.index].soldPrice}"></td>
+                    <td th:text="*{salesList[__${iterStat.index}__].stockBeforeSale}"></td>
+                    <td th:text="*{salesList[__${iterStat.index}__].calculatedPrice}"></td>
+                    <td th:text="*{salesList[__${iterStat.index}__].recommendedPrice}"></td>
+                    <td th:text="*{salesList[__${iterStat.index}__].wholesalePrice}"></td>
+
+                    <div th:if="${step.value == 'PRODUCT_SELECTION_WITH_FULL_LIST'}">
+                        <td></td>
+                    </div>
+                    <div th:unless="${step.value == 'PRODUCT_SELECTION_WITH_FULL_LIST'}">
+                        <td>
+                            <input type="checkbox" name="selectedSalesIds" class="styled-checkbox"
+                                   th:value="*{salesList[__${iterStat.index}__].id}">
+                        </td>
+                    </div>
+                </tr>
+            </div>
         </tbody>
     </table>
 
-    <div class="button-container" style="display: block;" th:if="${step.value == 'PRODUCT_SELECTION_DONE'}">
+    <div class="button-container" style="display: block;"
+         th:if="${step.value == 'PRODUCT_SELECTION_DONE' or step.value == 'PRODUCT_SELECTION_WITH_FULL_LIST'}">
 
         <div style="margin-bottom: 15px; text-align: center;">
-            <button type="submit" name="method" class="btn btn-blue" value="post">Добавить новый товар</button>
+            <button th:if="${step.value == 'PRODUCT_SELECTION_DONE'}"
+                    type="submit" name="method" class="btn btn-blue" value="post">Добавить новый товар</button>
 
-            <button type="submit" name="method" value="deleteSelected"
+            <button th:if="${step.value == 'PRODUCT_SELECTION_DONE'}"
+                    type="submit" name="method" class="btn btn-blue" value="changeBasketType">
+
+                Добавление товаров через полный список
+            </button>
+
+            <button th:if="${step.value == 'PRODUCT_SELECTION_WITH_FULL_LIST'}"
+                    type="submit" name="method" class="btn btn-blue" value="changeBasketType">
+
+                Добавление товаров через частичный список
+            </button>
+
+            <button th:if="${step.value == 'PRODUCT_SELECTION_DONE'}" type="submit" name="method" value="deleteSelected"
                     onclick="return confirm('Удалить выбранные товары?')"
                     class="btn btn-red">Удалить выбранные товары</button>
         </div>
@@ -461,7 +484,9 @@
 
             <button type="submit" name="method" class="btn btn-green" value="patch">Закрыть корзину с сохранением</button>
 
-            <button type="submit" name="method" class="btn btn-pink" value="close">Закрыть корзину без сохранения</button>
+            <button type="submit" name="method" value="close"
+                    onclick="return confirm('Вы уверены, что хотите закрыть корзину без сохранения?')"
+                    class="btn btn-pink">Закрыть корзину без сохранения</button>
 
             <button th:if="${basket.getStatus().getIntValue() == 1 or basket.getStatus().getIntValue() == 3}"
                     type="submit" name="method" value="delete"
@@ -475,7 +500,8 @@
 
     </div>
     <div class="button-container" th:unless="${step.value == 'PRODUCT_SELECTION_DONE'}">
-        <button type="submit" name="method" class="btn btn-green" value="post">Далее</button>
+        <button th:if="${step.value != 'PRODUCT_SELECTION_WITH_FILTER'}"
+                type="submit" name="method" class="btn btn-green" value="post">Далее</button>
 
         <button th:if="${step.value == 'PRODUCT_NAME_SELECTION'}"
                 type="submit" name="method" class="btn btn-orange"

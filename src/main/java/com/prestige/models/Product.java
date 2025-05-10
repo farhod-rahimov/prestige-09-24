@@ -36,13 +36,16 @@ public class Product {
         if (obj == null || getClass() != obj.getClass()) return false;
 
         Product other = (Product)obj;
+        return equalsWithoutNotes(other) && Objects.equals(notes, other.notes);
+    }
+
+    public boolean equalsWithoutNotes(Product other) {
         return  Objects.equals(id, other.id) &&
                 Objects.equals(productName, other.productName) &&
                 Objects.equals(carModel, other.carModel) &&
                 Objects.equals(engineModel, other.engineModel) &&
                 Objects.equals(oemArticleNumber, other.oemArticleNumber) &&
                 Objects.equals(crossArticleNumber, other.crossArticleNumber) &&
-                Objects.equals(brand, other.brand) &&
-                Objects.equals(notes, other.notes);
+                Objects.equals(brand, other.brand);
     }
 }

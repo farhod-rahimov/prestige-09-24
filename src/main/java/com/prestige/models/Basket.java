@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -51,6 +52,21 @@ public class Basket {
             }
             throw new IllegalArgumentException("Invalid status value: " + intValue);
         }
+    }
+
+    public List<Sales> getSalesListForUpdate() {
+        List<Sales> updateList = new LinkedList<>(salesList);
+        updateList.removeIf(sales -> (sales.getId() == null));
+
+        return updateList;
+    }
+
+    public List<Sales> getSalesListForSave() {
+        List<Sales> saveList = new LinkedList<>(salesList);
+        saveList.removeIf(sales -> (sales.getQuantity().equals(0) && sales.getSoldPrice().compareTo(BigDecimal.ZERO) == 0)
+                                    || sales.getId() != null);
+
+        return saveList;
     }
 
     @Override
