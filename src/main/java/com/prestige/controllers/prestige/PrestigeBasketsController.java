@@ -476,7 +476,7 @@ public class PrestigeBasketsController {
     private String changeSearchType(Basket basket, Model model) {
         EStep step = (EStep)model.getAttribute("step");
 
-        if (step == EStep.PRODUCT_SELECTION_DONE) {
+        if (step != EStep.PRODUCT_SELECTION_WITH_FILTER) {
             step = EStep.PRODUCT_SELECTION_WITH_FILTER;
 
             if (basket.getFilter() != null) {
@@ -484,7 +484,7 @@ public class PrestigeBasketsController {
             }
         }
         else {
-            step = EStep.PRODUCT_SELECTION_DONE;
+            step = EStep.PRODUCT_NAME_SELECTION;
             model.addAttribute("allProductNames", prestigeProductsDAO.findAllProductNames());
         }
         model.addAttribute("step", step);

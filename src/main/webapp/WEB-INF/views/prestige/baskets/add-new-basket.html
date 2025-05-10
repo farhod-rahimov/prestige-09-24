@@ -500,7 +500,7 @@
 
     </div>
     <div class="button-container" th:unless="${step.value == 'PRODUCT_SELECTION_DONE'}">
-        <button th:if="${step.value != 'PRODUCT_SELECTION_WITH_FILTER'}"
+        <button th:if="${step.value != 'PRODUCT_SELECTION_WITH_FULL_LIST'}"
                 type="submit" name="method" class="btn btn-green" value="post">Далее</button>
 
         <button th:if="${step.value == 'PRODUCT_NAME_SELECTION'}"
