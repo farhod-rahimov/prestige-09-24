@@ -17,9 +17,7 @@ public class Supplier extends Client {
     private String storeName;
 
     public Supplier(Integer id, String name, String phoneNumber, String storeName) {
-        this.id = id;
-        this.name = name;
-        this.phoneNumber = phoneNumber;
+        super(id, name, phoneNumber);
         this.storeName = storeName;
     }
 

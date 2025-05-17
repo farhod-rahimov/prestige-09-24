@@ -6,6 +6,7 @@ import com.prestige.dao.common.CommonProductNamesDAO;
 import com.prestige.dao.common.CommonProductsDAO;
 import com.prestige.dao.prestige.PrestigeProductsDAO;
 import com.prestige.dao.prestige.PrestigeSuppliersDAO;
+import com.prestige.models.Brand;
 import com.prestige.models.ProductName;
 import com.prestige.models.RetailProduct;
 import com.prestige.models.Supplier;
@@ -77,6 +78,12 @@ public class PrestigeProductsController {
     public String showAllProductsView(Model model) {
         model.addAttribute("allProductsView", prestigeProductsDAO.findAllProductsView());
         return "prestige/products/products";
+    }
+
+    @GetMapping("/supplies")
+    public String findAllSupplies(Model model) {
+
+        return "prestige/products/supplies";
     }
 
     @GetMapping("/add")
@@ -237,7 +244,7 @@ public class PrestigeProductsController {
     }
 
     private EStep processCrossArticleNumberSelection(RetailProduct retailProduct, Model model, EStep step) {
-        List<String> availableBrands = commonProductsDAO.findAvailableBrands(retailProduct.getProduct());
+        List<Brand> availableBrands = commonProductsDAO.findAvailableBrands(retailProduct.getProduct());
 
         if (availableBrands.isEmpty()) {
             // TODO: log the message "Brand should never be null. Now it is null"

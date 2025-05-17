@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Корзины</title>
+    <title>Поступления</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -76,7 +76,7 @@
           transform: scale(1.05);
           box-shadow: 0 0 5px rgba(0,0,0,0.2);
         }
-        .sold {
+        .received {
           background-color: #c8e6c9;
         }
         .deleted {
@@ -102,8 +102,8 @@
 <body>
 
 <div class="header">
-    <h2>Корзины</h2>
-    <a th:href="@{/prestige/baskets/add}" class="add-basket-link">Добавить новую корзину</a>
+    <h2>Поступления</h2>
+    <a th:href="@{/prestige/supplies/baskets/add}" class="add-basket-link">Добавить новое поступление</a>
 </div>
 
 <div th:if="${error}" class="error-message" th:text="${error}"></div>
@@ -112,8 +112,7 @@
     <thead>
     <tr>
         <th>ID корзины</th>
-        <th>Имя покупателя</th>
-        <th>Телефон</th>
+        <th>Наименование поставщика</th>
         <th>Сумма</th>
         <th>Дата и время последнего изменения</th>
         <th>Дата и время создания</th>
@@ -123,20 +122,19 @@
     <tbody>
 
     <tr th:each="basket : ${allBaskets}"
-        th:with="link='/prestige/baskets/' + ${basket.getId()}">
+        th:with="link='/prestige/supplies/baskets/' + ${basket.getId()}">
 
         <td>
             <a th:href="${link}">
-                <span th:if="${basket.getStatus().getIntValue() == 1}" class="id-status sold"
-                      title="Продано" th:text="${basket.getId()}"></span>
+                <span th:if="${basket.getStatus().getIntValue() == 1}" class="id-status received"
+                      title="Оприходовано" th:text="${basket.getId()}"></span>
                 <span th:if="${basket.getStatus().getIntValue() == 2}" class="id-status deleted"
                       title="Помечено на удаление" th:text="${basket.getId()}"></span>
                 <span th:if="${basket.getStatus().getIntValue() == 3}" class="id-status pending"
                       title="Новая корзина: ожидает действия" th:text="${basket.getId()}"></span>
             </a>
         </td>
-        <td><a th:href="${link}" th:text="${basket.getClient().getName()}"></a></td>
-        <td><a th:href="${link}" th:text="${basket.getClient().getPhoneNumber()}"></a></td>
+        <td><a th:href="${link}" th:text="${basket.getSupplier().getStoreName()}"></a></td>
         <td><a th:href="${link}" th:text="${basket.getTotalSum()}"></a></td>
         <td><a th:href="${link}" th:text="${utils.getDateTimeFormatted(basket.getLastChangedDateTime())}"></a></td>
         <td><a th:href="${link}" th:text="${utils.getDateTimeFormatted(basket.getCreatedDateTime())}"></a></td>

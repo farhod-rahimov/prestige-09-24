@@ -1,8 +1,8 @@
 package com.prestige.dao.prestige;
 
 import com.prestige.dao.Utils;
-import com.prestige.dao.mappers.BasketMapper;
-import com.prestige.models.Basket;
+import com.prestige.dao.mappers.SalesBasketMapper;
+import com.prestige.models.SalesBasket;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -14,44 +14,44 @@ import java.sql.PreparedStatement;
 import java.util.List;
 
 @Component
-public class PrestigeBasketsDAO {
+public class PrestigeSalesBasketsDAO {
 
     private final JdbcTemplate jdbcTemplate;
 
     private Utils utils;
 
     @Autowired
-    public PrestigeBasketsDAO(JdbcTemplate jdbcTemplate, Utils utils) {
+    public PrestigeSalesBasketsDAO(JdbcTemplate jdbcTemplate, Utils utils) {
         this.jdbcTemplate = jdbcTemplate;
         this.utils = utils;
     }
 
-    public List<Basket> findAllBaskets() {
+    public List<SalesBasket> findAllBaskets() {
         String sql =    "SELECT " +
-                            "pb.id, pb.created_date_time, pb.last_changed_date_time, " +
+                            "psb.id, psb.created_date_time, psb.last_changed_date_time, " +
                             "pc.id, pc.name, pc.phone_number, " +
-                            "pb.total_sum, pb.notes, pb.status " +
-                        "FROM prestige_baskets pb " +
-                        "JOIN prestige_clients pc on pb.client_id = pc.id " +
-                        "ORDER BY (pb.id)";
+                            "psb.total_sum, psb.notes, psb.status " +
+                        "FROM prestige_sales_baskets psb " +
+                        "JOIN prestige_clients pc on psb.client_id = pc.id " +
+                        "ORDER BY (psb.id)";
 
-        return jdbcTemplate.query(sql, new BasketMapper());
+        return jdbcTemplate.query(sql, new SalesBasketMapper());
     }
 
-    public Basket findBasketById(Integer basketId) {
+    public SalesBasket findBasketById(Integer basketId) {
         String sql =    "SELECT " +
-                            "pb.id, pb.created_date_time, pb.last_changed_date_time, " +
+                            "psb.id, psb.created_date_time, psb.last_changed_date_time, " +
                             "pc.id, pc.name, pc.phone_number, " +
-                            "pb.total_sum, pb.notes, pb.status " +
-                        "FROM prestige_baskets pb " +
-                        "JOIN prestige_clients pc on pb.client_id = pc.id " +
-                        "WHERE pb.id = ?";
+                            "psb.total_sum, psb.notes, psb.status " +
+                        "FROM prestige_sales_baskets psb " +
+                        "JOIN prestige_clients pc on psb.client_id = pc.id " +
+                        "WHERE psb.id = ?";
 
-        return jdbcTemplate.queryForObject(sql, new Object[] {basketId}, new BasketMapper());
+        return jdbcTemplate.queryForObject(sql, new Object[] {basketId}, new SalesBasketMapper());
     }
 
-    public void saveNewPrestigeBasket(Basket basket) {
-        String sql =    "INSERT INTO prestige_baskets (" +
+    public void saveNewPrestigeBasket(SalesBasket basket) {
+        String sql =    "INSERT INTO prestige_sales_baskets (" +
 
                             "created_date_time, " +
                             "last_changed_date_time, " +
@@ -82,20 +82,20 @@ public class PrestigeBasketsDAO {
         basket.setId(keyHolder.getKey().intValue());
     }
 
-    public void updateBasketTotalSum(Basket basket) {
-        String sql =    "UPDATE prestige_baskets SET total_sum = ?, last_changed_date_time = ? WHERE id = ?";
+    public void updateBasketTotalSum(SalesBasket basket) {
+        String sql =    "UPDATE prestige_sales_baskets SET total_sum = ?, last_changed_date_time = ? WHERE id = ?";
 
         jdbcTemplate.update(sql, new Object[]{basket.getTotalSum(), utils.getCurrentDateAndTime(), basket.getId()});
     }
 
-    public void updateBasketStatus(Basket basket) {
-        String sql =    "UPDATE prestige_baskets SET status = ?, last_changed_date_time = ? WHERE id = ?";
+    public void updateBasketStatus(SalesBasket basket) {
+        String sql =    "UPDATE prestige_sales_baskets SET status = ?, last_changed_date_time = ? WHERE id = ?";
 
         jdbcTemplate.update(sql, new Object[]{basket.getStatus().getIntValue(), utils.getCurrentDateAndTime(), basket.getId()});
     }
 
-    public void updateBasketNotes(Basket basket) {
-        String sql =    "UPDATE prestige_baskets SET notes = ?, last_changed_date_time = ? WHERE id = ?";
+    public void updateBasketNotes(SalesBasket basket) {
+        String sql =    "UPDATE prestige_sales_baskets SET notes = ?, last_changed_date_time = ? WHERE id = ?";
 
         jdbcTemplate.update(sql, new Object[]{basket.getNotes(), utils.getCurrentDateAndTime(), basket.getId()});
     }

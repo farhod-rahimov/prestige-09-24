@@ -40,6 +40,40 @@ public class PrestigeSuppliersDAO {
         return jdbcTemplate.query(sql, new SupplierMapper());
     }
 
+    public List<String> findUniqueSupplierStoreNames() {
+        String sql =    "SELECT " +
+                            "ps.store_name " +
+                        "FROM prestige_suppliers ps " +
+                        "GROUP BY (ps.store_name) " +
+                        "ORDER BY (ps.store_name)";
+
+        return jdbcTemplate.queryForList(sql, String.class);
+    }
+
+    public List<String> findSupplierNameByStoreName(String storeName) {
+        String sql =    "SELECT " +
+                            "ps.name " +
+                        "FROM prestige_suppliers ps " +
+                        "WHERE ps.store_name = ? " +
+                        "GROUP BY (ps.name) " +
+                        "ORDER BY (ps.name)";
+
+        return jdbcTemplate.queryForList(sql, new Object[]{storeName}, String.class);
+    }
+
+    public List<String> findSupplierPhoneNumbersByStoreNameAndManagerName(String storeName, String managerName) {
+        String sql =    "SELECT " +
+                            "ps.phone_number " +
+                        "FROM prestige_suppliers ps " +
+                        "WHERE " +
+                            "ps.store_name = ? AND " +
+                            "ps.name = ? " +
+                        "GROUP BY (ps.phone_number) " +
+                        "ORDER BY (ps.phone_number)";
+
+        return jdbcTemplate.queryForList(sql, new Object[]{storeName, managerName}, String.class);
+    }
+
     public boolean checkIfSupplierExists(Supplier supplier) {
         String sql = "SELECT EXISTS (SELECT 1 FROM prestige_suppliers WHERE store_name = ?";
 
@@ -113,5 +147,16 @@ public class PrestigeSuppliersDAO {
         String sql = "DELETE FROM prestige_suppliers WHERE id = ?";
 
         jdbcTemplate.update(sql, storeId);
+    }
+
+    public Integer findSupplierId(Supplier supplier) {
+        String sql =    "SELECT id " +
+                        "FROM prestige_suppliers ps " +
+                        "WHERE " +
+                            "ps.name = ? AND " +
+                            "ps.phone_number = ? AND " +
+                            "ps.store_name = ? ";
+
+        return jdbcTemplate.queryForObject(sql, new Object[] {supplier.getName(), supplier.getPhoneNumber(), supplier.getStoreName()}, Integer.class);
     }
 }

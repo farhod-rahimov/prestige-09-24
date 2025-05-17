@@ -1,10 +1,8 @@
 package com.prestige.dao.common;
 
 import com.prestige.dao.Utils;
-import com.prestige.dao.mappers.ProductMapper;
-import com.prestige.dao.mappers.ProductNameMapper;
-import com.prestige.models.Product;
-import com.prestige.models.ProductName;
+import com.prestige.dao.mappers.*;
+import com.prestige.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -16,6 +14,7 @@ import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class CommonProductsDAO {
@@ -53,6 +52,38 @@ public class CommonProductsDAO {
                                     "cp.oem_article_number, cp.cross_article_number, cbn.brand_name)";
 
         return jdbcTemplate.query(sql, new ProductMapper());
+    }
+
+    public List<Supply> findAllProductsWrappedInSupply(List<Integer> excludeProductIds) {
+        String sql =    "SELECT " +
+
+                            "cp.id, " +
+                            "cpn.id, " +
+                            "cpn.product_name, " +
+                            "cp.car_model, " +
+                            "cp.engine_model, " +
+                            "cp.oem_article_number, " +
+                            "cp.cross_article_number, " +
+                            "cbn.id, " +
+                            "cbn.brand_name, " +
+                            "cp.notes " +
+
+                    "FROM common_products cp " +
+                    "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
+                    "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id ";
+
+        if (!excludeProductIds.isEmpty()) {
+            String inClause = excludeProductIds.stream().map(id -> "?").collect(Collectors.joining(", "));
+            sql +=      "WHERE cp.id NOT IN ("+ inClause +") ";
+        }
+
+        sql +=          "ORDER BY   (cpn.product_name, cp.car_model, cp.engine_model, " +
+                                    "cp.oem_article_number, cp.cross_article_number, cbn.brand_name)";
+
+        if (!excludeProductIds.isEmpty()) {
+            return jdbcTemplate.query(sql, excludeProductIds.toArray(), new ProductMapperWrappedInSupply());
+        }
+        return jdbcTemplate.query(sql, new ProductMapperWrappedInSupply());
     }
 
     public boolean checkIfProductExists(Product product) {
@@ -210,14 +241,65 @@ public class CommonProductsDAO {
         jdbcTemplate.update(sql, productId);
     }
 
-    public List<ProductName> findAllProductNames() {
+    private List<ProductName> findAllProductNamesInternal(BasketFilter filter) {
         String sql =    "SELECT cpn.id, cpn.product_name " +
+
                         "FROM common_products cp " +
+
                         "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
-                        "GROUP BY (cpn.id) " +
+                        "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+
+                        "WHERE 1 = 1 ";
+
+        List<Object> bindings = new ArrayList();
+
+        if (filter != null) {
+            if (!filter.getProductName().isEmpty()) {
+                sql += "AND cpn.product_name ILIKE ? ESCAPE '\\' ";
+                bindings.add(filter.getProductName());
+            }
+
+            if (!filter.getCarModel().isEmpty()) {
+                sql += "AND cp.car_model ILIKE ? ESCAPE '\\' ";
+                bindings.add(filter.getCarModel());
+            }
+
+            if (!filter.getEngineModel().isEmpty()) {
+                sql += "AND cp.engine_model ILIKE ? ESCAPE '\\' ";
+                bindings.add(filter.getEngineModel());
+            }
+
+            if (!filter.getOemArticleNumber().isEmpty()) {
+                sql += "AND cp.oem_article_number ILIKE ? ESCAPE '\\' ";
+                bindings.add(filter.getOemArticleNumber());
+            }
+
+            if (!filter.getCrossArticleNumber().isEmpty()) {
+                sql += "AND cp.cross_article_number ILIKE ? ESCAPE '\\' ";
+                bindings.add(filter.getCrossArticleNumber());
+            }
+
+            if (!filter.getBrand().isEmpty()) {
+                sql += "AND cbn.brand_name ILIKE ? ESCAPE '\\' ";
+                bindings.add(filter.getBrand());
+            }
+        }
+
+        sql +=          "GROUP BY (cpn.id) " +
                         "ORDER BY (cpn.product_name)";
 
-        return jdbcTemplate.query(sql, new ProductNameMapper());
+        if (bindings.isEmpty()) {
+            return jdbcTemplate.query(sql, new ProductNameMapper());
+        }
+        return jdbcTemplate.query(sql, bindings.toArray(), new ProductNameMapper());
+    }
+
+    public List<ProductName> findAllProductNames() {
+        return findAllProductNamesInternal(null);
+    }
+
+    public List<ProductName> findAllProductNamesWithFilter(BasketFilter filter) {
+        return findAllProductNamesInternal(filter);
     }
 
     public List<String> findCarModelsByProductNameId(Integer productNameId) {
@@ -276,11 +358,11 @@ public class CommonProductsDAO {
                         "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
 
                         "WHERE " +
-                        "cpn.id = ? AND " +
-                        "cp.car_model = ? AND " +
-                        "cp.engine_model = ? AND " +
-                        "cp.oem_article_number = ? AND " +
-                        "cp.cross_article_number IS NOT NULL AND cp.cross_article_number != '' " +
+                            "cpn.id = ? AND " +
+                            "cp.car_model = ? AND " +
+                            "cp.engine_model = ? AND " +
+                            "cp.oem_article_number = ? AND " +
+                            "cp.cross_article_number IS NOT NULL AND cp.cross_article_number != '' " +
 
                         "GROUP BY (cp.cross_article_number) " +
                         "ORDER BY (cp.cross_article_number)";
@@ -295,20 +377,20 @@ public class CommonProductsDAO {
         return jdbcTemplate.queryForList(sql, bindings.toArray(), String.class);
     }
 
-    public List<String> findAvailableBrands(Product product) {
-        String sql =    "SELECT cbn.brand_name " +
+    public List<Brand> findAvailableBrands(Product product) {
+        String sql =    "SELECT cbn.id, cbn.brand_name " +
                         "FROM common_products cp " +
                         "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
                         "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
 
                         "WHERE " +
-                        "cpn.id = ? AND " +
-                        "cp.car_model = ? AND " +
-                        "cp.engine_model = ? AND " +
-                        "cp.oem_article_number = ? AND " +
-                        "cp.cross_article_number = ? " +
+                            "cpn.id = ? AND " +
+                            "cp.car_model = ? AND " +
+                            "cp.engine_model = ? AND " +
+                            "cp.oem_article_number = ? AND " +
+                            "cp.cross_article_number = ? " +
 
-                        "GROUP BY (cbn.brand_name) " +
+                        "GROUP BY (cbn.id, cbn.brand_name) " +
                         "ORDER BY (cbn.brand_name)";
 
         List<Object> bindings = new ArrayList();
@@ -319,6 +401,6 @@ public class CommonProductsDAO {
         bindings.add(product.getOemArticleNumber());
         bindings.add(product.getCrossArticleNumber());
 
-        return jdbcTemplate.queryForList(sql, bindings.toArray(), String.class);
+        return jdbcTemplate.query(sql, bindings.toArray(), new BrandMapper());
     }
 }

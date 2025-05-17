@@ -15,25 +15,23 @@ import java.util.Objects;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Basket {
-
-    private Integer id;
-
-    private Timestamp createdDateTime;
-
-    private Timestamp lastChangedDateTime;
+public class SalesBasket extends BaseBasket {
 
     private Client client;
-
-    private BigDecimal totalSum;
-
-    private String notes;
 
     private List<Sales> salesList;
 
     private EStatus status;
 
-    private BasketFilter filter;
+    public SalesBasket(Integer id, Timestamp createdDateTime, Timestamp lastChangedDateTime,
+                        Client client, BigDecimal totalSum, String notes, List<Sales> salesList,
+                        EStatus status, BasketFilter basketFilter) {
+
+        super(id, createdDateTime, lastChangedDateTime, totalSum, notes, basketFilter);
+        this.client = client;
+        this.salesList = salesList;
+        this.status = status;
+    }
 
     @AllArgsConstructor
     @Getter
@@ -74,15 +72,10 @@ public class Basket {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
 
-        Basket other = (Basket)obj;
-        return  Objects.equals(id, other.id) &&
-                Objects.equals(createdDateTime, other.createdDateTime) &&
-                Objects.equals(lastChangedDateTime, other.lastChangedDateTime) &&
+        SalesBasket other = (SalesBasket)obj;
+        return  super.equals(other) &&
                 Objects.equals(client, other.client) &&
-                Objects.equals(totalSum, other.totalSum) &&
-                Objects.equals(notes, other.notes) &&
                 Objects.equals(salesList, other.salesList) &&
-                Objects.equals(status, other.status) &&
-                Objects.equals(filter, other.filter);
+                Objects.equals(status, other.status);
     }
 }

@@ -146,7 +146,7 @@
 
 <h2>Новая корзина</h2>
 
-<form th:method="POST" th:action="@{/prestige/baskets}" th:object="${basket}">
+<form th:method="POST" th:action="@{/prestige/sales/baskets}" th:object="${basket}">
     <!-- Отображение сообщения об ошибке -->
     <div th:if="${error}" class="error-message" th:text="${error}"></div>
 

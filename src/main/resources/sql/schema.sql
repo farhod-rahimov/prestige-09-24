@@ -47,13 +47,22 @@ create table if not exists prestige_suppliers (
 	store_name varchar(200) unique not null
 );
 
-create table if not exists prestige_products (
+create table if not exists prestige_supply_baskets (
+	id serial primary key,
+	created_date_time TIMESTAMP not null,
+	last_changed_date_time TIMESTAMP not null,
+	supplier_id int references prestige_suppliers(id) not null,
+	total_sum numeric(15, 4) not null,
+    notes TEXT,
+    status int not null
+);
+
+create table if not exists prestige_all_supplies (
 	id serial primary key,
 	common_product_id int references common_products(id) not null,
+	quantity int default 0,
 	price_dollar numeric(15, 4) default 0,
-	stock_balance int default 0,
-	supplier_id int references prestige_suppliers(id) not null,
-	date_time timestamp not null
+	basket_id int references prestige_supply_baskets(id) not null
 );
 
 -- sales
@@ -66,7 +75,7 @@ create table if not exists sklad_clients (
 	phone_number varchar(500) /* несколько номеров с комменариями */
 );
 
-create table if not exists sklad_baskets (
+create table if not exists sklad_sales_baskets (
 	id serial primary key,
 	created_date_time TIMESTAMP not null,
     last_changed_date_time TIMESTAMP not null,
@@ -82,10 +91,10 @@ create table if not exists sklad_all_sales (
     quantity int not null,
     sold_price_dollar numeric(15, 4) not null,
     wholesale_price numeric(15, 4) not null,
-	basket_id int references sklad_baskets(id) not null
+	basket_id int references sklad_sales_baskets(id) not null
 );
 
-create table if not exists sklad_settings(
+create table if not exists sklad_settings (
 	id serial primary key,
     key varchar(100) unique not null,
     value varchar(100) not null
@@ -99,7 +108,7 @@ create table if not exists prestige_clients (
 	phone_number varchar(500) /* несколько номеров с комменариями */
 );
 
-create table if not exists prestige_baskets (
+create table if not exists prestige_sales_baskets (
 	id serial primary key,
 	created_date_time TIMESTAMP not null,
 	last_changed_date_time TIMESTAMP not null,
@@ -109,16 +118,16 @@ create table if not exists prestige_baskets (
     status int not null
 );
 
-create table if not exists prestige_all_sales(
+create table if not exists prestige_all_sales (
 	id serial primary key,
 	common_product_id int references common_products(id) not null,
 	quantity int not null,
 	sold_price_smn numeric(15, 4) not null,
     wholesale_price numeric(15, 4) not null,
-	basket_id int references prestige_baskets(id) not null
+	basket_id int references prestige_sales_baskets(id) not null
 );
 
-create table if not exists prestige_settings(
+create table if not exists prestige_settings (
 	id serial primary key,
     key varchar(100) unique not null,
     value varchar(100) not null

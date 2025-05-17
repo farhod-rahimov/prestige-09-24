@@ -2,7 +2,7 @@ package com.prestige.dao.prestige;
 
 
 import com.prestige.dao.mappers.SalesMapper;
-import com.prestige.models.Basket;
+import com.prestige.models.SalesBasket;
 import com.prestige.models.Sales;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -27,7 +27,7 @@ public class PrestigeAllSalesDAO {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public void saveNewPrestigeSale(Basket basket, Sales sales) {
+    public void saveNewPrestigeSale(SalesBasket basket, Sales sales) {
         String sql =    "INSERT INTO prestige_all_sales (" +
 
                             "common_product_id, " +
@@ -35,7 +35,7 @@ public class PrestigeAllSalesDAO {
                             "sold_price_smn, " +
                             "wholesale_price, " +
                             "basket_id" +
-                ") VALUES (?, ?, ?, ?, ?) RETURNING id";
+                        ") VALUES (?, ?, ?, ?, ?) RETURNING id";
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -99,7 +99,7 @@ public class PrestigeAllSalesDAO {
         }
     }
 
-    public void saveNewPrestigeSalesList(Basket basket, List<Sales> salesList) {
+    public void saveNewPrestigeSalesList(SalesBasket basket, List<Sales> salesList) {
         saveBatch(salesList, basket.getId());
         setSalesIds(salesList, basket.getId());
     }

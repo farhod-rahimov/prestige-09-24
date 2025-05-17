@@ -34,8 +34,8 @@ public class PrestigeProductsDAO {
                                 "basket_id, " +
                                 "SUM(quantity) AS total_quantity " +
                             "FROM prestige_all_sales pas " +
-                            "JOIN prestige_baskets pb ON pas.basket_id = pb.id " +
-                            "WHERE pb.status = " + Basket.EStatus.SOLD.getIntValue() + " " +
+                            "JOIN prestige_sales_baskets psb ON pas.basket_id = psb.id " +
+                            "WHERE psb.status = " + SalesBasket.EStatus.SOLD.getIntValue() + " " +
                             "GROUP BY (common_product_id, basket_id)) " +
 
                         "SELECT " +
@@ -451,25 +451,27 @@ public class PrestigeProductsDAO {
         return jdbcTemplate.query(sql, bindings.toArray(), new BrandMapper());
     }
 
-    public Map<Integer, Integer> findStockBeforeSale(Set<Integer> productIds, Basket basket) {
+    public Map<Integer, Integer> findStockBeforeSale(Set<Integer> productIds, BaseBasket basket) {
         String inClause = productIds.stream().map(id -> "?").collect(Collectors.joining(", "));
 
         String sql =    "SELECT cp.id AS product_id, " +
                             "(" +
-                                "(SELECT SUM(pp.stock_balance) " +
-                                 "FROM prestige_products pp " +
-                                 "WHERE pp.common_product_id = cp.id AND " +
-                                       "pp.date_time < ?) " +
+                                "(SELECT SUM(pas1.stock_balance) " +
+                                 "FROM prestige_all_supplies pas1 " +
+                                "JOIN prestige_supply_baskets psb1 ON pas1.basket_id = psb1.id " +
+                                 "WHERE pas1.common_product_id = cp.id AND " +
+                                     "psb1.status = " + SupplyBasket.EStatus.RECEIVED.getIntValue() + " AND " +
+                                     "psb1.created_date_time < ?)" +
 
                                 " - " +
 
                                 "(COALESCE( " +
-                                    "(SELECT SUM(pas.quantity) " +
-                                     "FROM prestige_all_sales pas " +
-                                     "JOIN prestige_baskets pb on pas.basket_id = pb.id " +
-                                     "WHERE pas.common_product_id = cp.id AND " +
-                                            "pb.status = " + Basket.EStatus.SOLD.getIntValue() + " AND " +
-                                            "pb.created_date_time < ?), 0))" +
+                                    "(SELECT SUM(pas2.quantity) " +
+                                     "FROM prestige_all_sales pas2 " +
+                                     "JOIN prestige_sales_baskets psb2 on pas2.basket_id = psb2.id " +
+                                     "WHERE pas2.common_product_id = cp.id AND " +
+                                         "psb2.status = " + SalesBasket.EStatus.SOLD.getIntValue() + " AND " +
+                                         "psb2.created_date_time < ?), 0))" +
                             ") AS stock_before_sale " +
                         "FROM common_products cp " +
                         "WHERE cp.id IN (" + inClause + ")";
@@ -519,9 +521,9 @@ public class PrestigeProductsDAO {
                                         "COALESCE(SUM(pas.quantity), 0) AS total_sold, " +
                                         "COALESCE(SUM(pas.quantity * pas.wholesale_price), 0) AS total_sold_value " +
                                     "FROM prestige_all_sales pas " +
-                                    "JOIN prestige_baskets pb ON pb.id = pas.basket_id " +
+                                    "JOIN prestige_sales_baskets psb ON psb.id = pas.basket_id " +
                                     "WHERE pas.common_product_id IN (" + inClause + ") AND " +
-                                            "pb.status = " + Basket.EStatus.SOLD.getIntValue() + " " +
+                                            "psb.status = " + SalesBasket.EStatus.SOLD.getIntValue() + " " +
                                     "GROUP BY pas_id) " +
 
                                 "SELECT " +
@@ -551,7 +553,7 @@ public class PrestigeProductsDAO {
         });
     }
 
-    public Map<Integer, BigDecimal> findRecommendedPrice(Set<Integer> productIds, Basket basket) {
+    public Map<Integer, BigDecimal> findRecommendedPrice(Set<Integer> productIds, SalesBasket basket) {
         String inClause = productIds.stream().map(id -> "?").collect(Collectors.joining(", "));
 
         String sql =    "SELECT " +
@@ -559,20 +561,20 @@ public class PrestigeProductsDAO {
                                 "SUM(COALESCE(pas.quantity, 0) * COALESCE(pas.sold_price_smn, 0)) / " +
                                     "NULLIF(SUM(pas.quantity), 0) " + // в случае если pas.quantity = 0, результат будет null
                         "FROM prestige_all_sales pas " +
-                        "JOIN prestige_baskets pb ON pb.id = pas.basket_id " +
+                        "JOIN prestige_sales_baskets psb ON psb.id = pas.basket_id " +
                         "WHERE " +
                             "pas.common_product_id IN (" + inClause + ") AND " +
-                            "pb.created_date_time >= ( " +
+                            "psb.created_date_time >= ( " +
                                 "SELECT created_date_time - INTERVAL '2 years' " +
-                                "FROM prestige_baskets " +
+                                "FROM prestige_sales_baskets " +
                                 "WHERE id = ? " +
                             ") AND " +
-                            "pb.created_date_time < (" +
+                            "psb.created_date_time < (" +
                                 "SELECT created_date_time " +
-                                "FROM prestige_baskets " +
+                                "FROM prestige_sales_baskets " +
                                 "WHERE id = ? " +
                             ") AND " +
-                            "pb.status = " + Basket.EStatus.SOLD.getIntValue() + " " +
+                            "psb.status = " + SalesBasket.EStatus.SOLD.getIntValue() + " " +
                         "GROUP BY (pas.common_product_id)";
 
         List<Object> bindings = new ArrayList();
