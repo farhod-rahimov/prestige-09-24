@@ -153,10 +153,10 @@
 
                                     <label for="dateTime">Дата и время оприходования:</label>
                                     <div th:if="${step.value == 'DATE_TIME_SELECTION'}">
-                                        <input type="datetime-local" id="dateTime" th:field="*{deliveryDateTime}">
+                                        <input type="datetime-local" id="dateTime" th:field="*{receivedDateTime}">
                                     </div>
                                     <div th:unless="${step.value == 'DATE_TIME_SELECTION'}">
-                                        <input type="datetime-local" th:field="*{deliveryDateTime}" readonly>
+                                        <input type="datetime-local" th:field="*{receivedDateTime}" readonly>
                                     </div>
                                 </div>
                             </div>

@@ -17,15 +17,15 @@ public class RetailProduct extends RetailProductView {
 
     private Integer id;
 
-    private Timestamp deliveryDateTime;
+    private Timestamp receivedDateTime; // TODO: заменить значение на receivedDateTime
 
     private Supplier supplier;
 
-    public RetailProduct(Integer id, Timestamp deliveryDateTime, Supplier supplier,
+    public RetailProduct(Integer id, Timestamp receivedDateTime, Supplier supplier,
                          Product product, BigDecimal priceDollar, Integer stockBalance) {
 
         this.id = id;
-        this.deliveryDateTime = deliveryDateTime;
+        this.receivedDateTime = receivedDateTime;
         this.supplier = supplier;
         this.product = product;
         this.priceDollar = priceDollar;
@@ -40,7 +40,7 @@ public class RetailProduct extends RetailProductView {
         RetailProduct other = (RetailProduct)obj;
         return  super.equals(other) &&
                 Objects.equals(id, other.id) &&
-                Objects.equals(deliveryDateTime, other.deliveryDateTime) &&
+                Objects.equals(receivedDateTime, other.receivedDateTime) &&
                 Objects.equals(supplier, other.supplier);
     }
 }

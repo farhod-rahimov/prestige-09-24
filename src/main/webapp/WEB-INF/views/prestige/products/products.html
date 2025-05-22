@@ -106,7 +106,7 @@
     </thead>
     <tbody>
 
-    <tr th:each="productView : ${allProductsView}"
+    <tr th:each="productView : ${allProductsInStock}"
         th:with="link='/prestige/products/' + ${productView.getProduct().getId()} + '/supplies', product=${productView.getProduct()}">
 
         <td><a th:href="${link}" th:text="${product.getProductName().getProductName()}"></a></td>

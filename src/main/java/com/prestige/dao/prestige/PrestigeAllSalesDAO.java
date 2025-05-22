@@ -11,10 +11,11 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -175,6 +176,52 @@ public class PrestigeAllSalesDAO {
             public int getBatchSize() {
                 return salesIds.size();
             }
+        });
+    }
+
+    public Map<Integer, BigDecimal> findRecommendedPrice(Set<Integer> productIds, SalesBasket basket) {
+        String inClause = productIds.stream().map(id -> "?").collect(Collectors.joining(", "));
+
+        String sql =    "SELECT " +
+                            "pas.common_product_id, " +
+                            "SUM(COALESCE(pas.quantity, 0) * COALESCE(pas.sold_price_smn, 0)) / " +
+                                "NULLIF(SUM(pas.quantity), 0) " + // в случае если pas.quantity = 0, результат будет null
+                        "FROM prestige_all_sales pas " +
+                        "JOIN prestige_sales_baskets psb ON psb.id = pas.basket_id " +
+                        "WHERE " +
+                            "pas.common_product_id IN (" + inClause + ") AND " +
+                            "psb.created_date_time >= ( " +
+                                "SELECT created_date_time - INTERVAL '2 years' " +
+                                "FROM prestige_sales_baskets " +
+                                "WHERE id = ? " +
+                            ") AND " +
+                            "psb.created_date_time < (" +
+                                "SELECT created_date_time " +
+                                "FROM prestige_sales_baskets " +
+                                "WHERE id = ? " +
+                            ") AND " +
+                            "psb.status = " + SalesBasket.EStatus.SOLD.getIntValue() + " " +
+                        "GROUP BY (pas.common_product_id)";
+
+        List<Object> bindings = new ArrayList();
+        bindings.addAll(productIds);
+        bindings.add(basket.getId());
+        bindings.add(basket.getId());
+
+        return jdbcTemplate.query(sql, bindings.toArray(), rs -> {
+            Map<Integer, BigDecimal> resultMap = new HashMap<>();
+
+            while (rs.next()) {
+                int productId = rs.getInt(1);
+                BigDecimal recommendedPrice = rs.getBigDecimal(2);
+
+                resultMap.put(productId, recommendedPrice != null ? recommendedPrice.setScale(2, RoundingMode.HALF_UP) : null);
+            }
+
+            for (Integer id : productIds) {
+                resultMap.putIfAbsent(id, null);
+            }
+            return resultMap;
         });
     }
 }

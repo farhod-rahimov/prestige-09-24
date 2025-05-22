@@ -37,7 +37,7 @@ public class PrestigeSalesBasketsController {
 
     private PrestigeClientsDAO prestigeClientsDAO;
 
-    private PrestigeProductsDAO prestigeProductsDAO;
+    private PrestigeAllSuppliesDAO prestigeAllSuppliesDAO;
 
     private PrestigeSettingsDAO prestigeSettingsDAO;
 
@@ -70,14 +70,14 @@ public class PrestigeSalesBasketsController {
 
     @Autowired
     public PrestigeSalesBasketsController(PrestigeSalesBasketsDAO prestigeSalesBasketsDAO, PrestigeAllSalesDAO prestigeAllSalesDAO,
-                                          PrestigeClientsDAO prestigeClientsDAO, PrestigeProductsDAO prestigeProductsDAO,
+                                          PrestigeClientsDAO prestigeClientsDAO, PrestigeAllSuppliesDAO prestigeAllSuppliesDAO,
                                           PrestigeSettingsDAO prestigeSettingsDAO, CommonProductsDAO commonProductsDAO,
                                           CommonProductNamesDAO commonProductNamesDAO, CommonBrandNamesDAO commonBrandNamesDAO,
                                           Utils utils) {
         this.prestigeSalesBasketsDAO = prestigeSalesBasketsDAO;
         this.prestigeAllSalesDAO = prestigeAllSalesDAO;
         this.prestigeClientsDAO = prestigeClientsDAO;
-        this.prestigeProductsDAO = prestigeProductsDAO;
+        this.prestigeAllSuppliesDAO = prestigeAllSuppliesDAO;
         this.prestigeSettingsDAO = prestigeSettingsDAO;
         this.commonProductsDAO = commonProductsDAO;
         this.commonProductNamesDAO = commonProductNamesDAO;
@@ -215,14 +215,14 @@ public class PrestigeSalesBasketsController {
 
     private EStep processProductSelectionWithFilter(SalesBasket basket, Model model, EStep step) {
         basket.getFilter().prepareAllFields();
-        model.addAttribute("allProductNames", prestigeProductsDAO.findAllProductNamesWithFilter(basket.getFilter()));
+        model.addAttribute("allProductNames", prestigeAllSuppliesDAO.findAllProductNamesWithFilter(basket.getFilter()));
         return getNextStep(step);
     }
 
     private EStep processProductNameSelection(SalesBasket basket, Model model, EStep step) {
         Sales sales = basket.getSalesList().get(basket.getSalesList().size() - 1);
         sales.getProduct().setProductName(commonProductNamesDAO.findProductNameById(sales.getProduct().getProductName().getId()));
-        List<String> allCarModelsList = prestigeProductsDAO.findAvailableCarModels(sales.getProduct());
+        List<String> allCarModelsList = prestigeAllSuppliesDAO.findAvailableCarModels(sales.getProduct());
 
         if (allCarModelsList.size() == 1) {
             sales.getProduct().setCarModel(allCarModelsList.get(0));
@@ -236,7 +236,7 @@ public class PrestigeSalesBasketsController {
 
     private EStep processProductCarModelSelection(SalesBasket basket, Model model, EStep step) {
         Sales sales = basket.getSalesList().get(basket.getSalesList().size() - 1);
-        List<String> allEngineModelsList = prestigeProductsDAO.findAvailableEngineModels(sales.getProduct());
+        List<String> allEngineModelsList = prestigeAllSuppliesDAO.findAvailableEngineModels(sales.getProduct());
 
         if (allEngineModelsList.size() == 1) {
             sales.getProduct().setEngineModel(allEngineModelsList.get(0));
@@ -254,7 +254,7 @@ public class PrestigeSalesBasketsController {
 
     private EStep processProductEngineModelSelection(SalesBasket basket, Model model, EStep step) {
         Sales sales = basket.getSalesList().get(basket.getSalesList().size() - 1);
-        List<String> allOemArticleNumbersList = prestigeProductsDAO.findAvailableOemArticleNumbers(sales.getProduct());
+        List<String> allOemArticleNumbersList = prestigeAllSuppliesDAO.findAvailableOemArticleNumbers(sales.getProduct());
 
         if (allOemArticleNumbersList.size() == 1) {
             sales.getProduct().setOemArticleNumber(allOemArticleNumbersList.get(0));
@@ -272,7 +272,7 @@ public class PrestigeSalesBasketsController {
 
     private EStep processProductOemArticleNumberSelection(SalesBasket basket, Model model, EStep step) {
         Sales sales = basket.getSalesList().get(basket.getSalesList().size() - 1);
-        List<String> allCrossArticleNumbersList = prestigeProductsDAO.findAvailableCrossArticleNumbers(sales.getProduct());
+        List<String> allCrossArticleNumbersList = prestigeAllSuppliesDAO.findAvailableCrossArticleNumbers(sales.getProduct());
 
         if (allCrossArticleNumbersList.size() == 1) {
             sales.getProduct().setCrossArticleNumber(allCrossArticleNumbersList.get(0));
@@ -290,7 +290,7 @@ public class PrestigeSalesBasketsController {
 
     private EStep processProductCrossArticleNumberSelection(SalesBasket basket, Model model, EStep step) {
         Sales sales = basket.getSalesList().get(basket.getSalesList().size() - 1);
-        List<Brand> allBrandsList = prestigeProductsDAO.findAvailableBrands(sales.getProduct());
+        List<Brand> allBrandsList = prestigeAllSuppliesDAO.findAvailableBrands(sales.getProduct());
 
         if (allBrandsList.size() == 1) {
             sales.getProduct().setBrand(allBrandsList.get(0));
@@ -349,11 +349,11 @@ public class PrestigeSalesBasketsController {
                     .collect(Collectors.toCollection(HashSet::new));
         }
 
-        Map<Integer, Integer> stockBeforeSaleMap = prestigeProductsDAO.findStockBeforeSale(productIds, basket);
-        Map<Integer, BigDecimal> wholeSalePriceMap = prestigeProductsDAO.findWholesalePrice(productIds);
+        Map<Integer, Integer> stockBeforeSaleMap = prestigeAllSuppliesDAO.findStockBeforeSale(productIds, basket);
+        Map<Integer, BigDecimal> wholeSalePriceMap = prestigeAllSuppliesDAO.findWholesalePrice(productIds);
         Settings exchangeRateSettings = prestigeSettingsDAO.findSettingsByName("exchangeRate");
         Settings magicValueSettings = prestigeSettingsDAO.findSettingsByName("magicValue");
-        Map<Integer, BigDecimal> recommendedPriceMap = prestigeProductsDAO.findRecommendedPrice(productIds, basket);
+        Map<Integer, BigDecimal> recommendedPriceMap = prestigeAllSalesDAO.findRecommendedPrice(productIds, basket);
 
         int salesListSize = salesList.size();
 
@@ -406,7 +406,7 @@ public class PrestigeSalesBasketsController {
 
     private EStep processProductSelectionDone(SalesBasket basket, Model model, EStep eStep) {
         basket.getSalesList().add(new Sales());
-        model.addAttribute("allProductNames", prestigeProductsDAO.findAllProductNames());
+        model.addAttribute("allProductNames", prestigeAllSuppliesDAO.findAllProductNames());
 
         return getNextStep(eStep);
     }
@@ -443,14 +443,14 @@ public class PrestigeSalesBasketsController {
             for (Sales sales : basket.getSalesList()) {
                 excludeProductIds.add(sales.getProduct().getId());
             }
-            List<Sales> fullSalesList = prestigeProductsDAO.findAllPrestigeProductsWrappedInSales(excludeProductIds);
+            List<Sales> fullSalesList = prestigeAllSuppliesDAO.findAllPrestigeProductsWrappedInSales(excludeProductIds);
             setPrivateInfos(basket, fullSalesList, false);
 
             salesList.addAll(fullSalesList);
         }
         else {
             step = EStep.PRODUCT_SELECTION_DONE;
-            model.addAttribute("allProductNames", prestigeProductsDAO.findAllProductNames());
+            model.addAttribute("allProductNames", prestigeAllSuppliesDAO.findAllProductNames());
             basket.setSalesList(basket.getSalesListForUpdate()); // delete all unsaved sales
         }
 
@@ -477,7 +477,7 @@ public class PrestigeSalesBasketsController {
         }
         else {
             step = EStep.PRODUCT_NAME_SELECTION;
-            model.addAttribute("allProductNames", prestigeProductsDAO.findAllProductNames());
+            model.addAttribute("allProductNames", prestigeAllSuppliesDAO.findAllProductNames());
         }
         model.addAttribute("step", step);
         return "prestige/sales/baskets/add-new-basket";

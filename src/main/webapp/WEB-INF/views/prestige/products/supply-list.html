@@ -116,7 +116,7 @@
         <td><a th:href="${link}" th:text="${utils.getConvertedPriceToSmn(item.getPriceDollar(), 0, 10.7, 2)}"></a></td>
 
         <td><a th:href="${link}" th:text="${item.getSupplier().getStoreName()}"></a></td>
-        <td><a th:href="${link}" th:text="${utils.getDateTimeFormatted(item.getDeliveryDateTime())}"></a></td>
+        <td><a th:href="${link}" th:text="${utils.getDateTimeFormatted(item.getReceivedDateTime())}"></a></td>
         <td><a th:href="${link}" th:title="${product.getNotes()}" th:text="${utils.getTruncatedText(product.getNotes(), 7)}"></a></td>
     </tr>
     </tbody>

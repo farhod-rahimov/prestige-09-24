@@ -81,6 +81,13 @@ public class Utils {
     }
 
     public String getFormattedBigDecimal(BigDecimal object, Integer scale) {
+
+        BigDecimal zero = new BigDecimal(0).setScale(scale);
+
+        if (object.equals(zero)) {
+            return zero.toString();
+        }
+
         // Настроим DecimalFormat с пробелом в качестве разделителя тысяч
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(new Locale("ru", "RU"));
         symbols.setGroupingSeparator(' ');  // Устанавливаем пробел как разделитель тысяч
