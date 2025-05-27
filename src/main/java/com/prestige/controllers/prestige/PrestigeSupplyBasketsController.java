@@ -1,6 +1,5 @@
 package com.prestige.controllers.prestige;
 
-import com.prestige.dao.Utils;
 import com.prestige.dao.common.CommonBrandNamesDAO;
 import com.prestige.dao.common.CommonProductNamesDAO;
 import com.prestige.dao.common.CommonProductsDAO;
@@ -8,8 +7,6 @@ import com.prestige.dao.prestige.PrestigeAllSuppliesDAO;
 import com.prestige.dao.prestige.PrestigeSuppliersDAO;
 import com.prestige.dao.prestige.PrestigeSupplyBasketsDAO;
 import com.prestige.models.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
@@ -27,7 +24,7 @@ import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/prestige/supplies/baskets")
-@SessionAttributes({"step", "basket", "utils"})
+@SessionAttributes({"supplyStep", "supplyBasket"})
 public class PrestigeSupplyBasketsController {
 
     private PrestigeSupplyBasketsDAO prestigeSupplyBasketsDAO;
@@ -42,27 +39,6 @@ public class PrestigeSupplyBasketsController {
 
     private CommonBrandNamesDAO commonBrandNamesDAO;
 
-    private Utils utils;
-
-    @AllArgsConstructor
-    @Getter
-    private enum EStep {
-        SUPPLIER_STORE_NAME_SELECTION("SUPPLIER_STORE_NAME_SELECTION"),
-        SUPPLIER_MANAGER_NAME_SELECTION("SUPPLIER_MANAGER_NAME_SELECTION"),
-        SUPPLIER_PHONE_NUMBER_SELECTION("SUPPLIER_PHONE_NUMBER_SELECTION"),
-        PRODUCT_SELECTION_WITH_FULL_LIST("PRODUCT_SELECTION_WITH_FULL_LIST"),
-        PRODUCT_SELECTION_WITH_FILTER("PRODUCT_SELECTION_WITH_FILTER"),
-        PRODUCT_NAME_SELECTION("PRODUCT_NAME_SELECTION"),
-        PRODUCT_CAR_MODEL_SELECTION("PRODUCT_CAR_MODEL_SELECTION"),
-        PRODUCT_ENGINE_MODEL_SELECTION("PRODUCT_ENGINE_MODEL_SELECTION"),
-        PRODUCT_OEM_ARTICLE_NUMBER_SELECTION("PRODUCT_OEM_ARTICLE_NUMBER_SELECTION"),
-        PRODUCT_CROSS_ARTICLE_NUMBER_SELECTION("PRODUCT_CROSS_ARTICLE_NUMBER_SELECTION"),
-        PRODUCT_BRAND_SELECTION("PRODUCT_BRAND_SELECTION"),
-        PRODUCT_QUANTITY_AND_PRICE_SELECTION("PRODUCT_QUANTITY_AND_PRICE_SELECTION"),
-        PRODUCT_SELECTION_DONE("PRODUCT_SELECTION_DONE");
-
-        private final String value;
-    }
 
     @Autowired
     public PrestigeSupplyBasketsController(PrestigeSupplyBasketsDAO prestigeSupplyBasketsDAO,
@@ -70,15 +46,13 @@ public class PrestigeSupplyBasketsController {
                                            PrestigeAllSuppliesDAO prestigeAllSuppliesDAO,
                                            CommonProductsDAO commonProductsDAO,
                                            CommonProductNamesDAO commonProductNamesDAO,
-                                           CommonBrandNamesDAO commonBrandNamesDAO,
-                                           Utils utils) {
+                                           CommonBrandNamesDAO commonBrandNamesDAO) {
         this.prestigeSupplyBasketsDAO = prestigeSupplyBasketsDAO;
         this.prestigeSuppliersDAO = prestigeSuppliersDAO;
         this.prestigeAllSuppliesDAO = prestigeAllSuppliesDAO;
         this.commonProductsDAO = commonProductsDAO;
         this.commonProductNamesDAO = commonProductNamesDAO;
         this.commonBrandNamesDAO = commonBrandNamesDAO;
-        this.utils = utils;
     }
 
     @GetMapping
@@ -89,15 +63,14 @@ public class PrestigeSupplyBasketsController {
 
     @GetMapping("/add")
     public String addNewBasketGet(Model model) {
-        model.addAttribute("basket", new SupplyBasket());
-        model.addAttribute("utils", utils);
-        model.addAttribute("step", EStep.SUPPLIER_STORE_NAME_SELECTION);
+        model.addAttribute("supplyBasket", new SupplyBasket());
+        model.addAttribute("supplyStep", EStep.SUPPLIER_STORE_NAME_SELECTION);
         model.addAttribute("allSupplierStoreNames", prestigeSuppliersDAO.findUniqueSupplierStoreNames());
         return "prestige/supplies/baskets/add-new-basket";
     }
 
     @PostMapping()
-    public String postMethodDispatcher(@ModelAttribute("basket") SupplyBasket basket,
+    public String postMethodDispatcher(@ModelAttribute("supplyBasket") SupplyBasket supplyBasket,
                                        @RequestParam("method") String method,
                                        @RequestParam(value = "selectedSuppliesIds", required = false) List<Integer> selectedSuppliesIds,
                                        BindingResult bindingResult,
@@ -106,29 +79,29 @@ public class PrestigeSupplyBasketsController {
 
         switch (method) {
             case "changeBasketType":
-                return changeBasketType(basket, model);
+                return changeBasketType(supplyBasket, model);
             case "resetAddingNewProduct":
-                return resetAddingNewProduct(basket, model);
+                return resetAddingNewProduct(supplyBasket, model);
             case "changeSearchType":
-                return changeSearchType(basket, model);
+                return changeSearchType(supplyBasket, model);
             case "markAsReceived":
-                return markAsReceivedBasket(basket, bindingResult, redirectAttributes);
+                return markAsReceivedBasket(supplyBasket, bindingResult, redirectAttributes);
             case "deleteSelected":
-                return deleteSelected(basket, selectedSuppliesIds);
+                return deleteSelected(supplyBasket, selectedSuppliesIds);
             case "delete":
-                return deleteBasket(basket, bindingResult, redirectAttributes);
+                return deleteBasket(supplyBasket, bindingResult, redirectAttributes);
             case "close":
                 return "redirect:/prestige/supplies/baskets";
             case "patch":
-                return patchBasket(basket, bindingResult, redirectAttributes, model);
+                return patchBasket(supplyBasket, bindingResult, redirectAttributes, model);
             default:
-                return saveNewBasket(basket, bindingResult, redirectAttributes, model);
+                return saveNewBasket(supplyBasket, bindingResult, redirectAttributes, model);
         }
     }
 
-    private EStep getNextStep(EStep step) {
+    private EStep getNextStep(EStep supplyStep) {
 
-        switch (step) {
+        switch (supplyStep) {
             case SUPPLIER_STORE_NAME_SELECTION:
                 return EStep.SUPPLIER_MANAGER_NAME_SELECTION;
             case SUPPLIER_MANAGER_NAME_SELECTION:
@@ -153,190 +126,190 @@ public class PrestigeSupplyBasketsController {
             case PRODUCT_QUANTITY_AND_PRICE_SELECTION:
                 return EStep.PRODUCT_SELECTION_DONE;
             default:
-                throw new RuntimeException(String.format("Step is undefined: '%s'", step.getValue()));
+                throw new RuntimeException(String.format("Step is undefined: '%s'", supplyStep.getValue()));
         }
     }
 
-    EStep processAndGetNextStep(SupplyBasket basket, Model model, EStep step) {
+    EStep processAndGetNextStep(SupplyBasket supplyBasket, Model model, EStep supplyStep) {
 
-        switch (step) {
+        switch (supplyStep) {
             case SUPPLIER_STORE_NAME_SELECTION:
-                return processSupplierStoreNameSelection(basket, model, step);
+                return processSupplierStoreNameSelection(supplyBasket, model, supplyStep);
             case SUPPLIER_MANAGER_NAME_SELECTION:
-                return processSupplierManagerNameSelection(basket, model, step);
+                return processSupplierManagerNameSelection(supplyBasket, model, supplyStep);
             case SUPPLIER_PHONE_NUMBER_SELECTION:
-                return processSupplierPhoneNumberSelection(basket, model, step);
+                return processSupplierPhoneNumberSelection(supplyBasket, model, supplyStep);
             case PRODUCT_SELECTION_WITH_FULL_LIST:
-                return processProductSelectionWithFullList(basket, model, step);
+                return processProductSelectionWithFullList(supplyBasket, model, supplyStep);
             case PRODUCT_SELECTION_WITH_FILTER:
-                return processProductSelectionWithFilter(basket, model, step);
+                return processProductSelectionWithFilter(supplyBasket, model, supplyStep);
             case PRODUCT_NAME_SELECTION:
-                return processProductNameSelection(basket, model, step);
+                return processProductNameSelection(supplyBasket, model, supplyStep);
             case PRODUCT_CAR_MODEL_SELECTION:
-                return processProductCarModelSelection(basket, model, step);
+                return processProductCarModelSelection(supplyBasket, model, supplyStep);
             case PRODUCT_ENGINE_MODEL_SELECTION:
-                return processProductEngineModelSelection(basket, model, step);
+                return processProductEngineModelSelection(supplyBasket, model, supplyStep);
             case PRODUCT_OEM_ARTICLE_NUMBER_SELECTION:
-                return processProductOemArticleNumberSelection(basket, model, step);
+                return processProductOemArticleNumberSelection(supplyBasket, model, supplyStep);
             case PRODUCT_CROSS_ARTICLE_NUMBER_SELECTION:
-                return processProductCrossArticleNumberSelection(basket, model, step);
+                return processProductCrossArticleNumberSelection(supplyBasket, model, supplyStep);
             case PRODUCT_BRAND_SELECTION:
-                return processProductBrandSelection(basket, model, step);
+                return processProductBrandSelection(supplyBasket, model, supplyStep);
             case PRODUCT_QUANTITY_AND_PRICE_SELECTION:
-                return processProductQuantityAndPriceSelection(basket, model, step);
+                return processProductQuantityAndPriceSelection(supplyBasket, model, supplyStep);
             case PRODUCT_SELECTION_DONE:
-                return processProductSelectionDone(basket, model, step);
+                return processProductSelectionDone(supplyBasket, model, supplyStep);
             default:
-                throw new RuntimeException(String.format("Step is undefined: '%s'", step.getValue()));
+                throw new RuntimeException(String.format("Step is undefined: '%s'", supplyStep.getValue()));
         }
     }
 
-    private EStep processSupplierStoreNameSelection(SupplyBasket basket, Model model, EStep step) {
-        List<String> allSupplierNamesList = prestigeSuppliersDAO.findSupplierNameByStoreName(basket.getSupplier().getStoreName());
+    private EStep processSupplierStoreNameSelection(SupplyBasket supplyBasket, Model model, EStep supplyStep) {
+        List<String> allSupplierNamesList = prestigeSuppliersDAO.findSupplierNameByStoreName(supplyBasket.getSupplier().getStoreName());
 
         if (allSupplierNamesList.size() == 1) {
-            basket.getSupplier().setName(allSupplierNamesList.get(0));
-            return processSupplierManagerNameSelection(basket, model, getNextStep(step));
+            supplyBasket.getSupplier().setName(allSupplierNamesList.get(0));
+            return processSupplierManagerNameSelection(supplyBasket, model, getNextStep(supplyStep));
         }
         else {
             model.addAttribute("allSupplierNames", allSupplierNamesList);
         }
-        return getNextStep(step);
+        return getNextStep(supplyStep);
     }
 
-    private EStep processSupplierManagerNameSelection(SupplyBasket basket, Model model, EStep step) {
-        Supplier supplier = basket.getSupplier();
+    private EStep processSupplierManagerNameSelection(SupplyBasket supplyBasket, Model model, EStep supplyStep) {
+        Supplier supplier = supplyBasket.getSupplier();
         List<String> allSupplierPhoneNumbers = prestigeSuppliersDAO.findSupplierPhoneNumbersByStoreNameAndManagerName(supplier.getStoreName(), supplier.getName());
 
         if (allSupplierPhoneNumbers.size() == 1) {
-            basket.getSupplier().setPhoneNumber(allSupplierPhoneNumbers.get(0));
-            return processSupplierPhoneNumberSelection(basket, model, getNextStep(step));
+            supplyBasket.getSupplier().setPhoneNumber(allSupplierPhoneNumbers.get(0));
+            return processSupplierPhoneNumberSelection(supplyBasket, model, getNextStep(supplyStep));
         }
         else {
             model.addAttribute("allSupplierPhoneNumbers", allSupplierPhoneNumbers);
         }
-        return getNextStep(step);
+        return getNextStep(supplyStep);
     }
 
-    private EStep processSupplierPhoneNumberSelection(SupplyBasket basket, Model model, EStep step) {
-        basket.getSupplier().setId(prestigeSuppliersDAO.findSupplierId(basket.getSupplier()));
-        basket.setSuppliesList(new LinkedList<>());
-        basket.setStatus(SupplyBasket.EStatus.PENDING);
+    private EStep processSupplierPhoneNumberSelection(SupplyBasket supplyBasket, Model model, EStep supplyStep) {
+        supplyBasket.getSupplier().setId(prestigeSuppliersDAO.findSupplierId(supplyBasket.getSupplier()));
+        supplyBasket.setSuppliesList(new LinkedList<>());
+        supplyBasket.setStatus(SupplyBasket.EStatus.PENDING);
 
-        prestigeSupplyBasketsDAO.saveNewBasket(basket);
+        prestigeSupplyBasketsDAO.saveNewBasket(supplyBasket);
 
-        return getNextStep(step);
+        return getNextStep(supplyStep);
     }
 
-    private EStep processProductSelectionWithFullList(SupplyBasket basket, Model model, EStep step) {
-        prestigeAllSuppliesDAO.updateQuantityAndPrices(basket.getSuppliesListForUpdate());
-        prestigeAllSuppliesDAO.saveNewPrestigeSuppliesList(basket, basket.getSuppliesListForSave());
-        return step;
+    private EStep processProductSelectionWithFullList(SupplyBasket supplyBasket, Model model, EStep supplyStep) {
+        prestigeAllSuppliesDAO.updateQuantityAndPrices(supplyBasket.getSuppliesListForUpdate());
+        prestigeAllSuppliesDAO.saveNewPrestigeSuppliesList(supplyBasket, supplyBasket.getSuppliesListForSave());
+        return supplyStep;
     }
 
-    private EStep processProductSelectionWithFilter(SupplyBasket basket, Model model, EStep step) {
-        basket.getFilter().prepareAllFields();
-        model.addAttribute("allProductNames", commonProductsDAO.findAllProductNamesWithFilter(basket.getFilter()));
-        return getNextStep(step);
+    private EStep processProductSelectionWithFilter(SupplyBasket supplyBasket, Model model, EStep supplyStep) {
+        supplyBasket.getFilter().prepareAllFields();
+        model.addAttribute("allProductNames", commonProductsDAO.findAllProductNamesWithFilter(supplyBasket.getFilter()));
+        return getNextStep(supplyStep);
     }
 
-    private EStep processProductNameSelection(SupplyBasket basket, Model model, EStep step) {
-        Supply supply = basket.getSuppliesList().get(basket.getSuppliesList().size() - 1);
+    private EStep processProductNameSelection(SupplyBasket supplyBasket, Model model, EStep supplyStep) {
+        Supply supply = supplyBasket.getSuppliesList().get(supplyBasket.getSuppliesList().size() - 1);
         supply.getProduct().setProductName(commonProductNamesDAO.findProductNameById(supply.getProduct().getProductName().getId()));
         List<String> allCarModelsList = commonProductsDAO.findCarModelsByProductNameId(supply.getProduct().getProductName().getId());
 
         if (allCarModelsList.size() == 1) {
             supply.getProduct().setCarModel(allCarModelsList.get(0));
-            return processProductCarModelSelection(basket, model, getNextStep(step));
+            return processProductCarModelSelection(supplyBasket, model, getNextStep(supplyStep));
         }
         else {
             model.addAttribute("allCarModels", allCarModelsList);
         }
-        return getNextStep(step);
+        return getNextStep(supplyStep);
     }
 
-    private EStep processProductCarModelSelection(SupplyBasket basket, Model model, EStep step) {
-        Supply supply = basket.getSuppliesList().get(basket.getSuppliesList().size() - 1);
+    private EStep processProductCarModelSelection(SupplyBasket supplyBasket, Model model, EStep supplyStep) {
+        Supply supply = supplyBasket.getSuppliesList().get(supplyBasket.getSuppliesList().size() - 1);
         List<String> allEngineModelsList = commonProductsDAO.findAvailableEngineModels(supply.getProduct());
 
         if (allEngineModelsList.size() == 1) {
             supply.getProduct().setEngineModel(allEngineModelsList.get(0));
-            return processProductEngineModelSelection(basket, model, getNextStep(step));
+            return processProductEngineModelSelection(supplyBasket, model, getNextStep(supplyStep));
         }
         else if (allEngineModelsList.isEmpty()) {
             supply.getProduct().setEngineModel("");
-            return processProductEngineModelSelection(basket, model, getNextStep(step));
+            return processProductEngineModelSelection(supplyBasket, model, getNextStep(supplyStep));
         }
         else {
             model.addAttribute("allEngineModels", allEngineModelsList);
         }
-        return getNextStep(step);
+        return getNextStep(supplyStep);
     }
 
-    private EStep processProductEngineModelSelection(SupplyBasket basket, Model model, EStep step) {
-        Supply supply = basket.getSuppliesList().get(basket.getSuppliesList().size() - 1);
+    private EStep processProductEngineModelSelection(SupplyBasket supplyBasket, Model model, EStep supplyStep) {
+        Supply supply = supplyBasket.getSuppliesList().get(supplyBasket.getSuppliesList().size() - 1);
         List<String> allOemArticleNumbersList = commonProductsDAO.findAvailableOemArticleNumbers(supply.getProduct());
 
         if (allOemArticleNumbersList.size() == 1) {
             supply.getProduct().setOemArticleNumber(allOemArticleNumbersList.get(0));
-            return processProductOemArticleNumberSelection(basket, model, getNextStep(step));
+            return processProductOemArticleNumberSelection(supplyBasket, model, getNextStep(supplyStep));
         }
         else if (allOemArticleNumbersList.isEmpty()) {
             supply.getProduct().setOemArticleNumber("");
-            return processProductOemArticleNumberSelection(basket, model, getNextStep(step));
+            return processProductOemArticleNumberSelection(supplyBasket, model, getNextStep(supplyStep));
         }
         else {
             model.addAttribute("allOemArticleNumbers", allOemArticleNumbersList);
         }
-        return getNextStep(step);
+        return getNextStep(supplyStep);
     }
 
-    private EStep processProductOemArticleNumberSelection(SupplyBasket basket, Model model, EStep step) {
-        Supply supply = basket.getSuppliesList().get(basket.getSuppliesList().size() - 1);
+    private EStep processProductOemArticleNumberSelection(SupplyBasket supplyBasket, Model model, EStep supplyStep) {
+        Supply supply = supplyBasket.getSuppliesList().get(supplyBasket.getSuppliesList().size() - 1);
         List<String> allCrossArticleNumbersList = commonProductsDAO.findAvailableCrossArticleNumbers(supply.getProduct());
 
         if (allCrossArticleNumbersList.size() == 1) {
             supply.getProduct().setCrossArticleNumber(allCrossArticleNumbersList.get(0));
-            return processProductCrossArticleNumberSelection(basket, model, getNextStep(step));
+            return processProductCrossArticleNumberSelection(supplyBasket, model, getNextStep(supplyStep));
         }
         else if (allCrossArticleNumbersList.isEmpty()) {
             supply.getProduct().setCrossArticleNumber("");
-            return processProductCrossArticleNumberSelection(basket, model, getNextStep(step));
+            return processProductCrossArticleNumberSelection(supplyBasket, model, getNextStep(supplyStep));
         }
         else {
             model.addAttribute("allCrossArticleNumbers", allCrossArticleNumbersList);
         }
-        return getNextStep(step);
+        return getNextStep(supplyStep);
     }
 
-    private EStep processProductCrossArticleNumberSelection(SupplyBasket basket, Model model, EStep step) {
-        Supply supply = basket.getSuppliesList().get(basket.getSuppliesList().size() - 1);
+    private EStep processProductCrossArticleNumberSelection(SupplyBasket supplyBasket, Model model, EStep supplyStep) {
+        Supply supply = supplyBasket.getSuppliesList().get(supplyBasket.getSuppliesList().size() - 1);
         List<Brand> allBrandsList = commonProductsDAO.findAvailableBrands(supply.getProduct());
 
         if (allBrandsList.size() == 1) {
             supply.getProduct().setBrand(allBrandsList.get(0));
-            return processProductBrandSelection(basket, model, getNextStep(step));
+            return processProductBrandSelection(supplyBasket, model, getNextStep(supplyStep));
         }
         else {
             model.addAttribute("allBrands", allBrandsList);
         }
-        return getNextStep(step);
+        return getNextStep(supplyStep);
     }
 
-    private EStep processProductBrandSelection(SupplyBasket basket, Model model, EStep step) {
-        Supply supply = basket.getSuppliesList().get(basket.getSuppliesList().size() - 1);
+    private EStep processProductBrandSelection(SupplyBasket supplyBasket, Model model, EStep supplyStep) {
+        Supply supply = supplyBasket.getSuppliesList().get(supplyBasket.getSuppliesList().size() - 1);
 
         if (supply.getProduct().getBrand().getBrandName() == null) {
             supply.getProduct().setBrand(commonBrandNamesDAO.findBrandById(supply.getProduct().getBrand().getId()));
         }
         supply.getProduct().setId(commonProductsDAO.findProductId(supply.getProduct()));
 
-        setPrivateInfos(basket, basket.getSuppliesList(), true);
+        setPrivateInfos(supplyBasket, supplyBasket.getSuppliesList(), true);
 
-        for (int i = 0; i < basket.getSuppliesList().size() - 1; i++) {
+        for (int i = 0; i < supplyBasket.getSuppliesList().size() - 1; i++) {
 
-            if (supply.equalsOnlyProductWithoutNotes(basket.getSuppliesList().get(i))) {
-                basket.getSuppliesList().remove(basket.getSuppliesList().size() - 1);
+            if (supply.equalsOnlyProductWithoutNotes(supplyBasket.getSuppliesList().get(i))) {
+                supplyBasket.getSuppliesList().remove(supplyBasket.getSuppliesList().size() - 1);
 
                 String errorMsg = String.format("|%s| |%s| |%s| |%s| |%s| |%s| уже есть в корзине!",
                         supply.getProduct().getProductName().getProductName(),
@@ -350,10 +323,10 @@ public class PrestigeSupplyBasketsController {
                 return EStep.PRODUCT_SELECTION_DONE;
             }
         }
-        return getNextStep(step);
+        return getNextStep(supplyStep);
     }
 
-    private void setPrivateInfos(SupplyBasket basket, List<Supply> suppliesList, boolean onlyForLastSupplies) {
+    private void setPrivateInfos(SupplyBasket supplyBasket, List<Supply> suppliesList, boolean onlyForLastSupplies) {
         Set<Integer> productIds;
 
         if (suppliesList.isEmpty()) {
@@ -370,7 +343,7 @@ public class PrestigeSupplyBasketsController {
                     .collect(Collectors.toCollection(HashSet::new));
         }
 
-        Map<Integer, Integer> stockBeforeSaleMap = prestigeAllSuppliesDAO.findStockBeforeSale(productIds, basket);
+        Map<Integer, Integer> stockBeforeSaleMap = prestigeAllSuppliesDAO.findStockBeforeSale(productIds, supplyBasket);
 
         int suppliesListSize = suppliesList.size();
 
@@ -380,129 +353,129 @@ public class PrestigeSupplyBasketsController {
         }
     }
 
-    private void updateBasketTotalSum(SupplyBasket basket) {
-        List<Supply> suppliesList = basket.getSuppliesListForUpdate();
+    private void updateBasketTotalSum(SupplyBasket supplyBasket) {
+        List<Supply> suppliesList = supplyBasket.getSuppliesListForUpdate();
         BigDecimal totalSum = new BigDecimal(0);
 
         for (Supply supply : suppliesList) {
             totalSum = totalSum.add(supply.getPriceDollar().multiply(BigDecimal.valueOf(supply.getQuantity())));
         }
-        basket.setTotalSum(totalSum.setScale(2, RoundingMode.HALF_UP));
-        prestigeAllSuppliesDAO.updateBasketTotalSum(basket);
+        supplyBasket.setTotalSum(totalSum.setScale(2, RoundingMode.HALF_UP));
+        prestigeAllSuppliesDAO.updateBasketTotalSum(supplyBasket);
     }
 
-    private EStep processProductQuantityAndPriceSelection(SupplyBasket basket, Model model, EStep step) {
-        Supply newSupply = basket.getSuppliesList().get(basket.getSuppliesList().size() - 1);
+    private EStep processProductQuantityAndPriceSelection(SupplyBasket supplyBasket, Model model, EStep supplyStep) {
+        Supply newSupply = supplyBasket.getSuppliesList().get(supplyBasket.getSuppliesList().size() - 1);
 
-        prestigeAllSuppliesDAO.saveNewPrestigeSupply(basket, newSupply);
-        updateBasketTotalSum(basket);
-        return getNextStep(step);
+        prestigeAllSuppliesDAO.saveNewPrestigeSupply(supplyBasket, newSupply);
+        updateBasketTotalSum(supplyBasket);
+        return getNextStep(supplyStep);
     }
 
-    private EStep processProductSelectionDone(SupplyBasket basket, Model model, EStep step) {
-        basket.getSuppliesList().add(new Supply());
+    private EStep processProductSelectionDone(SupplyBasket supplyBasket, Model model, EStep supplyStep) {
+        supplyBasket.getSuppliesList().add(new Supply());
         model.addAttribute("allProductNames", commonProductsDAO.findAllProductNames());
-        return getNextStep(step);
+        return getNextStep(supplyStep);
     }
 
-    private void patchBasketInternal(SupplyBasket basket) {
-        prestigeAllSuppliesDAO.saveNewPrestigeSuppliesList(basket, basket.getSuppliesListForSave());
-        prestigeAllSuppliesDAO.updateQuantityAndPrices(basket.getSuppliesListForUpdate());
-        prestigeSupplyBasketsDAO.updateBasketNotes(basket);
-        updateBasketTotalSum(basket);
+    private void patchBasketInternal(SupplyBasket supplyBasket) {
+        prestigeAllSuppliesDAO.saveNewPrestigeSuppliesList(supplyBasket, supplyBasket.getSuppliesListForSave());
+        prestigeAllSuppliesDAO.updateQuantityAndPrices(supplyBasket.getSuppliesListForUpdate());
+        prestigeSupplyBasketsDAO.updateBasketNotes(supplyBasket);
+        updateBasketTotalSum(supplyBasket);
     }
 
-    private String changeBasketStatus(SupplyBasket basket, BindingResult bindingResult,
+    private String changeBasketStatus(SupplyBasket supplyBasket, BindingResult bindingResult,
                                       RedirectAttributes redirectAttributes, String errorMsg, SupplyBasket.EStatus newStatus) {
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("error", errorMsg);
-            return String.format("redirect:/prestige/supplies/baskets/%d", basket.getId());
+            return String.format("redirect:/prestige/supplies/baskets/%d", supplyBasket.getId());
         }
 
-        patchBasketInternal(basket); // перед обновлением статуса корзины обязательно обновить ее
-        basket.setStatus(newStatus);
-        prestigeSupplyBasketsDAO.updateBasketStatus(basket);
+        patchBasketInternal(supplyBasket); // перед обновлением статуса корзины обязательно обновить ее
+        supplyBasket.setStatus(newStatus);
+        prestigeSupplyBasketsDAO.updateBasketStatus(supplyBasket);
 
         return "redirect:/prestige/supplies/baskets";
     }
 
-    private String changeBasketType(SupplyBasket basket, Model model) {
-        EStep step = (EStep)model.getAttribute("step");
-        List<Supply> suppliesList = basket.getSuppliesList();
+    private String changeBasketType(SupplyBasket supplyBasket, Model model) {
+        EStep supplyStep = (EStep)model.getAttribute("supplyStep");
+        List<Supply> suppliesList = supplyBasket.getSuppliesList();
 
-        if (step == EStep.PRODUCT_SELECTION_DONE) {
-            step = EStep.PRODUCT_SELECTION_WITH_FULL_LIST;
+        if (supplyStep == EStep.PRODUCT_SELECTION_DONE) {
+            supplyStep = EStep.PRODUCT_SELECTION_WITH_FULL_LIST;
 
             List<Integer> excludeProductIds = new ArrayList<>(suppliesList.size());
-            for (Supply supply : basket.getSuppliesList()) {
+            for (Supply supply : supplyBasket.getSuppliesList()) {
                 excludeProductIds.add(supply.getProduct().getId());
             }
             List<Supply> fullSuppliesList = commonProductsDAO.findAllProductsWrappedInSupply(excludeProductIds);
-            setPrivateInfos(basket, fullSuppliesList, false);
+            setPrivateInfos(supplyBasket, fullSuppliesList, false);
 
             suppliesList.addAll(fullSuppliesList);
         }
         else {
-            step = EStep.PRODUCT_SELECTION_DONE;
+            supplyStep = EStep.PRODUCT_SELECTION_DONE;
             model.addAttribute("allProductNames", commonProductsDAO.findAllProductNames());
-            basket.setSuppliesList(basket.getSuppliesListForUpdate()); // delete all unsaved sales
+            supplyBasket.setSuppliesList(supplyBasket.getSuppliesListForUpdate()); // delete all unsaved supplies
         }
 
-        model.addAttribute("step", step);
+        model.addAttribute("supplyStep", supplyStep);
         return "prestige/supplies/baskets/add-new-basket";
     }
 
-    private String resetAddingNewProduct(SupplyBasket basket, Model model) {
-        basket.getSuppliesList().remove(basket.getSuppliesList().size() - 1);
-        model.addAttribute("step", EStep.PRODUCT_SELECTION_DONE);
+    private String resetAddingNewProduct(SupplyBasket supplyBasket, Model model) {
+        supplyBasket.getSuppliesList().remove(supplyBasket.getSuppliesList().size() - 1);
+        model.addAttribute("supplyStep", EStep.PRODUCT_SELECTION_DONE);
 
         return "prestige/supplies/baskets/add-new-basket";
     }
 
-    private String changeSearchType(SupplyBasket basket, Model model) {
-        EStep step = (EStep)model.getAttribute("step");
+    private String changeSearchType(SupplyBasket supplyBasket, Model model) {
+        EStep supplyStep = (EStep)model.getAttribute("supplyStep");
 
-        if (step != EStep.PRODUCT_SELECTION_WITH_FILTER) {
-            step = EStep.PRODUCT_SELECTION_WITH_FILTER;
+        if (supplyStep != EStep.PRODUCT_SELECTION_WITH_FILTER) {
+            supplyStep = EStep.PRODUCT_SELECTION_WITH_FILTER;
 
-            if (basket.getFilter() != null) {
-                basket.getFilter().clear();
+            if (supplyBasket.getFilter() != null) {
+                supplyBasket.getFilter().clear();
             }
         }
         else {
-            step = EStep.PRODUCT_NAME_SELECTION;
+            supplyStep = EStep.PRODUCT_NAME_SELECTION;
             model.addAttribute("allProductNames", commonProductsDAO.findAllProductNames());
         }
-        model.addAttribute("step", step);
+        model.addAttribute("supplyStep", supplyStep);
         return "prestige/supplies/baskets/add-new-basket";
     }
 
-    private String markAsReceivedBasket(SupplyBasket basket, BindingResult bindingResult,
+    private String markAsReceivedBasket(SupplyBasket supplyBasket, BindingResult bindingResult,
                                         RedirectAttributes redirectAttributes) {
         String errorMsg = String.format("Возникла ошибка при %s корзины. Пожалуйста, попробуйте заново.",
-                basket.getStatus() == SupplyBasket.EStatus.DELETED ? "восстановлении" : "оприходовании");
+                supplyBasket.getStatus() == SupplyBasket.EStatus.DELETED ? "восстановлении" : "оприходовании");
 
-        return changeBasketStatus(basket, bindingResult, redirectAttributes, errorMsg, SupplyBasket.EStatus.RECEIVED);
+        return changeBasketStatus(supplyBasket, bindingResult, redirectAttributes, errorMsg, SupplyBasket.EStatus.RECEIVED);
     }
 
-    private String deleteSelected(SupplyBasket basket, List<Integer> selectedSuppliesIds) {
+    private String deleteSelected(SupplyBasket supplyBasket, List<Integer> selectedSuppliesIds) {
         for (Integer supplyId : selectedSuppliesIds) {
-            basket.getSuppliesList().removeIf(supply -> supply.getId().equals(supplyId));
+            supplyBasket.getSuppliesList().removeIf(supply -> supply.getId().equals(supplyId));
         }
 
         prestigeAllSuppliesDAO.deleteSuppliesIds(selectedSuppliesIds);
-        updateBasketTotalSum(basket);
-        return "redirect:/prestige/supplies/baskets/" + basket.getId();
+        updateBasketTotalSum(supplyBasket);
+        return "redirect:/prestige/supplies/baskets/" + supplyBasket.getId();
     }
 
-    private String deleteBasket(SupplyBasket basket, BindingResult bindingResult,
+    private String deleteBasket(SupplyBasket supplyBasket, BindingResult bindingResult,
                                 RedirectAttributes redirectAttributes) {
         String errorMsg = "Возникла ошибка при удалении корзины. Пожалуйста, попробуйте заново.";
 
-        return changeBasketStatus(basket, bindingResult, redirectAttributes, errorMsg, SupplyBasket.EStatus.DELETED);
+        return changeBasketStatus(supplyBasket, bindingResult, redirectAttributes, errorMsg, SupplyBasket.EStatus.DELETED);
     }
 
-    private String patchBasket(SupplyBasket basket, BindingResult bindingResult,
+    private String patchBasket(SupplyBasket supplyBasket, BindingResult bindingResult,
                                RedirectAttributes redirectAttributes, Model model) {
 
         // обновляем кол-во и цену товаров и возвращаемся на страницу "/prestige/supplies/baskets"
@@ -510,15 +483,15 @@ public class PrestigeSupplyBasketsController {
         if (bindingResult.hasErrors()) {
             String errorMessage = "Возникла ошибка при сохранении корзины. Пожалуйста, попробуйте заново.";
             redirectAttributes.addFlashAttribute("error", errorMessage);
-            return String.format("redirect:/prestige/supplies/baskets/%d", basket.getId());
+            return String.format("redirect:/prestige/supplies/baskets/%d", supplyBasket.getId());
         }
 
-        patchBasketInternal(basket);
+        patchBasketInternal(supplyBasket);
 
         return "redirect:/prestige/supplies/baskets";
     }
 
-    private String saveNewBasket(SupplyBasket basket, BindingResult bindingResult,
+    private String saveNewBasket(SupplyBasket supplyBasket, BindingResult bindingResult,
                                  RedirectAttributes redirectAttributes, Model model) {
 
         if (bindingResult.hasErrors()) {
@@ -527,8 +500,8 @@ public class PrestigeSupplyBasketsController {
             return String.format("redirect:/prestige/supplies/baskets/add");
         }
 
-        EStep step = processAndGetNextStep(basket, model, (EStep)model.getAttribute("step"));
-        model.addAttribute("step", step);
+        EStep supplyStep = processAndGetNextStep(supplyBasket, model, (EStep)model.getAttribute("supplyStep"));
+        model.addAttribute("supplyStep", supplyStep);
 
         return "prestige/supplies/baskets/add-new-basket";
     }
@@ -536,10 +509,10 @@ public class PrestigeSupplyBasketsController {
     private SupplyBasket findBasketById(Integer basketId) {
 
         try {
-            SupplyBasket basket = prestigeSupplyBasketsDAO.findBasketById(basketId);
-            basket.setSuppliesList(prestigeAllSuppliesDAO.findAllSuppliesByBasketId(basketId));
-            setPrivateInfos(basket, basket.getSuppliesList(), false);
-            return basket;
+            SupplyBasket supplyBasket = prestigeSupplyBasketsDAO.findBasketById(basketId);
+            supplyBasket.setSuppliesList(prestigeAllSuppliesDAO.findAllSuppliesByBasketId(basketId));
+            setPrivateInfos(supplyBasket, supplyBasket.getSuppliesList(), false);
+            return supplyBasket;
         }
         catch (DataAccessException e) {
             return null;
@@ -549,16 +522,16 @@ public class PrestigeSupplyBasketsController {
     @GetMapping("/{basketId}")
     public ModelAndView findBasketById(@PathVariable("basketId") Integer basketId, Model model) {
         ModelAndView mav = new ModelAndView("prestige/supplies/baskets/add-new-basket");
-        SupplyBasket basket = findBasketById(basketId);
+        SupplyBasket supplyBasket = findBasketById(basketId);
 
-        if (basket == null) {
+        if (supplyBasket == null) {
             mav.setViewName("errors/404");
             mav.setStatus(HttpStatus.NOT_FOUND);
             mav.addObject("previousPage", "/prestige/supplies/baskets");
         }
         else {
-            mav.addObject("basket", basket);
-            mav.addObject("step", PrestigeSupplyBasketsController.EStep.PRODUCT_SELECTION_DONE);
+            mav.addObject("supplyBasket", supplyBasket);
+            mav.addObject("supplyStep", EStep.PRODUCT_SELECTION_DONE);
         }
         return mav;
     }

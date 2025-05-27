@@ -320,8 +320,9 @@ public class PrestigeAllSuppliesDAO {
                         "JOIN common_products cp ON pas.common_product_id = cp.id " +
                         "JOIN common_product_names cpn ON cpn.id = cp.product_name_id " +
                         "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+                        "JOIN prestige_supply_baskets psb ON pas.basket_id = psb.id " +
 
-                        "WHERE 1 = 1 ";
+                        "WHERE psb.status = " + SupplyBasket.EStatus.RECEIVED.getIntValue() + " ";
 
         List<Object> bindings = new ArrayList();
 
@@ -519,13 +520,13 @@ public class PrestigeAllSuppliesDAO {
                                     "SELECT DISTINCT ON (common_product_id) " +
                                         "pas.common_product_id, " +
                                         "pas.price_dollar, " +
-                                        "pas.date_time " +
+                                        "psb.created_date_time " +
                                     "FROM prestige_all_supplies pas " +
                                     "JOIN prestige_supply_baskets psb ON pas.basket_id = psb.id " +
                                     "WHERE " +
                                         "common_product_id IN (" + inClause + ") AND " +
                                         "psb.status = " + SupplyBasket.EStatus.RECEIVED.getIntValue() + " " +
-                                    "ORDER BY common_product_id, date_time DESC), " +
+                                    "ORDER BY common_product_id, psb.created_date_time DESC), " +
 
                                     "stock_data AS ( " +
                                         "SELECT " +
@@ -537,7 +538,7 @@ public class PrestigeAllSuppliesDAO {
                                     "JOIN latest_prices lp ON pas.common_product_id = lp.common_product_id " +
                                     "JOIN prestige_supply_baskets psb ON pas.basket_id = psb.id " +
                                     "WHERE " +
-                                        "pas.common_product_id IN ("+ inClause +") " +
+                                        "pas.common_product_id IN ("+ inClause +") AND " +
                                         "psb.status = " + SupplyBasket.EStatus.RECEIVED.getIntValue() + " " +
                                     "GROUP BY pp_id, lp.price_dollar), " +
 
@@ -555,7 +556,7 @@ public class PrestigeAllSuppliesDAO {
                                 "SELECT " +
                                     "sd.pp_id, " +
                                     "CASE " +
-                                        "WHEN (sd.total_stock - sd2.total_sold) = 0 " +
+                                        "WHEN COALESCE((sd.total_stock - sd2.total_sold), 0) = 0 OR sd.total_stock = 0 " +
                                             "THEN sd.latest_price " +
                                         "WHEN sd2.total_sold IS NULL " +
                                             "THEN sd.total_stock_value / sd.total_stock " + // ср. взвешенная цена поступления

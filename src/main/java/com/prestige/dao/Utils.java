@@ -1,6 +1,8 @@
 package com.prestige.dao;
 
+import com.prestige.models.EStep;
 import com.prestige.models.Product;
+import com.prestige.models.ProductName;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -9,6 +11,7 @@ import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.Locale;
 
 @Component
@@ -110,5 +113,62 @@ public class Utils {
             return text;
         }
         return text.substring(0, charQuantity) + ellipsis;
+    }
+
+    public boolean shouldShowNextButton(EStep step, List<ProductName> allProductNames) {
+
+        switch (step) {
+            case PRODUCT_NAME_SELECTION:
+                return allProductNames != null && allProductNames.isEmpty() ? false : true;
+            case PRODUCT_SELECTION_DONE:
+                return false;
+            default:
+                return true;
+        }
+    }
+
+    public boolean clientSelectionDone(EStep step) {
+
+        switch (step) {
+            case CLIENT_NAME_SELECTION:
+            case CLIENT_PHONE_NUMBER_SELECTION:
+                return false;
+            default:
+                return true;
+        }
+    }
+
+    public boolean supplierSelectionDone(EStep step) {
+
+        switch (step) {
+            case SUPPLIER_STORE_NAME_SELECTION:
+            case SUPPLIER_MANAGER_NAME_SELECTION:
+            case SUPPLIER_PHONE_NUMBER_SELECTION:
+                return false;
+            default:
+                return true;
+        }
+    }
+
+    public boolean shouldShowAddedItemsInTheBasket(EStep step, List<Object> list, boolean isLastItem) {
+        boolean isEmptyList = list == null || list.isEmpty();
+
+        switch (step) {
+            case PRODUCT_SELECTION_DONE:
+            case PRODUCT_SELECTION_WITH_FULL_LIST:
+                return !isEmptyList || isLastItem;
+            default:
+                return !isEmptyList && !isLastItem;
+        }
+    }
+
+    public boolean shouldShowCheckBox(EStep step) {
+
+        switch (step) {
+            case PRODUCT_SELECTION_DONE:
+                return true;
+            default:
+                return false;
+        }
     }
 }
