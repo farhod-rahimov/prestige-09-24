@@ -1,6 +1,6 @@
 package com.prestige.dao.prestige;
 
-import com.prestige.dao.Utils;
+import com.prestige.service.Utils;
 import com.prestige.dao.mappers.ClientMapper;
 import com.prestige.models.Client;
 import org.springframework.beans.factory.annotation.Autowired;

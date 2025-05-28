@@ -49,11 +49,8 @@
             border-radius: 5px;
             box-sizing: border-box;
         }
-               .client-table {
+       .client-table {
             width: 50%;
-        }
-        .private-info {
-            background-color: #a8ada8;
         }
         .button-container {
             position: sticky;
@@ -227,9 +224,9 @@
                 <th>Количество</th>
                 <th>Цена, СМН</th>
                 <th>Сумма, СМН</th>
-                <th class="private-info">Остаток до реализации</th>
-                <th class="private-info">(INNER * magicValue * exchangeRate, SMN)</th>
-                <th class="private-info">(INNER RECOMMENDED, SMN)</th>
+                <th class="private-info">Остаток до<br>реализации</th>
+                <th class="private-info">(INNER *<br>magicValue *<br>exchangeRate,<br>SMN)</th>
+                <th class="private-info">(INNER<br>RECOM<br>MENDED,<br>SMN)</th>
                 <th class="private-info">(INNER)</th>
                 <th class="private-info"></th>
             </tr>
@@ -492,7 +489,7 @@
             <tr th:if="${utils.shouldShowAddedItemsInTheBasket(salesStep, salesBasket.salesList, iterStat.last)}"
                 th:each="sales, iterStat : ${salesBasket.salesList}">
 
-                <td th:text="*{salesList[__${iterStat.index}__].product.productName.productName}"></td>-->
+                <td th:text="*{salesList[__${iterStat.index}__].product.productName.productName}"></td>
                 <td th:text="*{salesList[__${iterStat.index}__].product.carModel}"></td>
                 <td th:text="*{salesList[__${iterStat.index}__].product.engineModel}"></td>
                 <td th:text="*{salesList[__${iterStat.index}__].product.oemArticleNumber}"></td>

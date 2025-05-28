@@ -29,7 +29,7 @@ public class PrestigeSettingsController {
             prestigeSettingsDAO.saveNewSettings(magicValue);
         }
 
-        Settings exchangeRate = new Settings(null, "exchangeRate", "11.03");
+        Settings exchangeRate = new Settings(null, "exchangeRate", "11.00");
         if (!prestigeSettingsDAO.checkIfSettingsExists(exchangeRate)) {
             prestigeSettingsDAO.saveNewSettings(exchangeRate);
         }

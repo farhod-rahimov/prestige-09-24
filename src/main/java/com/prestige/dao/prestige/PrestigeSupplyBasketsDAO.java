@@ -1,6 +1,6 @@
 package com.prestige.dao.prestige;
 
-import com.prestige.dao.Utils;
+import com.prestige.service.Utils;
 import com.prestige.dao.mappers.SupplyBasketMapper;
 import com.prestige.models.SupplyBasket;
 import org.springframework.beans.factory.annotation.Autowired;

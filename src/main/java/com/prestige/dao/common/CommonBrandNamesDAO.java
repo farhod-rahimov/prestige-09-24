@@ -1,6 +1,6 @@
 package com.prestige.dao.common;
 
-import com.prestige.dao.Utils;
+import com.prestige.service.Utils;
 import com.prestige.dao.mappers.BrandMapper;
 import com.prestige.models.Brand;
 import org.springframework.beans.factory.annotation.Autowired;

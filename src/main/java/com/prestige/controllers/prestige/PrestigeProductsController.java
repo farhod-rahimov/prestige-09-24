@@ -1,6 +1,7 @@
 package com.prestige.controllers.prestige;
 
 import com.prestige.dao.prestige.PrestigeAllSuppliesDAO;
+import com.prestige.dao.prestige.PrestigeSettingsDAO;
 import com.prestige.models.RetailProduct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,15 +19,21 @@ import java.util.List;
 public class PrestigeProductsController {
 
     private final PrestigeAllSuppliesDAO prestigeAllSuppliesDAO;
+    private final PrestigeSettingsDAO prestigeSettingsDAO;
 
     @Autowired
-    public PrestigeProductsController(PrestigeAllSuppliesDAO prestigeAllSuppliesDAO) {
+    public PrestigeProductsController(PrestigeAllSuppliesDAO prestigeAllSuppliesDAO,
+                                      PrestigeSettingsDAO prestigeSettingsDAO) {
         this.prestigeAllSuppliesDAO = prestigeAllSuppliesDAO;
+        this.prestigeSettingsDAO = prestigeSettingsDAO;
     }
 
     @GetMapping
     public String showAllPrestigeProductsInStock(Model model) {
         model.addAttribute("allProductsInStock", prestigeAllSuppliesDAO.findAllPrestigeProductsInStock());
+        model.addAttribute("magicValue", prestigeSettingsDAO.findSettingsByName("magicValue").getValue());
+        model.addAttribute("exchangeRate", prestigeSettingsDAO.findSettingsByName("exchangeRate").getValue());
+
         return "prestige/products/products";
     }
 
@@ -43,6 +50,8 @@ public class PrestigeProductsController {
         }
         else {
             mav.addObject("prestigeProductSupplyList", prestigeProductSupplyList);
+            mav.addObject("magicValue", prestigeSettingsDAO.findSettingsByName("magicValue").getValue());
+            mav.addObject("exchangeRate", prestigeSettingsDAO.findSettingsByName("exchangeRate").getValue());
         }
         return mav;
     }

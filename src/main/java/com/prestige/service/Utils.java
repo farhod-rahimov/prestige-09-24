@@ -1,4 +1,4 @@
-package com.prestige.dao;
+package com.prestige.service;
 
 import com.prestige.models.EStep;
 import com.prestige.models.Product;
