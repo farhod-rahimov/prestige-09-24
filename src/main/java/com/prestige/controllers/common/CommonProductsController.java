@@ -4,6 +4,7 @@ import com.prestige.dao.common.CommonBrandNamesDAO;
 import com.prestige.dao.common.CommonProductNamesDAO;
 import com.prestige.dao.common.CommonProductsDAO;
 import com.prestige.dao.prestige.PrestigeAllSuppliesDAO;
+import com.prestige.models.EStep;
 import com.prestige.models.Product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,10 +16,13 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.LinkedList;
+import java.util.List;
 
 @Controller
 @RequestMapping({"/prestige/product-management/products",
                  "/sklad/product-management/products"})
+@SessionAttributes({"productStep", "productList", "product"})
 public class CommonProductsController extends AbstractCommonBaseController {
 
     private final CommonProductsDAO commonProductsDAO;
@@ -51,11 +55,10 @@ public class CommonProductsController extends AbstractCommonBaseController {
     @GetMapping("/add")
     public String addNewProductGet(Model model, HttpServletRequest request) {
 
-        if (model.getAttribute("product") == null) {
-            model.addAttribute("product", new Product());
-        }
-        model.addAttribute("allProductNames", commonProductNamesDAO.findAllProductNames());
-        model.addAttribute("allBrands", commonBrandNamesDAO.findAllBrands());
+        model.addAttribute("productStep", EStep.PRODUCT_SELECTION_DONE);
+        model.addAttribute("productList", new LinkedList<Product>());
+        model.addAttribute("product", new Product()); //mock
+
         model.addAttribute("URIBeginning", getURIBeginning(request));
         return "common/products/add-new-product";
     }
@@ -82,41 +85,121 @@ public class CommonProductsController extends AbstractCommonBaseController {
 
     @PostMapping()
     public String postMethodDispatcher(@ModelAttribute("product") Product product, BindingResult bindingResult,
-                                       @RequestParam("method") String method, RedirectAttributes redirectAttributes,
-                                       HttpServletRequest request) {
+                                       @RequestParam("method") String method,
+                                       @RequestParam(value = "selectedProductIds", required = false) List<Integer> selectedProductIds,
+                                       RedirectAttributes redirectAttributes,
+                                       Model model, HttpServletRequest request) {
 
         switch (method) {
             case "put":
                 return updateProduct(product, bindingResult, redirectAttributes, request);
             case "delete":
                 return deleteProduct(product.getId(), redirectAttributes, request);
+            case "resetAddingNewProduct":
+                return resetAddingNewProduct(model, request);
+            case "deleteSelected":
+                return deleteSelected(selectedProductIds, model, request);
+            case "saveAndClose":
+                if (model.getAttribute("productStep") == EStep.PRODUCT_NAME_SELECTION) {
+                    saveNewProduct(bindingResult, model, redirectAttributes, request);
+                }
+                return String.format("redirect:/%s/product-management/products", getURIBeginning(request));
             default:
-                return saveNewProduct(product, bindingResult, redirectAttributes, request);
+                return saveNewProduct(bindingResult, model, redirectAttributes, request);
         }
     }
 
-    private String saveNewProduct(Product product, BindingResult bindingResult,
+    private EStep getNextStep(EStep productStep) {
+
+        switch (productStep) {
+            case PRODUCT_SELECTION_DONE:
+                return EStep.PRODUCT_NAME_SELECTION;
+            case PRODUCT_NAME_SELECTION:
+                return EStep.PRODUCT_SELECTION_DONE;
+            default:
+                throw new RuntimeException(String.format("Step is undefined: '%s'", productStep.getValue()));
+        }
+    }
+
+    EStep processAndGetNextStep(Model model, EStep productStep) {
+
+        LinkedList<Product> productList = (LinkedList<Product>)model.getAttribute("productList");
+
+        switch (productStep) {
+            case PRODUCT_SELECTION_DONE:
+                return processProductSelectionDone(productList, model, productStep);
+            case PRODUCT_NAME_SELECTION:
+                return processProductNameSelection(productList, model, productStep);
+            default:
+                throw new RuntimeException(String.format("Step is undefined: '%s'", productStep.getValue()));
+        }
+    }
+
+    private EStep processProductSelectionDone(LinkedList<Product> productList, Model model, EStep productStep) {
+        productList.add(new Product());
+
+        model.addAttribute("allProductNames", commonProductNamesDAO.findAllProductNames());
+        model.addAttribute("allBrands", commonBrandNamesDAO.findAllBrands());
+        model.addAttribute("product", productList.getLast());
+
+        return getNextStep(productStep);
+    }
+
+    private EStep processProductNameSelection(LinkedList<Product> productList, Model model, EStep productStep) {
+
+        Product product = productList.getLast();
+        product.setProductName(commonProductNamesDAO.findProductNameById(product.getProductName().getId()));
+        product.setBrand(commonBrandNamesDAO.findBrandById(product.getBrand().getId()));
+
+        if (!commonProductsDAO.saveNewProduct(product)) {
+            model.addAttribute("allProductNames", commonProductNamesDAO.findAllProductNames());
+            model.addAttribute("allBrands", commonBrandNamesDAO.findAllBrands());
+
+            String errorMessage = "Указанный Вами товар уже существует.";
+            model.addAttribute("error", errorMessage);
+            return productStep;
+        }
+        return getNextStep(productStep);
+    }
+
+    private String resetAddingNewProduct(Model model, HttpServletRequest request) {
+        ((LinkedList<Product>)model.getAttribute("productList")).removeLast();
+
+        model.addAttribute("productStep", EStep.PRODUCT_SELECTION_DONE);
+        model.addAttribute("URIBeginning", getURIBeginning(request));
+
+        return "common/products/add-new-product";
+    }
+
+    private String deleteSelected(List<Integer> selectedProductIds, Model model, HttpServletRequest request) {
+        LinkedList<Product> productList = (LinkedList<Product>)model.getAttribute("productList");
+
+        for (Integer productId : selectedProductIds) {
+            productList.removeIf(product -> product.getId().equals(productId));
+        }
+
+        commonProductsDAO.deleteProductIds(selectedProductIds);
+
+        model.addAttribute("productStep", EStep.PRODUCT_SELECTION_DONE);
+        model.addAttribute("URIBeginning", getURIBeginning(request));
+
+        return "common/products/add-new-product";
+    }
+
+    private String saveNewProduct(BindingResult bindingResult, Model model,
                                   RedirectAttributes redirectAttributes, HttpServletRequest request) {
 
         if (bindingResult.hasErrors()) {
             String errorMessage = "Возникла ошибка при создании нового товара. Пожалуйста, попробуйте заново.";
             redirectAttributes.addFlashAttribute("error", errorMessage);
-
-            return String.format("redirect:/%s/product-management/products/add",
-                    isPrestigeRequest(request.getRequestURI()) ? "prestige" : "sklad");
+            return String.format("redirect:/%s/product-management/products/add", getURIBeginning(request));
         }
 
-        if (!commonProductsDAO.saveNewProduct(product)) {
-            String errorMessage = "Указанный Вами товар уже существует.";
-            redirectAttributes.addFlashAttribute("error", errorMessage);
-            redirectAttributes.addFlashAttribute("product", product);
+        EStep productStep = processAndGetNextStep(model, (EStep)model.getAttribute("productStep"));
+        model.addAttribute("productStep", productStep);
+        model.addAttribute("URIBeginning", getURIBeginning(request));
 
-            return String.format("redirect:/%s/product-management/products/add",
-                    isPrestigeRequest(request.getRequestURI()) ? "prestige" : "sklad");
-        }
-
-        return String.format("redirect:/%s/product-management/products",
-                isPrestigeRequest(request.getRequestURI()) ? "prestige" : "sklad");
+        return "common/products/add-new-product";
     }
 
     private String updateProduct(Product product, BindingResult bindingResult,

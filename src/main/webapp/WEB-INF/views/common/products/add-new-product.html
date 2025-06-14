@@ -13,20 +13,34 @@
             padding: 20px;
             padding-top: 60px;
         }
-        form {
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
             background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            margin: 0 auto;
+            table-layout: fixed;
         }
-        label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: bold;
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            border-right: 1px solid #ddd;
         }
-        select, input[type="text"], input[type="tel"] {
+        th {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        td {
+            text-align: left;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        select, input {
             width: 100%;
             padding: 10px;
             margin-bottom: 20px;
@@ -34,21 +48,53 @@
             border-radius: 5px;
             box-sizing: border-box;
         }
-        button {
-            background-color: #4CAF50; /* Зеленый цвет для кнопки "Сохранить" */
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
+        .button-container {
+            position: sticky;
+            bottom: 0;
+            background-color: #fff;
+            padding: 15px;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            z-index: 10;
         }
-        button:hover {
-            background-color: #45a049; /* Более темный зеленый при наведении */
+        .btn {
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .btn-green {
+            background-color: #66bb6a;
+        }
+        .btn-green:hover {
+            background-color: #57a95b;
+        }
+        .btn-blue {
+            background-color: #2196F3;
+        }
+        .btn-blue:hover {
+            background-color: #1976D2;
+        }
+        .btn-red {
+            background-color: #f66f6f;
+        }
+        .btn-red:hover {
+            background-color: #f44336;
         }
         .error-message {
             color: red;
             margin-bottom: 20px;
+        }
+        input[type="checkbox"].styled-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #4CAF50;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -56,38 +102,100 @@
 
 <div th:replace="fragments/common-header :: common-header"></div>
 
-<h2>Добавление нового товара</h2>
+<div class="header">
+    <h2>Добавление нового товара</h2>
+</div>
 
 <form th:method="POST" th:action="@{${'/' + URIBeginning + '/product-management/products'}}" th:object="${product}">
     <!-- Отображение сообщения об ошибке -->
     <div th:if="${error}" class="error-message" th:text="${error}"></div>
 
-    <label for="productNameId">Название товара:</label>
-    <select type="text" th:field="*{productName.id}" id="productNameId" required>
-        <option th:each="productName : ${allProductNames}" th:value="${productName.id}" th:text="${productName.productName}">Выберите название товара</option>
-    </select>
+    <table>
+        <thead>
+            <tr>
+                <th>Название товара</th>
+                <th>Модель машины</th>
+                <th>Модель мотора</th>
+                <th>Артикул, OEM</th>
+                <th>Артикул, КРОСС</th>
+                <th>БРЕНД</th>
+                <th>Комментарий</th>
+                <th></th>
+            </tr>
+        </thead>
 
-    <label for="carModel">Модель машины:</label>
-    <input type="text" th:field="*{carModel}" id="carModel" required>
+        <tbody>
+            <tr th:if="${productStep.value == 'PRODUCT_NAME_SELECTION'}">
+                <td>
+                    <select type="text" th:field="*{productName.id}" required>
+                        <option th:each="productName : ${allProductNames}" th:value="${productName.id}" th:text="${productName.productName}">
+                            Выберите название товара
+                        </option>
+                    </select>
+                </td>
+                <td>
+                    <input type="text" th:field="*{carModel}" required>
+                </td>
+                <td>
+                    <input type="text" th:field="*{engineModel}">
+                </td>
+                <td>
+                    <input type="text" th:field="*{oemArticleNumber}">
+                </td>
+                <td>
+                    <input type="text" th:field="*{crossArticleNumber}">
+                </td>
+                <td>
+                    <select type="text" th:field="*{brand.id}" id="brandId" required>
+                        <option th:each="brand : ${allBrands}" th:value="${brand.id}" th:text="${brand.brandName}">
+                            Выберите бренд
+                        </option>
+                    </select>
+                </td>
+                <td>
+                    <input type="text" th:field="*{notes}">
+                </td>
+                <td>
+                    <button type="submit" name="method" class="btn btn-red" value="resetAddingNewProduct">Удалить</button>
+                </td>
+            </tr>
 
-    <label for="carModel">Модель мотора:</label>
-    <input type="text" th:field="*{engineModel}" id="engineModel">
+            <tr th:if="${utils.shouldShowAddedItemsInTheBasket(productStep, productList, iterStat.last)}"
+                th:each="productItem, iterStat : ${productList}">
 
-    <label for="oemArticleNumber">Артикул, OEM:</label>
-    <input type="text" th:field="*{oemArticleNumber}" id="oemArticleNumber">
+                <td th:text="${productItem.productName.productName}"></td>
+                <td th:text="${productItem.carModel}"></td>
+                <td th:text="${productItem.engineModel}"></td>
+                <td th:text="${productItem.oemArticleNumber}"></td>
+                <td th:text="${productItem.crossArticleNumber}"></td>
+                <td th:text="${productItem.brand.brandName}"></td>
+                <td th:text="${productItem.notes}"></td>
 
-    <label for="crossArticleNumber">Артикул, КРОСС:</label>
-    <input type="text" th:field="*{crossArticleNumber}" id="crossArticleNumber">
+                <td th:if="${utils.shouldShowCheckBox(productStep)}">
+                    <input type="checkbox" name="selectedProductIds" class="styled-checkbox" th:value="${productItem.id}">
+                </td>
+                <td th:unless="${utils.shouldShowCheckBox(productStep)}">
+                </td>
+            </tr>
+        </tbody>
+    </table>
 
-    <label for="brandId">Бренд:</label>
-    <select type="text" th:field="*{brand.id}" id="brandId" required>
-        <option th:each="brand : ${allBrands}" th:value="${brand.id}" th:text="${brand.brandName}">Выберите бренд</option>
-    </select>
+    <div class="button-container" style="display: block;">
+        <button th:if="${productStep.value == 'PRODUCT_SELECTION_DONE'}"
+                type="submit" name="method" class="btn btn-green" value="post">Добавить новый товар</button>
 
-    <label for="notes">Комментарий:</label>
-    <input type="text" th:field="*{notes}" id="notes">
+        <button th:unless="${productStep.value == 'PRODUCT_SELECTION_DONE'}"
+                type="submit" name="method" class="btn btn-green" value="post">Сохранить</button>
 
-    <button type="submit" name="method" value="post">Сохранить</button>
+        <button th:if="${productStep.value == 'PRODUCT_SELECTION_DONE'}"
+                type="submit" name="method" class="btn btn-blue" value="saveAndClose">Завершить</button>
+
+        <button th:unless="${productStep.value == 'PRODUCT_SELECTION_DONE'}"
+                type="submit" name="method" class="btn btn-blue" value="saveAndClose">Сохранить и завершить</button>
+
+        <button type="submit" name="method" value="deleteSelected" onclick="return confirm('Удалить выбранные товары?')"
+                class="btn btn-red">Удалить выбранные товары</button>
+    </div>
 </form>
 
 </body>
