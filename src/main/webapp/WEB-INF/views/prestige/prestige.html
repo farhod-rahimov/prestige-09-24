@@ -2,11 +2,15 @@
 <html lang="ru" xmlns:th="http://thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/common-header.css}">
     <title>Престиж</title>
     <style>
         body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
             margin: 0; /* Убираем стандартные отступы */
             padding: 0; /* Убираем стандартные отступы */
+            padding-top: 60px;
         }
 
         .container {
@@ -49,13 +53,16 @@
     </style>
 </head>
 <body>
+
+<div th:replace="fragments/common-header :: common-header"></div>
+
 <div class="container">
     <div class="block" id="prestige-products">
         <a href="/prestige/products/"><h2>Показать все товары в магазине</h2></a>
     </div>
 
     <div class="block" id="prestige-products-add">
-        <a href="/prestige/products/add"><h2>Оприходовать новый товар в магазин</h2></a>
+        <a href="/prestige/supplies/baskets/add"><h2>Оприходовать новый товар в магазин</h2></a>
     </div>
 </div>
 

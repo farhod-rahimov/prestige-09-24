@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" th:href="@{/css/common-header.css}">
     <title>Редактирование товара</title>
     <style>
         body {
@@ -10,6 +11,7 @@
             background-color: #f4f4f4;
             margin: 0;
             padding: 20px;
+            padding-top: 60px;
         }
         form {
             background-color: #fff;
@@ -66,6 +68,8 @@
     <script th:src="@{/js/confirm-delete.js}"></script>
 </head>
 <body>
+
+<div th:replace="fragments/common-header :: common-header"></div>
 
 <h2>Редактирование товара</h2>
 

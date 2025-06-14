@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" th:href="@{/css/common-header.css}">
     <title>Поступления</title>
     <style>
         body {
@@ -10,6 +11,7 @@
             background-color: #f4f4f4;
             margin: 0;
             padding: 20px;
+            padding-top: 60px;
         }
         .header {
             display: flex;
@@ -75,6 +77,8 @@
 </head>
 <body>
 
+<div th:replace="fragments/common-header :: common-header"></div>
+
 <h2>Поступления</h2>
 
 <div th:if="${error}" class="error-message" th:text="${error}"></div>
@@ -100,24 +104,24 @@
     <tbody>
 
     <tr th:each="item : ${prestigeProductSupplyList}"
-        th:with="link='/prestige/products/' + ${item.getProduct().getId()} + '/supplies/' + ${item.getId()}, product=${item.getProduct()}">
+        th:with="product=${item.getProduct()}">
 
-        <td><a th:href="${link}" th:text="${product.getProductName().getProductName()}"></a></td>
-        <td><a th:href="${link}" th:text="${product.getCarModel()}"></a></td>
-        <td><a th:href="${link}" th:text="${product.getEngineModel()}"></a></td>
-        <td><a th:href="${link}" th:text="${product.getOemArticleNumber()}"></a></td>
-        <td><a th:href="${link}" th:text="${product.getCrossArticleNumber()}"></a></td>
+        <td><a th:text="${product.getProductName().getProductName()}"></a></td>
+        <td><a th:text="${product.getCarModel()}"></a></td>
+        <td><a th:text="${product.getEngineModel()}"></a></td>
+        <td><a th:text="${product.getOemArticleNumber()}"></a></td>
+        <td><a th:text="${product.getCrossArticleNumber()}"></a></td>
 
-        <td><a th:href="${link}" th:text="${utils.getFormattedBigDecimal(item.getStockBalance(), 0)}"></a></td>
-        <td><a th:href="${link}" th:text="${utils.getConvertedPriceToSmn(item.getPriceDollar(), magicValue, exchangeRate, 0) + ' СМН'}"></a></td>
+        <td><a th:text="${utils.getFormattedBigDecimal(item.getStockBalance(), 0)}"></a></td>
+        <td><a th:text="${utils.getConvertedPriceToSmn(item.getPriceDollar(), magicValue, exchangeRate, 0) + ' СМН'}"></a></td>
 
-        <td><a th:href="${link}" th:text="${product.getBrand().getBrandName()}"></a></td>
-        <td><a th:href="${link}" th:text="${utils.getFormattedBigDecimal(item.getPriceDollar(), 2)}"></a></td>
-        <td><a th:href="${link}" th:text="${utils.getConvertedPriceToSmn(item.getPriceDollar(), 0, exchangeRate, 2)}"></a></td>
+        <td><a th:text="${product.getBrand().getBrandName()}"></a></td>
+        <td><a th:text="${utils.getFormattedBigDecimal(item.getPriceDollar(), 2)}"></a></td>
+        <td><a th:text="${utils.getConvertedPriceToSmn(item.getPriceDollar(), 0, exchangeRate, 2)}"></a></td>
 
-        <td><a th:href="${link}" th:text="${item.getSupplier().getStoreName()}"></a></td>
-        <td><a th:href="${link}" th:text="${utils.getDateTimeFormatted(item.getReceivedDateTime())}"></a></td>
-        <td><a th:href="${link}" th:title="${product.getNotes()}" th:text="${utils.getTruncatedText(product.getNotes(), 7)}"></a></td>
+        <td><a th:text="${item.getSupplier().getStoreName()}"></a></td>
+        <td><a th:text="${utils.getDateTimeFormatted(item.getReceivedDateTime())}"></a></td>
+        <td><a th:title="${product.getNotes()}" th:text="${utils.getTruncatedText(product.getNotes(), 7)}"></a></td>
     </tr>
     </tbody>
 </table>
