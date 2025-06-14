@@ -1,6 +1,7 @@
 package com.prestige.controllers.common;
 
 import com.prestige.dao.common.CommonBrandNamesDAO;
+import com.prestige.dao.common.CommonProductsDAO;
 import com.prestige.models.Brand;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,9 +21,13 @@ public class CommonBrandsController extends AbstractCommonBaseController {
 
     private final CommonBrandNamesDAO commonBrandNamesDAO;
 
+    private final CommonProductsDAO commonProductsDAO;
+
     @Autowired
-    public CommonBrandsController(CommonBrandNamesDAO commonBrandNamesDAO) {
+    public CommonBrandsController(CommonBrandNamesDAO commonBrandNamesDAO,
+                                  CommonProductsDAO commonProductsDAO) {
         this.commonBrandNamesDAO = commonBrandNamesDAO;
+        this.commonProductsDAO = commonProductsDAO;
     }
 
     @GetMapping
@@ -69,7 +74,7 @@ public class CommonBrandsController extends AbstractCommonBaseController {
             case "put":
                 return updateBrand(brand, bindingResult, redirectAttributes, request);
             case "delete":
-                return deleteBrand(brand.getId(), request);
+                return deleteBrand(brand.getId(), redirectAttributes, request);
             default:
                 return saveNewBrand(brand, bindingResult, redirectAttributes, request);
         }
@@ -127,7 +132,15 @@ public class CommonBrandsController extends AbstractCommonBaseController {
                 isPrestigeRequest(request.getRequestURI()) ? "prestige" : "sklad");
     }
 
-    private String deleteBrand(Integer brandId, HttpServletRequest request) {
+    private String deleteBrand(Integer brandId, RedirectAttributes redirectAttributes, HttpServletRequest request) {
+        if (commonProductsDAO.checkIfBrandExists(brandId)) {
+            String errorMessage = "Невозможно удалить этот бренд, т.к он используется в номенклатуре товаров.";
+            redirectAttributes.addFlashAttribute("error", errorMessage);
+
+            return String.format("redirect:/%s/product-management/brands/%d",
+                    isPrestigeRequest(request.getRequestURI()) ? "prestige" : "sklad", brandId);
+        }
+
         commonBrandNamesDAO.deleteBrandById(brandId);
 
         return String.format("redirect:/%s/product-management/brands",

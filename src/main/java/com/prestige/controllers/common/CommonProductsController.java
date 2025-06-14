@@ -3,6 +3,7 @@ package com.prestige.controllers.common;
 import com.prestige.dao.common.CommonBrandNamesDAO;
 import com.prestige.dao.common.CommonProductNamesDAO;
 import com.prestige.dao.common.CommonProductsDAO;
+import com.prestige.dao.prestige.PrestigeAllSuppliesDAO;
 import com.prestige.models.Product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,14 +27,18 @@ public class CommonProductsController extends AbstractCommonBaseController {
 
     private final CommonBrandNamesDAO commonBrandNamesDAO;
 
+    private final PrestigeAllSuppliesDAO prestigeAllSuppliesDAO;
+
     @Autowired
     public CommonProductsController(CommonProductsDAO commonProductsDAO,
                                     CommonProductNamesDAO commonProductNamesDAO,
-                                    CommonBrandNamesDAO commonBrandNamesDAO) {
+                                    CommonBrandNamesDAO commonBrandNamesDAO,
+                                    PrestigeAllSuppliesDAO prestigeAllSuppliesDAO) {
 
         this.commonProductsDAO = commonProductsDAO;
         this.commonProductNamesDAO = commonProductNamesDAO;
         this.commonBrandNamesDAO = commonBrandNamesDAO;
+        this.prestigeAllSuppliesDAO = prestigeAllSuppliesDAO;
     }
 
     @GetMapping
@@ -84,7 +89,7 @@ public class CommonProductsController extends AbstractCommonBaseController {
             case "put":
                 return updateProduct(product, bindingResult, redirectAttributes, request);
             case "delete":
-                return deleteProduct(product.getId(), request);
+                return deleteProduct(product.getId(), redirectAttributes, request);
             default:
                 return saveNewProduct(product, bindingResult, redirectAttributes, request);
         }
@@ -143,7 +148,18 @@ public class CommonProductsController extends AbstractCommonBaseController {
                 isPrestigeRequest(request.getRequestURI()) ? "prestige" : "sklad");
     }
 
-    private String deleteProduct(Integer productId, HttpServletRequest request) {
+    private String deleteProduct(Integer productId, RedirectAttributes redirectAttributes, HttpServletRequest request) {
+        // TODO: prestigeAllSuppliesDAO.checkIfProductExists or skladAllSuppliesDAO.checkIfProductExists
+        if (prestigeAllSuppliesDAO.checkIfProductExists(productId)) {
+            String errorMessage = String.format("Невозможно удалить этот товар, т.к он используется в поступлениях %s.",
+                    isPrestigeRequest(request.getRequestURI()) ? "магазина" : "склада");
+
+            redirectAttributes.addFlashAttribute("error", errorMessage);
+
+            return String.format("redirect:/%s/product-management/products/%d",
+                    isPrestigeRequest(request.getRequestURI()) ? "prestige" : "sklad", productId);
+        }
+
         commonProductsDAO.deleteProductById(productId);
 
         return String.format("redirect:/%s/product-management/products",

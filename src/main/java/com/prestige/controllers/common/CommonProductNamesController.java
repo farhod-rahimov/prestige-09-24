@@ -1,9 +1,9 @@
 package com.prestige.controllers.common;
 
 import com.prestige.dao.common.CommonProductNamesDAO;
+import com.prestige.dao.common.CommonProductsDAO;
 import com.prestige.models.ProductName;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,9 +21,13 @@ public class CommonProductNamesController extends AbstractCommonBaseController {
 
     private final CommonProductNamesDAO commonProductNamesDAO;
 
+    private final CommonProductsDAO commonProductsDAO;
+
     @Autowired
-    public CommonProductNamesController(CommonProductNamesDAO commonProductNamesDAO) {
+    public CommonProductNamesController(CommonProductNamesDAO commonProductNamesDAO,
+                                        CommonProductsDAO commonProductsDAO) {
         this.commonProductNamesDAO = commonProductNamesDAO;
+        this.commonProductsDAO = commonProductsDAO;
     }
 
     @GetMapping
@@ -70,7 +74,7 @@ public class CommonProductNamesController extends AbstractCommonBaseController {
             case "put":
                 return updateProductName(productName, bindingResult, redirectAttributes, request);
             case "delete":
-                return deleteProductName(productName.getId(), request);
+                return deleteProductName(productName.getId(), redirectAttributes, request);
             default:
                 return saveNewProductName(productName, bindingResult, redirectAttributes, request);
         }
@@ -128,7 +132,15 @@ public class CommonProductNamesController extends AbstractCommonBaseController {
                 isPrestigeRequest(request.getRequestURI()) ? "prestige" : "sklad");
     }
 
-    private String deleteProductName(Integer productNameId, HttpServletRequest request) {
+    private String deleteProductName(Integer productNameId, RedirectAttributes redirectAttributes, HttpServletRequest request) {
+        if (commonProductsDAO.checkIfProductNameExists(productNameId)) {
+            String errorMessage = "Невозможно удалить это название продукта, т.к оно используется в номенклатуре товаров.";
+            redirectAttributes.addFlashAttribute("error", errorMessage);
+
+            return String.format("redirect:/%s/product-management/product-names/%d",
+                    isPrestigeRequest(request.getRequestURI()) ? "prestige" : "sklad", productNameId);
+        }
+
         commonProductNamesDAO.deleteProductNameById(productNameId);
 
         return String.format("redirect:/%s/product-management/product-names",

@@ -617,4 +617,10 @@ public class PrestigeAllSuppliesDAO {
 
         return jdbcTemplate.query(sql, new Object[]{productId}, new RetailProductMapper());
     }
+
+    public boolean checkIfProductExists(Integer productId) {
+        String sql = "SELECT EXISTS (SELECT 1 FROM prestige_all_supplies WHERE common_product_id = ?)";
+
+        return jdbcTemplate.queryForObject(sql, new Object[]{productId}, Boolean.class);
+    }
 }

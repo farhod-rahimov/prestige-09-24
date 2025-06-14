@@ -403,4 +403,16 @@ public class CommonProductsDAO {
 
         return jdbcTemplate.query(sql, bindings.toArray(), new BrandMapper());
     }
+
+    public boolean checkIfProductNameExists(Integer productNameId) {
+        String sql = "SELECT EXISTS (SELECT 1 FROM common_products WHERE product_name_id = ?)";
+
+        return jdbcTemplate.queryForObject(sql, new Object[]{productNameId}, Boolean.class);
+    }
+
+    public boolean checkIfBrandExists(Integer brandId) {
+        String sql = "SELECT EXISTS (SELECT 1 FROM common_products WHERE brand_name_id = ?)";
+
+        return jdbcTemplate.queryForObject(sql, new Object[]{brandId}, Boolean.class);
+    }
 }
