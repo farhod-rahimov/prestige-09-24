@@ -172,13 +172,15 @@ public class CommonProductsController extends AbstractCommonBaseController {
     }
 
     private String deleteSelected(List<Integer> selectedProductIds, Model model, HttpServletRequest request) {
-        LinkedList<Product> productList = (LinkedList<Product>)model.getAttribute("productList");
 
-        for (Integer productId : selectedProductIds) {
-            productList.removeIf(product -> product.getId().equals(productId));
+        if (selectedProductIds != null && !selectedProductIds.isEmpty()) {
+            LinkedList<Product> productList = (LinkedList<Product>)model.getAttribute("productList");
+
+            for (Integer productId : selectedProductIds) {
+                productList.removeIf(product -> product.getId().equals(productId));
+            }
+            commonProductsDAO.deleteProductIds(selectedProductIds);
         }
-
-        commonProductsDAO.deleteProductIds(selectedProductIds);
 
         model.addAttribute("productStep", EStep.PRODUCT_SELECTION_DONE);
         model.addAttribute("URIBeginning", getURIBeginning(request));

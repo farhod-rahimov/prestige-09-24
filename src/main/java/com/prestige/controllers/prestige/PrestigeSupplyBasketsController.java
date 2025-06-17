@@ -459,12 +459,15 @@ public class PrestigeSupplyBasketsController {
     }
 
     private String deleteSelected(SupplyBasket supplyBasket, List<Integer> selectedSuppliesIds) {
-        for (Integer supplyId : selectedSuppliesIds) {
-            supplyBasket.getSuppliesList().removeIf(supply -> supply.getId().equals(supplyId));
-        }
 
-        prestigeAllSuppliesDAO.deleteSuppliesIds(selectedSuppliesIds);
-        updateBasketTotalSum(supplyBasket);
+        if (selectedSuppliesIds != null && !selectedSuppliesIds.isEmpty()) {
+            for (Integer supplyId : selectedSuppliesIds) {
+                supplyBasket.getSuppliesList().removeIf(supply -> supply.getId().equals(supplyId));
+            }
+
+            prestigeAllSuppliesDAO.deleteSuppliesIds(selectedSuppliesIds);
+            updateBasketTotalSum(supplyBasket);
+        }
         return "redirect:/prestige/supplies/baskets/" + supplyBasket.getId();
     }
 

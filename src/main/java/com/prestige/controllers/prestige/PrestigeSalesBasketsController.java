@@ -461,12 +461,15 @@ public class PrestigeSalesBasketsController {
     }
 
     private String deleteSelected(SalesBasket salesBasket, List<Integer> selectedSalesIds) {
-        for (Integer salesId : selectedSalesIds) {
-            salesBasket.getSalesList().removeIf(sales -> sales.getId().equals(salesId));
-        }
 
-        prestigeAllSalesDAO.deleteSalesIds(selectedSalesIds);
-        updateBasketTotalSum(salesBasket);
+        if (selectedSalesIds != null && !selectedSalesIds.isEmpty()) {
+            for (Integer salesId : selectedSalesIds) {
+                salesBasket.getSalesList().removeIf(sales -> sales.getId().equals(salesId));
+            }
+
+            prestigeAllSalesDAO.deleteSalesIds(selectedSalesIds);
+            updateBasketTotalSum(salesBasket);
+        }
         return "redirect:/prestige/sales/baskets/" + salesBasket.getId();
     }
 
