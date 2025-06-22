@@ -17,6 +17,14 @@ public class ProductName {
 
     private String productName;
 
+    public ProductName(ProductName productName) {
+
+        if (productName != null) {
+            this.id = productName.getId();
+            this.productName = productName.getProductName();
+        }
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;

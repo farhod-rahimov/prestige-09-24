@@ -20,6 +20,15 @@ public class RetailProductView {
 
     protected Integer stockBalance;
 
+    public RetailProductView(RetailProductView retailProductView) {
+
+        if (retailProductView != null) {
+            this.product = new Product(retailProductView.getProduct());
+            this.priceDollar = retailProductView.getPriceDollar();
+            this.stockBalance = retailProductView.getStockBalance();
+        }
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;

@@ -21,6 +21,14 @@ public class Supplier extends Client {
         this.storeName = storeName;
     }
 
+    public Supplier(Supplier supplier) {
+        super(supplier);
+
+        if (supplier != null) {
+            this.storeName = supplier.getStoreName();
+        }
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;

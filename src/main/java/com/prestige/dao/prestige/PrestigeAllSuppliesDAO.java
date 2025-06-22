@@ -1,5 +1,6 @@
 package com.prestige.dao.prestige;
 
+import com.prestige.models.filters.BasketFilter;
 import com.prestige.service.Utils;
 import com.prestige.dao.mappers.*;
 import com.prestige.models.*;
@@ -47,13 +48,17 @@ public class PrestigeAllSuppliesDAO {
                             "cp.cross_article_number, " +
                             "cbn.id, " +
                             "cbn.brand_name, " +
-                            "cp.notes " +
+                            "cp.notes, " +
+                            "cpe.id, " +
+                            "cpe.group_id, " +
+                            "cpe.product_id " +
 
                         "FROM prestige_all_supplies pas " +
 
                         "JOIN common_products cp ON pas.common_product_id = cp.id " +
                         "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
                         "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+                        "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id " +
 
                         "WHERE pas.basket_id = ? " +
                         "ORDER BY (pas.id)";
@@ -262,13 +267,17 @@ public class PrestigeAllSuppliesDAO {
                             "cbn.brand_name, " +
                             "cp.notes, " +
                             "COALESCE(supply_info.avg_price, 0) AS avg_price, " +
-                            "COALESCE(supply_info.stock, 0) AS stock " +
+                            "COALESCE(supply_info.stock, 0) AS stock, " +
+                            "cpe.id, " +
+                            "cpe.group_id, " +
+                            "cpe.product_id " +
 
                         "FROM common_products cp " +
 
                         "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
                         "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
                         "LEFT JOIN supply_info ON cp.id = supply_info.cp_id " +
+                        "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id " +
 
                         "ORDER BY   (cbn.brand_name, cpn.product_name, cp.car_model, cp.engine_model, " +
                                     "cp.oem_article_number, cp.cross_article_number) ";
@@ -288,12 +297,16 @@ public class PrestigeAllSuppliesDAO {
                             "cp.cross_article_number, " +
                             "cbn.id, " +
                             "cbn.brand_name, " +
-                            "cp.notes " +
+                            "cp.notes, " +
+                            "cpe.id, " +
+                            "cpe.group_id, " +
+                            "cpe.product_id " +
 
                         "FROM prestige_all_supplies pas " +
                         "JOIN common_products cp ON cp.id = pas.common_product_id " +
                         "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
-                        "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id ";
+                        "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+                        "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id ";
 
         if (!excludeProductIds.isEmpty()) {
             String inClause = excludeProductIds.stream().map(id -> "?").collect(Collectors.joining(", "));
@@ -301,10 +314,12 @@ public class PrestigeAllSuppliesDAO {
         }
 
         sql +=          "GROUP BY   (cp.id, cpn.id, cpn.product_name, cp.car_model, cp.engine_model, " +
-                                    "cp.oem_article_number, cp.cross_article_number, cbn.id, cbn.brand_name) " +
+                                    "cp.oem_article_number, cp.cross_article_number, cbn.id, cbn.brand_name," +
+                                    "cp.notes, cpe.id, cpe.group_id, cpe.product_id) " +
 
                         "ORDER BY   (cpn.product_name, cp.car_model, cp.engine_model, " +
-                                    "cp.oem_article_number, cp.cross_article_number, cbn.brand_name)";
+                                    "cp.oem_article_number, cp.cross_article_number, cbn.brand_name," +
+                                    "cp.notes, cpe.id, cpe.group_id, cpe.product_id)";
 
         if (!excludeProductIds.isEmpty()) {
             return jdbcTemplate.query(sql, excludeProductIds.toArray(), new ProductMapperWrappedInSales());
@@ -599,7 +614,10 @@ public class PrestigeAllSuppliesDAO {
                             "ps.name, " +
                             "ps.phone_number, " +
                             "ps.store_name, " +
-                            "psb.created_date_time " + // TODO: заменить на received_date_time
+                            "psb.created_date_time, " + // TODO: заменить на received_date_time
+                            "cpe.id, " +
+                            "cpe.group_id, " +
+                            "cpe.product_id " +
 
                         "FROM prestige_all_supplies pas " +
 
@@ -608,6 +626,7 @@ public class PrestigeAllSuppliesDAO {
                         "JOIN common_brand_names cbn ON cp.brand_name_id  = cbn.id " +
                         "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
                         "JOIN prestige_suppliers ps ON psb.supplier_id = ps.id " +
+                        "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id " +
 
                         "WHERE " +
                             "cp.id = ? AND " +

@@ -1,4 +1,4 @@
-package com.prestige.models;
+package com.prestige.models.filters;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,7 +11,7 @@ import java.util.Objects;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class BasketFilter {
+public class BasketFilter extends AbstractBaseFilter {
 
     private String productName;
 
@@ -25,6 +25,19 @@ public class BasketFilter {
 
     private String brand;
 
+    public BasketFilter(BasketFilter basketFilter) {
+
+        if (basketFilter != null) {
+            this.productName = basketFilter.getProductName();
+            this.carModel = basketFilter.getCarModel();
+            this.engineModel = basketFilter.getEngineModel();
+            this.oemArticleNumber = basketFilter.getOemArticleNumber();
+            this.crossArticleNumber = basketFilter.getCrossArticleNumber();
+            this.brand = basketFilter.getBrand();
+        }
+    }
+
+    @Override
     public void clear() {
         productName = "";
         carModel = "";
@@ -34,16 +47,7 @@ public class BasketFilter {
         brand = "";
     }
 
-    private String getPreparedField(String value) {
-
-        return "%" +
-                    value.replace("\\", "\\\\") // экранирование спец символа в ILIKE
-                         .replace("%", "\\%") // экранирование спец символа в ILIKE
-                         .replace("_", "\\_") // экранирование спец символа в ILIKE
-                         .replace("*", "%") + // в ILIKE вместо * используется %
-                "%";
-    }
-
+    @Override
     public void prepareAllFields() {
 
         productName = getPreparedField(productName);

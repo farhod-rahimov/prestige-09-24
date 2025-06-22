@@ -1,6 +1,6 @@
 package com.prestige.service;
 
-import com.prestige.models.EStep;
+import com.prestige.models.enums.EStep;
 import com.prestige.models.Product;
 import com.prestige.models.ProductName;
 import org.springframework.stereotype.Component;
@@ -169,6 +169,17 @@ public class Utils {
                 return true;
             default:
                 return false;
+        }
+    }
+
+    public String getBackgroundColorByGroupId(Integer groupId) {
+
+        switch (groupId % 5) {
+            case 0: return "#E0F7FA"; // light blue
+            case 1: return "#E8F5E9"; // light green
+            case 2: return "#FFF9C4"; // light yellow
+            case 3: return "#FCE4EC"; // light pink
+            default: return "#F3E5F5"; // light purple
         }
     }
 }

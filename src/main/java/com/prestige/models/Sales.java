@@ -38,6 +38,20 @@ public class Sales {
         this.soldPrice = new BigDecimal(0);
     }
 
+    public Sales(Sales sales) {
+
+        if (sales != null) {
+            this.id = sales.getId();
+            this.product = new Product(sales.getProduct());
+            this.quantity = sales.getQuantity();
+            this.soldPrice = sales.getSoldPrice();
+            this.stockBeforeSale = sales.getStockBeforeSale();
+            this.calculatedPrice = sales.getCalculatedPrice();
+            this.recommendedPrice = sales.getRecommendedPrice();
+            this.wholesalePrice = sales.getWholesalePrice();
+        }
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;

@@ -22,6 +22,13 @@ create table if not exists common_products (
 	notes TEXT
 );
 
+create table if not exists common_product_equivalents (
+    id serial primary key,
+    group_id serial not null,
+    product_id int not null references common_products(id),
+    CONSTRAINT uq_group_product UNIQUE (group_id, product_id)
+);
+
 create table if not exists sklad_suppliers (
 	id serial primary key,
 	name varchar(100),

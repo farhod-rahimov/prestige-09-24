@@ -148,13 +148,18 @@ public class PrestigeAllSalesDAO {
                             "cp.cross_article_number, " +
                             "cbn.id, " +
                             "cbn.brand_name, " +
-                            "cp.notes " +
+                            "cp.notes, " +
+                            "cpe.id, " +
+                            "cpe.group_id, " +
+                            "cpe.product_id " +
+
 
                         "FROM prestige_all_sales pas " +
 
                         "JOIN common_products cp ON pas.common_product_id = cp.id " +
                         "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
                         "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+                        "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id " +
 
                         "WHERE pas.basket_id = ? " +
                         "ORDER BY (pas.id)";

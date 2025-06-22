@@ -19,6 +19,15 @@ public class Settings {
 
     private String value;
 
+    public Settings(Settings settings) {
+
+        if (settings != null) {
+            this.id = settings.getId();
+            this.key = settings.getKey();
+            this.value = settings.getValue();
+        }
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;

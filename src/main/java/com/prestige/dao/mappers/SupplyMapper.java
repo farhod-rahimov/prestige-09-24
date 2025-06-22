@@ -1,9 +1,6 @@
 package com.prestige.dao.mappers;
 
-import com.prestige.models.Brand;
-import com.prestige.models.Product;
-import com.prestige.models.ProductName;
-import com.prestige.models.Supply;
+import com.prestige.models.*;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
@@ -22,10 +19,11 @@ public class SupplyMapper implements RowMapper<Supply> {
 
         ProductName productName = new ProductName(rs.getInt(5), rs.getString(6));
         Brand brand = new Brand(rs.getInt(11), rs.getString(12));
+        EquivalentProductInfo equivalentProductInfo = new EquivalentProductInfo(rs.getInt(14), rs.getInt(15), rs.getInt(16));
 
         Product product = new Product(rs.getInt(4), productName, rs.getString(7),
                                     rs.getString(8), rs.getString(9),
-                                    rs.getString(10), brand, rs.getString(13));
+                                    rs.getString(10), brand, rs.getString(13), equivalentProductInfo);
 
         supply.setProduct(product);
 

@@ -19,6 +19,15 @@ public class Client {
 
     protected String phoneNumber;
 
+    public Client(Client client) {
+
+        if (client != null) {
+            this.id = client.getId();
+            this.name = client.getName();
+            this.phoneNumber = client.getPhoneNumber();
+        }
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;

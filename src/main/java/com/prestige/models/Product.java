@@ -30,6 +30,23 @@ public class Product {
 
     private String notes;
 
+    private EquivalentProductInfo equivalentProductInfo;
+
+    public Product(Product product) {
+
+        if (product != null) {
+            this.id = product.getId();
+            this.productName = new ProductName(product.getProductName());
+            this.carModel = product.getCarModel();
+            this.engineModel = product.getEngineModel();
+            this.oemArticleNumber = product.getOemArticleNumber();
+            this.crossArticleNumber = product.getCrossArticleNumber();
+            this.brand = new Brand(product.getBrand());
+            this.notes = product.getNotes();
+            this.equivalentProductInfo = new EquivalentProductInfo(product.getEquivalentProductInfo());
+        }
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
@@ -46,6 +63,7 @@ public class Product {
                 Objects.equals(engineModel, other.engineModel) &&
                 Objects.equals(oemArticleNumber, other.oemArticleNumber) &&
                 Objects.equals(crossArticleNumber, other.crossArticleNumber) &&
-                Objects.equals(brand, other.brand);
+                Objects.equals(brand, other.brand) &&
+                Objects.equals(equivalentProductInfo, other.equivalentProductInfo);
     }
 }

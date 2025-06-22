@@ -32,6 +32,16 @@ public class Supply {
         this.priceDollar = new BigDecimal(0);
     }
 
+    public Supply(Supply supply) {
+
+        if (supply != null) {
+            this.id = supply.getId();
+            this.product = new Product(supply.getProduct());
+            this.quantity = supply.getQuantity();
+            this.priceDollar = supply.getPriceDollar();
+        }
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;

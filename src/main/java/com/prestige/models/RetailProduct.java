@@ -32,6 +32,16 @@ public class RetailProduct extends RetailProductView {
         this.stockBalance = stockBalance;
     }
 
+    public RetailProduct(RetailProduct retailProduct) {
+        super(retailProduct);
+
+        if (retailProduct != null) {
+            this.id = retailProduct.getId();
+            this.receivedDateTime = retailProduct.getReceivedDateTime();
+            this.supplier = new Supplier(retailProduct.getSupplier());
+        }
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;

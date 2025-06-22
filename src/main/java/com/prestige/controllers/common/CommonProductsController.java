@@ -1,11 +1,13 @@
 package com.prestige.controllers.common;
 
 import com.prestige.dao.common.CommonBrandNamesDAO;
+import com.prestige.dao.common.CommonProductEquivalentsDAO;
 import com.prestige.dao.common.CommonProductNamesDAO;
 import com.prestige.dao.common.CommonProductsDAO;
 import com.prestige.dao.prestige.PrestigeAllSuppliesDAO;
-import com.prestige.models.EStep;
+import com.prestige.models.enums.EStep;
 import com.prestige.models.Product;
+import com.prestige.models.filters.ProductFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -18,11 +20,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping({"/prestige/product-management/products",
                  "/sklad/product-management/products"})
-@SessionAttributes({"productStep", "productList", "product"})
+@SessionAttributes({"productStep", "productList", "product", "allProducts", "productFilter"})
 public class CommonProductsController extends AbstractCommonBaseController {
 
     private final CommonProductsDAO commonProductsDAO;
@@ -31,17 +36,21 @@ public class CommonProductsController extends AbstractCommonBaseController {
 
     private final CommonBrandNamesDAO commonBrandNamesDAO;
 
+    private final CommonProductEquivalentsDAO commonProductEquivalentsDAO;
+
     private final PrestigeAllSuppliesDAO prestigeAllSuppliesDAO;
 
     @Autowired
     public CommonProductsController(CommonProductsDAO commonProductsDAO,
                                     CommonProductNamesDAO commonProductNamesDAO,
                                     CommonBrandNamesDAO commonBrandNamesDAO,
+                                    CommonProductEquivalentsDAO commonProductEquivalentsDAO,
                                     PrestigeAllSuppliesDAO prestigeAllSuppliesDAO) {
 
         this.commonProductsDAO = commonProductsDAO;
         this.commonProductNamesDAO = commonProductNamesDAO;
         this.commonBrandNamesDAO = commonBrandNamesDAO;
+        this.commonProductEquivalentsDAO = commonProductEquivalentsDAO;
         this.prestigeAllSuppliesDAO = prestigeAllSuppliesDAO;
     }
 
@@ -49,6 +58,8 @@ public class CommonProductsController extends AbstractCommonBaseController {
     public String showAllProducts(Model model, HttpServletRequest request) {
         model.addAttribute("allProducts", commonProductsDAO.findAllProducts());
         model.addAttribute("URIBeginning", getURIBeginning(request));
+        model.addAttribute("product", new Product()); //mock
+        model.addAttribute("productFilter", new ProductFilter());
         return "common/products/products";
     }
 
@@ -84,9 +95,12 @@ public class CommonProductsController extends AbstractCommonBaseController {
     }
 
     @PostMapping()
-    public String postMethodDispatcher(@ModelAttribute("product") Product product, BindingResult bindingResult,
+    public String postMethodDispatcher(@ModelAttribute("product") Product product,
+                                       @ModelAttribute("productFilter") ProductFilter productFilter,
+                                       BindingResult bindingResult,
                                        @RequestParam("method") String method,
                                        @RequestParam(value = "selectedProductIds", required = false) List<Integer> selectedProductIds,
+                                       @RequestParam(value = "selectedEquivalentProductIds", required = false) List<Integer> selectedEquivalentProductIds,
                                        RedirectAttributes redirectAttributes,
                                        Model model, HttpServletRequest request) {
 
@@ -97,6 +111,14 @@ public class CommonProductsController extends AbstractCommonBaseController {
                 return deleteProduct(product.getId(), redirectAttributes, request);
             case "resetAddingNewProduct":
                 return resetAddingNewProduct(model, request);
+            case "applyFilter":
+                return applyFilter(productFilter, model, request);
+            case "resetFilter":
+                return resetFilter(productFilter, request);
+            case "markAsSame":
+                return markAsSame(selectedEquivalentProductIds, redirectAttributes, model, request);
+            case "unmarkAsSame":
+                return unmarkAsSame(selectedEquivalentProductIds, request);
             case "deleteSelected":
                 return deleteSelected(selectedProductIds, model, request);
             case "saveAndClose":
@@ -169,6 +191,66 @@ public class CommonProductsController extends AbstractCommonBaseController {
         model.addAttribute("URIBeginning", getURIBeginning(request));
 
         return "common/products/add-new-product";
+    }
+
+    private String applyFilter(ProductFilter productFilter, Model model, HttpServletRequest request) {
+        ProductFilter productFilterCopy = new ProductFilter(productFilter);
+        productFilterCopy.prepareAllFields();
+
+        model.addAttribute("allProducts", commonProductsDAO.findAllProductsWIthFilter(productFilterCopy));
+        model.addAttribute("URIBeginning", getURIBeginning(request));
+
+        return "common/products/products";
+    }
+
+    private String resetFilter(ProductFilter productFilter, HttpServletRequest request) {
+        productFilter.clear();
+        return String.format("redirect:/%s/product-management/products", getURIBeginning(request));
+    }
+
+    private String markAsSame(List<Integer> selectedEquivalentProductIds, RedirectAttributes redirectAttributes,
+                              Model model, HttpServletRequest request) {
+
+        if (selectedEquivalentProductIds == null || selectedEquivalentProductIds.size() < 2) {
+            return String.format("redirect:/%s/product-management/products", getURIBeginning(request));
+        }
+
+        List<Product> allProducts = (List<Product>)model.getAttribute("allProducts");
+
+        Map<Integer, Product> productMap = allProducts.stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+
+        Integer groupId = null;
+
+        for (Integer id : selectedEquivalentProductIds) {
+            Product product = productMap.get(id);
+
+            if (product != null && product.getEquivalentProductInfo() != null &&
+                    !product.getEquivalentProductInfo().getGroupId().equals(0)) {
+
+                if (groupId == null) {
+                    groupId = product.getEquivalentProductInfo().getGroupId();
+                }
+                else if (!product.getEquivalentProductInfo().getGroupId().equals(groupId)) {
+                    String errorMessage = "Ошибка: попытка отметить товары как одинаковые, состоящие уже в других объединениях.";
+                    redirectAttributes.addFlashAttribute("error", errorMessage);
+
+                    return String.format("redirect:/%s/product-management/products", getURIBeginning(request));
+                }
+            }
+        }
+
+        commonProductEquivalentsDAO.markAsSame(selectedEquivalentProductIds);
+
+        return String.format("redirect:/%s/product-management/products", getURIBeginning(request));
+    }
+
+    private String unmarkAsSame(List<Integer> selectedEquivalentProductIds, HttpServletRequest request) {
+
+        if (selectedEquivalentProductIds != null && !selectedEquivalentProductIds.isEmpty()) {
+            commonProductEquivalentsDAO.unmarkAsSame(selectedEquivalentProductIds);
+        }
+        return String.format("redirect:/%s/product-management/products", getURIBeginning(request));
     }
 
     private String deleteSelected(List<Integer> selectedProductIds, Model model, HttpServletRequest request) {

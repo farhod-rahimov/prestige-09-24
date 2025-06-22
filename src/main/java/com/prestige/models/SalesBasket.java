@@ -1,5 +1,6 @@
 package com.prestige.models;
 
+import com.prestige.models.filters.BasketFilter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,6 +32,16 @@ public class SalesBasket extends BaseBasket {
         this.client = client;
         this.salesList = salesList;
         this.status = status;
+    }
+
+    public SalesBasket(SalesBasket salesBasket) {
+        super(salesBasket);
+
+        if (salesBasket != null) {
+            this.client = new Client(salesBasket.getClient());
+            this.salesList = new LinkedList<>(salesBasket.getSalesList());
+            this.status = salesBasket.getStatus();
+        }
     }
 
     @AllArgsConstructor

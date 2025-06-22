@@ -1,5 +1,7 @@
 package com.prestige.dao.common;
 
+import com.prestige.models.filters.BasketFilter;
+import com.prestige.models.filters.ProductFilter;
 import com.prestige.service.Utils;
 import com.prestige.dao.mappers.*;
 import com.prestige.models.*;
@@ -32,6 +34,17 @@ public class CommonProductsDAO {
     }
 
     public List<Product> findAllProducts() {
+        return findAllProductsInternal(null);
+    }
+
+    public List<Product> findAllProductsWIthFilter(ProductFilter productFilter) {
+        return findAllProductsInternal(productFilter);
+    }
+
+    private List<Product> findAllProductsInternal(ProductFilter productFilter) {
+
+        List<Object> bindings = new ArrayList();
+
         String sql =    "SELECT " +
 
                             "cp.id, " +
@@ -43,17 +56,84 @@ public class CommonProductsDAO {
                             "cp.cross_article_number, " +
                             "cbn.id, " +
                             "cbn.brand_name, " +
-                            "cp.notes " +
+                            "cp.notes, " +
+                            "cpe.id, " +
+                            "cpe.group_id, " +
+                            "cpe.product_id " +
 
                         "FROM common_products cp " +
 
                         "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
                         "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+                        "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id " +
 
-                        "ORDER BY   (cpn.product_name, cp.car_model, cp.engine_model, " +
-                                    "cp.oem_article_number, cp.cross_article_number, cbn.brand_name)";
+                        "WHERE 1 = 1 ";
 
-        return jdbcTemplate.query(sql, new ProductMapper());
+        if (productFilter != null) {
+
+            Integer groupId = productFilter.getEquivalentProductInfo().getGroupId();
+            if (groupId != null && groupId != 0) {
+                sql +=  "AND cpe.group_id = ? ";
+                bindings.add(groupId);
+            }
+
+            Integer productId = productFilter.getEquivalentProductInfo().getProductId();
+            if (productId != null && productId != 0) {
+                sql +=  "AND cp.idit  = ? ";
+                bindings.add(productId);
+            }
+
+            Product product = productFilter.getProduct();
+            if (product != null) {
+
+                ProductName productName = product.getProductName();
+                if (productName != null && productName.getProductName() != null &&
+                        !productName.getProductName().isEmpty()) {
+
+                    sql +=  "AND cpn.product_name ILIKE ? ESCAPE '\\' ";
+                    bindings.add(productName.getProductName());
+                }
+
+                if (product.getCarModel() != null && !product.getCarModel().isEmpty()) {
+                    sql +=  "AND cp.car_model ILIKE ? ESCAPE '\\' ";
+                    bindings.add(product.getCarModel());
+                }
+
+                if (product.getEngineModel() != null && !product.getEngineModel().isEmpty()) {
+                    sql +=  "AND cp.engine_model ILIKE ? ESCAPE '\\' ";
+                    bindings.add(product.getEngineModel());
+                }
+
+                if (product.getOemArticleNumber() != null && !product.getOemArticleNumber().isEmpty()) {
+                    sql +=  "AND cp.oem_article_number ILIKE ? ESCAPE '\\' ";
+                    bindings.add(product.getOemArticleNumber());
+                }
+
+                if (product.getCrossArticleNumber() != null && !product.getCrossArticleNumber().isEmpty()) {
+                    sql +=  "AND cp.cross_article_number ILIKE ? ESCAPE '\\' ";
+                    bindings.add(product.getCrossArticleNumber());
+                }
+
+                Brand brand = product.getBrand();
+                if (brand != null && brand.getBrandName() != null && !brand.getBrandName().isEmpty()) {
+                    sql +=  "AND cbn.brand_name ILIKE ? ESCAPE '\\' ";
+                    bindings.add(brand.getBrandName());
+                }
+
+                if (product.getNotes() != null && !product.getNotes().isEmpty()) {
+                    sql +=  "AND cp.notes ILIKE ? ESCAPE '\\' ";
+                    bindings.add(product.getNotes());
+                }
+            }
+        }
+
+        sql +=          "ORDER BY   (cpn.product_name, cp.car_model, cp.engine_model, " +
+                                    "cp.oem_article_number, cp.cross_article_number, cbn.brand_name, cpe.group_id)";
+
+        if (bindings.isEmpty()) {
+            return jdbcTemplate.query(sql, new ProductMapper());
+        }
+        return jdbcTemplate.query(sql, bindings.toArray(), new ProductMapper());
     }
 
     public List<Supply> findAllProductsWrappedInSupply(List<Integer> excludeProductIds) {
@@ -68,11 +148,16 @@ public class CommonProductsDAO {
                             "cp.cross_article_number, " +
                             "cbn.id, " +
                             "cbn.brand_name, " +
-                            "cp.notes " +
+                            "cp.notes, " +
+                            "cpe.id, " +
+                            "cpe.group_id, " +
+                            "cpe.product_id " +
 
                     "FROM common_products cp " +
+
                     "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
-                    "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id ";
+                    "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+                    "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id ";
 
         if (!excludeProductIds.isEmpty()) {
             String inClause = excludeProductIds.stream().map(id -> "?").collect(Collectors.joining(", "));
@@ -192,12 +277,16 @@ public class CommonProductsDAO {
                             "cp.cross_article_number, " +
                             "cbn.id, " +
                             "cbn.brand_name, " +
-                            "cp.notes " +
+                            "cp.notes, " +
+                            "cpe.id, " +
+                            "cpe.group_id, " +
+                            "cpe.product_id " +
 
                         "FROM common_products cp " +
 
                         "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
                         "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+                        "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id " +
 
                         "WHERE cp.id = ?";
 

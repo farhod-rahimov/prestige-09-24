@@ -1,4 +1,4 @@
-package com.prestige.models;
+package com.prestige.models.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

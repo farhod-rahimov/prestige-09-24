@@ -18,6 +18,14 @@ public class Brand {
 
     private String brandName;
 
+    public Brand(Brand brand) {
+
+        if (brand != null) {
+            this.id = brand.getId();
+            this.brandName = brand.getBrandName();
+        }
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;

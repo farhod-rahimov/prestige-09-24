@@ -1,5 +1,6 @@
 package com.prestige.models;
 
+import com.prestige.models.filters.BasketFilter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,6 +32,16 @@ public class SupplyBasket extends BaseBasket {
         this.supplier = supplier;
         this.suppliesList = suppliesList;
         this.status = status;
+    }
+
+    public SupplyBasket(SupplyBasket supplyBasket) {
+        super(supplyBasket);
+
+        if (supplyBasket != null) {
+            this.supplier = new Supplier(supplyBasket.getSupplier());
+            this.suppliesList = new LinkedList<>(supplyBasket.getSuppliesList());
+            this.status = supplyBasket.getStatus();
+        }
     }
 
     @AllArgsConstructor

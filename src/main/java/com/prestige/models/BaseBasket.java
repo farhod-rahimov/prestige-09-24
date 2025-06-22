@@ -1,5 +1,6 @@
 package com.prestige.models;
 
+import com.prestige.models.filters.BasketFilter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,6 +27,18 @@ public abstract class BaseBasket {
     private String notes;
 
     private BasketFilter filter;
+
+    public BaseBasket(BaseBasket baseBasket) {
+
+        if (baseBasket != null) {
+            this.id = baseBasket.getId();
+            this.createdDateTime = baseBasket.getCreatedDateTime();
+            this.lastChangedDateTime = baseBasket.getLastChangedDateTime();
+            this.totalSum = baseBasket.getTotalSum();
+            this.notes = baseBasket.getNotes();
+            this.filter = new BasketFilter(baseBasket.getFilter());
+        }
+    }
 
     @Override
     public boolean equals(Object obj) {

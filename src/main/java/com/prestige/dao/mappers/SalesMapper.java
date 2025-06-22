@@ -1,9 +1,6 @@
 package com.prestige.dao.mappers;
 
-import com.prestige.models.Brand;
-import com.prestige.models.Product;
-import com.prestige.models.ProductName;
-import com.prestige.models.Sales;
+import com.prestige.models.*;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.math.RoundingMode;
@@ -23,10 +20,11 @@ public class SalesMapper implements RowMapper<Sales> {
 
         ProductName productName = new ProductName(rs.getInt(6), rs.getString(7));
         Brand brand = new Brand(rs.getInt(12), rs.getString(13));
+        EquivalentProductInfo equivalentProductInfo = new EquivalentProductInfo(rs.getInt(15), rs.getInt(16), rs.getInt(17));
 
         Product product = new Product(rs.getInt(5), productName, rs.getString(8),
                                     rs.getString(9), rs.getString(10),
-                                    rs.getString(11), brand, rs.getString(14));
+                                    rs.getString(11), brand, rs.getString(14), equivalentProductInfo);
 
         sales.setProduct(product);
 
