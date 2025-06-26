@@ -1,6 +1,7 @@
 package com.prestige.dao.prestige;
 
 import com.prestige.models.filters.BasketFilter;
+import com.prestige.models.filters.ProductFilter;
 import com.prestige.service.Utils;
 import com.prestige.dao.mappers.*;
 import com.prestige.models.*;
@@ -233,6 +234,16 @@ public class PrestigeAllSuppliesDAO {
     }
 
     public List<RetailProductView> findAllPrestigeProductsInStock() {
+        return findAllPrestigeProductsInStockInternal(null);
+    }
+
+    public List<RetailProductView> findAllPrestigeProductsInStockWIthFilter(ProductFilter productFilter) {
+        return findAllPrestigeProductsInStockInternal(productFilter);
+    }
+
+    private List<RetailProductView> findAllPrestigeProductsInStockInternal(ProductFilter productFilter) {
+        List<Object> bindings = new ArrayList();
+
         String sql =    "WITH sales_info AS (" +
                             "SELECT " +
                                 "common_product_id, " +
@@ -279,10 +290,74 @@ public class PrestigeAllSuppliesDAO {
                         "LEFT JOIN supply_info ON cp.id = supply_info.cp_id " +
                         "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id " +
 
-                        "ORDER BY   (cbn.brand_name, cpn.product_name, cp.car_model, cp.engine_model, " +
-                                    "cp.oem_article_number, cp.cross_article_number) ";
+                        "WHERE 1 = 1 ";
 
-        return jdbcTemplate.query(sql, new RetailProductViewMapper());
+        if (productFilter != null) {
+
+            Integer groupId = productFilter.getEquivalentProductInfo().getGroupId();
+            if (groupId != null && groupId != 0) {
+                sql +=  "AND cpe.group_id = ? ";
+                bindings.add(groupId);
+            }
+
+            Integer productId = productFilter.getEquivalentProductInfo().getProductId();
+            if (productId != null && productId != 0) {
+                sql +=  "AND cp.id  = ? ";
+                bindings.add(productId);
+            }
+
+            Product product = productFilter.getProduct();
+            if (product != null) {
+
+                ProductName productName = product.getProductName();
+                if (productName != null && productName.getProductName() != null &&
+                        !productName.getProductName().isEmpty()) {
+
+                    sql +=  "AND cpn.product_name ILIKE ? ESCAPE '\\' ";
+                    bindings.add(productName.getProductName());
+                }
+
+                if (product.getCarModel() != null && !product.getCarModel().isEmpty()) {
+                    sql +=  "AND cp.car_model ILIKE ? ESCAPE '\\' ";
+                    bindings.add(product.getCarModel());
+                }
+
+                if (product.getEngineModel() != null && !product.getEngineModel().isEmpty()) {
+                    sql +=  "AND cp.engine_model ILIKE ? ESCAPE '\\' ";
+                    bindings.add(product.getEngineModel());
+                }
+
+                if (product.getOemArticleNumber() != null && !product.getOemArticleNumber().isEmpty()) {
+                    sql +=  "AND cp.oem_article_number ILIKE ? ESCAPE '\\' ";
+                    bindings.add(product.getOemArticleNumber());
+                }
+
+                if (product.getCrossArticleNumber() != null && !product.getCrossArticleNumber().isEmpty()) {
+                    sql +=  "AND cp.cross_article_number ILIKE ? ESCAPE '\\' ";
+                    bindings.add(product.getCrossArticleNumber());
+                }
+
+                Brand brand = product.getBrand();
+                if (brand != null && brand.getBrandName() != null && !brand.getBrandName().isEmpty()) {
+                    sql +=  "AND cbn.brand_name ILIKE ? ESCAPE '\\' ";
+                    bindings.add(brand.getBrandName());
+                }
+
+                if (product.getNotes() != null && !product.getNotes().isEmpty()) {
+                    sql +=  "AND cp.notes ILIKE ? ESCAPE '\\' ";
+                    bindings.add(product.getNotes());
+                }
+            }
+        }
+
+        sql +=          "ORDER BY   (cpn.product_name, cp.car_model, cp.engine_model, " +
+                                    "cp.oem_article_number, cp.cross_article_number, cbn.brand_name, cpe.group_id) ";
+
+
+        if (bindings.isEmpty()) {
+            return jdbcTemplate.query(sql, new RetailProductViewMapper());
+        }
+        return jdbcTemplate.query(sql, bindings.toArray(), new RetailProductViewMapper());
     }
 
     public List<Sales> findAllPrestigeProductsWrappedInSales(List<Integer> excludeProductIds) {

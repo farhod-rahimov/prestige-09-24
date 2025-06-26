@@ -1,20 +1,24 @@
 package com.prestige.dao.common;
 
+import com.prestige.dao.mappers.BrandMapper;
+import com.prestige.dao.mappers.ProductMapper;
+import com.prestige.dao.mappers.ProductMapperWrappedInSupply;
+import com.prestige.dao.mappers.ProductNameMapper;
+import com.prestige.models.Brand;
+import com.prestige.models.Product;
+import com.prestige.models.ProductName;
+import com.prestige.models.Supply;
 import com.prestige.models.filters.BasketFilter;
 import com.prestige.models.filters.ProductFilter;
 import com.prestige.service.Utils;
-import com.prestige.dao.mappers.*;
-import com.prestige.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -79,7 +83,7 @@ public class CommonProductsDAO {
 
             Integer productId = productFilter.getEquivalentProductInfo().getProductId();
             if (productId != null && productId != 0) {
-                sql +=  "AND cp.idit  = ? ";
+                sql +=  "AND cp.id  = ? ";
                 bindings.add(productId);
             }
 
@@ -505,22 +509,5 @@ public class CommonProductsDAO {
         String sql = "SELECT EXISTS (SELECT 1 FROM common_products WHERE brand_name_id = ?)";
 
         return jdbcTemplate.queryForObject(sql, new Object[]{brandId}, Boolean.class);
-    }
-
-    public void deleteProductIds(List<Integer> productIds) {
-        String sql =    "DELETE FROM common_products WHERE id = ?";
-
-        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
-
-            @Override
-            public void setValues(PreparedStatement ps, int index) throws SQLException {
-                ps.setInt(1, productIds.get(index));
-            }
-
-            @Override
-            public int getBatchSize() {
-                return productIds.size();
-            }
-        });
     }
 }

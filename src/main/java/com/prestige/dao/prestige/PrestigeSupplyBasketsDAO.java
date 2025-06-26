@@ -93,4 +93,10 @@ public class PrestigeSupplyBasketsDAO {
 
         jdbcTemplate.update(sql, new Object[]{basket.getNotes(), utils.getCurrentDateAndTime(), basket.getId()});
     }
+
+    public void deleteAllEmptyBaskets() {
+        String sql = "DELETE FROM prestige_supply_baskets WHERE total_sum = 0";
+
+        jdbcTemplate.update(sql);
+    }
 }

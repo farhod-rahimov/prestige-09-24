@@ -60,6 +60,8 @@ public class PrestigeSalesBasketsController {
     @GetMapping
     public String showAllBaskets(Model model) {
         model.addAttribute("allBaskets", prestigeSalesBasketsDAO.findAllBaskets());
+        model.addAttribute("salesBasket", new SalesBasket()); // mock
+
         return "prestige/sales/baskets/baskets"; // return /prestige/sales/baskets/baskets.html
     }
 
@@ -80,6 +82,8 @@ public class PrestigeSalesBasketsController {
                                        Model model) {
 
         switch (method) {
+            case "deleteAllEmptyBaskets":
+                return deleteAllEmptyBaskets();
             case "changeBasketType":
                 return changeBasketType(salesBasket, model);
             case "resetAddingNewProduct":
@@ -391,6 +395,12 @@ public class PrestigeSalesBasketsController {
         patchBasketInternal(salesBasket); // перед обновлением статуса корзины обязательно обновить ее
         salesBasket.setStatus(newStatus);
         prestigeSalesBasketsDAO.updateBasketStatus(salesBasket);
+
+        return "redirect:/prestige/sales/baskets";
+    }
+
+    private String deleteAllEmptyBaskets() {
+        prestigeSalesBasketsDAO.deleteAllEmptyBaskets();
 
         return "redirect:/prestige/sales/baskets";
     }

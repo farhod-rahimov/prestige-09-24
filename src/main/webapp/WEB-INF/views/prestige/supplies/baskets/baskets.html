@@ -99,53 +99,76 @@
             outline: none;
             box-shadow: 0 0 5px rgba(72, 168, 72, 0.6); /* Эффект при фокусе на ссылке */
         }
+        .btn {
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .btn-red {
+            background-color: #f66f6f;
+        }
+        .btn-red:hover {
+            background-color: #f44336;
+        }
     </style>
 </head>
 <body>
 
 <div th:replace="fragments/common-header :: common-header"></div>
 
-<div class="header">
-    <h2>Поступления</h2>
-    <a th:href="@{/prestige/supplies/baskets/add}" class="add-basket-link">Добавить новое поступление</a>
-</div>
+<form th:method="POST" th:action="@{/prestige/supplies/baskets}">
 
-<div th:if="${error}" class="error-message" th:text="${error}"></div>
+    <div class="header">
+        <h2>Поступления</h2>
+        <div style="display: flex; gap: 10px;">
+            <a th:href="@{/prestige/supplies/baskets/add}" class="add-basket-link">Добавить новое поступление</a>
+            <button type="submit" name="method" value="deleteAllEmptyBaskets"
+                    onclick="return confirm('Вы уверены, что хотите удалить все пустые корзины?')"
+                    class="btn btn-red">Удалить все пустые корзины</button>
+        </div>
+    </div>
 
-<table>
-    <thead>
-    <tr>
-        <th>ID корзины</th>
-        <th>Наименование поставщика</th>
-        <th>Сумма</th>
-        <th>Дата и время последнего изменения</th>
-        <th>Дата и время создания</th>
-        <th>Комментарий</th>
-    </tr>
-    </thead>
-    <tbody>
+    <div th:if="${error}" class="error-message" th:text="${error}"></div>
 
-    <tr th:each="basket : ${allBaskets}"
-        th:with="link='/prestige/supplies/baskets/' + ${basket.getId()}">
+    <table>
+        <thead>
+        <tr>
+            <th>ID корзины</th>
+            <th>Наименование поставщика</th>
+            <th>Сумма</th>
+            <th>Дата и время последнего изменения</th>
+            <th>Дата и время создания</th>
+            <th>Комментарий</th>
+        </tr>
+        </thead>
+        <tbody>
 
-        <td>
-            <a th:href="${link}">
-                <span th:if="${basket.getStatus().getIntValue() == 1}" class="id-status received"
-                      title="Оприходовано" th:text="${basket.getId()}"></span>
-                <span th:if="${basket.getStatus().getIntValue() == 2}" class="id-status deleted"
-                      title="Помечено на удаление" th:text="${basket.getId()}"></span>
-                <span th:if="${basket.getStatus().getIntValue() == 3}" class="id-status pending"
-                      title="Новая корзина: ожидает действия" th:text="${basket.getId()}"></span>
-            </a>
-        </td>
-        <td><a th:href="${link}" th:text="${basket.getSupplier().getStoreName()}"></a></td>
-        <td><a th:href="${link}" th:text="${basket.getTotalSum()}"></a></td>
-        <td><a th:href="${link}" th:text="${utils.getDateTimeFormatted(basket.getLastChangedDateTime())}"></a></td>
-        <td><a th:href="${link}" th:text="${utils.getDateTimeFormatted(basket.getCreatedDateTime())}"></a></td>
-        <td><a th:href="${link}" th:text="${basket.getNotes()}"></a></td>
-    </tr>
-    </tbody>
-</table>
+        <tr th:each="basket : ${allBaskets}"
+            th:with="link='/prestige/supplies/baskets/' + ${basket.getId()}">
+
+            <td>
+                <a th:href="${link}">
+                    <span th:if="${basket.getStatus().getIntValue() == 1}" class="id-status received"
+                          title="Оприходовано" th:text="${basket.getId()}"></span>
+                    <span th:if="${basket.getStatus().getIntValue() == 2}" class="id-status deleted"
+                          title="Помечено на удаление" th:text="${basket.getId()}"></span>
+                    <span th:if="${basket.getStatus().getIntValue() == 3}" class="id-status pending"
+                          title="Новая корзина: ожидает действия" th:text="${basket.getId()}"></span>
+                </a>
+            </td>
+            <td><a th:href="${link}" th:text="${basket.getSupplier().getStoreName()}"></a></td>
+            <td><a th:href="${link}" th:text="${basket.getTotalSum()}"></a></td>
+            <td><a th:href="${link}" th:text="${utils.getDateTimeFormatted(basket.getLastChangedDateTime())}"></a></td>
+            <td><a th:href="${link}" th:text="${utils.getDateTimeFormatted(basket.getCreatedDateTime())}"></a></td>
+            <td><a th:href="${link}" th:text="${basket.getNotes()}"></a></td>
+        </tr>
+        </tbody>
+    </table>
+</form>
 
 </body>
 </html>

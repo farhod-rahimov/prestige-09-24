@@ -5,5 +5,3 @@
 
 SALES BASKET добавить время продажи
 SUPPLY BASKET добавить время оприходования
-
-common products batch DELETE problem

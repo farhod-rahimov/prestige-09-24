@@ -92,7 +92,6 @@ public class CommonProductEquivalentsDAO {
     }
 
     public void markAsSame(List<Integer> equivalentProductIds) {
-
         Integer groupId = getGroupIdByProductIds(equivalentProductIds);
 
         if (groupId == null) {
@@ -114,8 +113,13 @@ public class CommonProductEquivalentsDAO {
     }
 
     public void unmarkAsSame(List<Integer> unmarkProductIds) {
-
         deleteEquivalentProductIds(unmarkProductIds);
         deleteIfSingleLeft();
+    }
+
+    public boolean checkIfProductExists(Integer productId) {
+        String sql = "SELECT EXISTS (SELECT 1 FROM common_product_equivalents WHERE product_id = ?)";
+
+        return jdbcTemplate.queryForObject(sql, new Object[]{productId}, Boolean.class);
     }
 }

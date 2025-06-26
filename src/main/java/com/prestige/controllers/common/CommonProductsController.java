@@ -119,8 +119,6 @@ public class CommonProductsController extends AbstractCommonBaseController {
                 return markAsSame(selectedEquivalentProductIds, redirectAttributes, model, request);
             case "unmarkAsSame":
                 return unmarkAsSame(selectedEquivalentProductIds, request);
-            case "deleteSelected":
-                return deleteSelected(selectedProductIds, model, request);
             case "saveAndClose":
                 if (model.getAttribute("productStep") == EStep.PRODUCT_NAME_SELECTION) {
                     saveNewProduct(bindingResult, model, redirectAttributes, request);
@@ -253,23 +251,6 @@ public class CommonProductsController extends AbstractCommonBaseController {
         return String.format("redirect:/%s/product-management/products", getURIBeginning(request));
     }
 
-    private String deleteSelected(List<Integer> selectedProductIds, Model model, HttpServletRequest request) {
-
-        if (selectedProductIds != null && !selectedProductIds.isEmpty()) {
-            LinkedList<Product> productList = (LinkedList<Product>)model.getAttribute("productList");
-
-            for (Integer productId : selectedProductIds) {
-                productList.removeIf(product -> product.getId().equals(productId));
-            }
-            commonProductsDAO.deleteProductIds(selectedProductIds);
-        }
-
-        model.addAttribute("productStep", EStep.PRODUCT_SELECTION_DONE);
-        model.addAttribute("URIBeginning", getURIBeginning(request));
-
-        return "common/products/add-new-product";
-    }
-
     private String saveNewProduct(BindingResult bindingResult, Model model,
                                   RedirectAttributes redirectAttributes, HttpServletRequest request) {
 
@@ -316,9 +297,11 @@ public class CommonProductsController extends AbstractCommonBaseController {
     }
 
     private String deleteProduct(Integer productId, RedirectAttributes redirectAttributes, HttpServletRequest request) {
-        // TODO: prestigeAllSuppliesDAO.checkIfProductExists or skladAllSuppliesDAO.checkIfProductExists
-        if (prestigeAllSuppliesDAO.checkIfProductExists(productId)) {
-            String errorMessage = String.format("Невозможно удалить этот товар, т.к он используется в поступлениях %s.",
+        // TODO: add skladAllSuppliesDAO.checkIfProductExists
+        if  (prestigeAllSuppliesDAO.checkIfProductExists(productId) ||
+            commonProductEquivalentsDAO.checkIfProductExists(productId)) {
+            String errorMessage = String.format("Невозможно удалить этот товар, т.к он используется в поступлениях %s " +
+                                                "либо состоит объединениях с другими товарами.  ",
                     isPrestigeRequest(request.getRequestURI()) ? "магазина" : "склада");
 
             redirectAttributes.addFlashAttribute("error", errorMessage);
