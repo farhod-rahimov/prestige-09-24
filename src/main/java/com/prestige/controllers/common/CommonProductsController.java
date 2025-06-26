@@ -5,8 +5,8 @@ import com.prestige.dao.common.CommonProductEquivalentsDAO;
 import com.prestige.dao.common.CommonProductNamesDAO;
 import com.prestige.dao.common.CommonProductsDAO;
 import com.prestige.dao.prestige.PrestigeAllSuppliesDAO;
-import com.prestige.models.enums.EStep;
 import com.prestige.models.Product;
+import com.prestige.models.enums.EStep;
 import com.prestige.models.filters.ProductFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +27,7 @@ import java.util.stream.Collectors;
 @RequestMapping({"/prestige/product-management/products",
                  "/sklad/product-management/products"})
 @SessionAttributes({"productStep", "productList", "product", "allProducts", "productFilter"})
-public class CommonProductsController extends AbstractCommonBaseController {
+public class CommonProductsController {
 
     private final CommonProductsDAO commonProductsDAO;
 
@@ -55,27 +54,24 @@ public class CommonProductsController extends AbstractCommonBaseController {
     }
 
     @GetMapping
-    public String showAllProducts(Model model, HttpServletRequest request) {
+    public String showAllProducts(Model model) {
         model.addAttribute("allProducts", commonProductsDAO.findAllProducts());
-        model.addAttribute("URIBeginning", getURIBeginning(request));
         model.addAttribute("product", new Product()); //mock
         model.addAttribute("productFilter", new ProductFilter());
         return "common/products/products";
     }
 
     @GetMapping("/add")
-    public String addNewProductGet(Model model, HttpServletRequest request) {
+    public String addNewProductGet(Model model) {
 
         model.addAttribute("productStep", EStep.PRODUCT_SELECTION_DONE);
         model.addAttribute("productList", new LinkedList<Product>());
         model.addAttribute("product", new Product()); //mock
-
-        model.addAttribute("URIBeginning", getURIBeginning(request));
         return "common/products/add-new-product";
     }
 
     @GetMapping("/{productId}")
-    public ModelAndView findProductById(@PathVariable("productId") Integer productId, Model model, HttpServletRequest request) {
+    public ModelAndView findProductById(@PathVariable("productId") Integer productId, Model model) {
         ModelAndView mav = new ModelAndView("common/products/edit-product");
         Product product = commonProductsDAO.findProductById(productId);
 
@@ -83,14 +79,13 @@ public class CommonProductsController extends AbstractCommonBaseController {
             mav.setViewName("errors/404");
             mav.setStatus(HttpStatus.NOT_FOUND);
             mav.addObject("previousPage", String.format("/%s/product-management/products",
-                    isPrestigeRequest(request.getRequestURI()) ? "prestige" : "sklad"));
+                    model.getAttribute("URIBeginning")));
         }
         else {
             mav.addObject("product", product);
             mav.addObject("allProductNames", commonProductNamesDAO.findAllProductNames());
             mav.addObject("allBrands", commonBrandNamesDAO.findAllBrands());
         }
-        mav.addObject("URIBeginning", getURIBeginning(request));
         return mav;
     }
 
@@ -102,30 +97,30 @@ public class CommonProductsController extends AbstractCommonBaseController {
                                        @RequestParam(value = "selectedProductIds", required = false) List<Integer> selectedProductIds,
                                        @RequestParam(value = "selectedEquivalentProductIds", required = false) List<Integer> selectedEquivalentProductIds,
                                        RedirectAttributes redirectAttributes,
-                                       Model model, HttpServletRequest request) {
+                                       Model model) {
 
         switch (method) {
             case "put":
-                return updateProduct(product, bindingResult, redirectAttributes, request);
+                return updateProduct(product, bindingResult, redirectAttributes, model);
             case "delete":
-                return deleteProduct(product.getId(), redirectAttributes, request);
+                return deleteProduct(product.getId(), redirectAttributes, model);
             case "resetAddingNewProduct":
-                return resetAddingNewProduct(model, request);
+                return resetAddingNewProduct(model);
             case "applyFilter":
-                return applyFilter(productFilter, model, request);
+                return applyFilter(productFilter, model);
             case "resetFilter":
-                return resetFilter(productFilter, request);
+                return resetFilter(productFilter, model);
             case "markAsSame":
-                return markAsSame(selectedEquivalentProductIds, redirectAttributes, model, request);
+                return markAsSame(selectedEquivalentProductIds, redirectAttributes, model);
             case "unmarkAsSame":
-                return unmarkAsSame(selectedEquivalentProductIds, request);
+                return unmarkAsSame(selectedEquivalentProductIds, model);
             case "saveAndClose":
                 if (model.getAttribute("productStep") == EStep.PRODUCT_NAME_SELECTION) {
-                    saveNewProduct(bindingResult, model, redirectAttributes, request);
+                    saveNewProduct(bindingResult, model, redirectAttributes);
                 }
-                return String.format("redirect:/%s/product-management/products", getURIBeginning(request));
+                return String.format("redirect:/%s/product-management/products", model.getAttribute("URIBeginning"));
             default:
-                return saveNewProduct(bindingResult, model, redirectAttributes, request);
+                return saveNewProduct(bindingResult, model, redirectAttributes);
         }
     }
 
@@ -182,35 +177,34 @@ public class CommonProductsController extends AbstractCommonBaseController {
         return getNextStep(productStep);
     }
 
-    private String resetAddingNewProduct(Model model, HttpServletRequest request) {
+    private String resetAddingNewProduct(Model model) {
         ((LinkedList<Product>)model.getAttribute("productList")).removeLast();
 
         model.addAttribute("productStep", EStep.PRODUCT_SELECTION_DONE);
-        model.addAttribute("URIBeginning", getURIBeginning(request));
+        model.addAttribute("URIBeginning", model.getAttribute("URIBeginning"));
 
         return "common/products/add-new-product";
     }
 
-    private String applyFilter(ProductFilter productFilter, Model model, HttpServletRequest request) {
+    private String applyFilter(ProductFilter productFilter, Model model) {
         ProductFilter productFilterCopy = new ProductFilter(productFilter);
         productFilterCopy.prepareAllFields();
 
         model.addAttribute("allProducts", commonProductsDAO.findAllProductsWIthFilter(productFilterCopy));
-        model.addAttribute("URIBeginning", getURIBeginning(request));
 
         return "common/products/products";
     }
 
-    private String resetFilter(ProductFilter productFilter, HttpServletRequest request) {
+    private String resetFilter(ProductFilter productFilter, Model model) {
         productFilter.clear();
-        return String.format("redirect:/%s/product-management/products", getURIBeginning(request));
+        return String.format("redirect:/%s/product-management/products", model.getAttribute("URIBeginning"));
     }
 
     private String markAsSame(List<Integer> selectedEquivalentProductIds, RedirectAttributes redirectAttributes,
-                              Model model, HttpServletRequest request) {
+                              Model model) {
 
         if (selectedEquivalentProductIds == null || selectedEquivalentProductIds.size() < 2) {
-            return String.format("redirect:/%s/product-management/products", getURIBeginning(request));
+            return String.format("redirect:/%s/product-management/products", model.getAttribute("URIBeginning"));
         }
 
         List<Product> allProducts = (List<Product>)model.getAttribute("allProducts");
@@ -233,87 +227,80 @@ public class CommonProductsController extends AbstractCommonBaseController {
                     String errorMessage = "Ошибка: попытка отметить товары как одинаковые, состоящие уже в других объединениях.";
                     redirectAttributes.addFlashAttribute("error", errorMessage);
 
-                    return String.format("redirect:/%s/product-management/products", getURIBeginning(request));
+                    return String.format("redirect:/%s/product-management/products", model.getAttribute("URIBeginning"));
                 }
             }
         }
 
         commonProductEquivalentsDAO.markAsSame(selectedEquivalentProductIds);
 
-        return String.format("redirect:/%s/product-management/products", getURIBeginning(request));
+        return String.format("redirect:/%s/product-management/products", model.getAttribute("URIBeginning"));
     }
 
-    private String unmarkAsSame(List<Integer> selectedEquivalentProductIds, HttpServletRequest request) {
+    private String unmarkAsSame(List<Integer> selectedEquivalentProductIds, Model model) {
 
         if (selectedEquivalentProductIds != null && !selectedEquivalentProductIds.isEmpty()) {
             commonProductEquivalentsDAO.unmarkAsSame(selectedEquivalentProductIds);
         }
-        return String.format("redirect:/%s/product-management/products", getURIBeginning(request));
+        return String.format("redirect:/%s/product-management/products", model.getAttribute("URIBeginning"));
     }
 
-    private String saveNewProduct(BindingResult bindingResult, Model model,
-                                  RedirectAttributes redirectAttributes, HttpServletRequest request) {
+    private String saveNewProduct(BindingResult bindingResult, Model model, RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
             String errorMessage = "Возникла ошибка при создании нового товара. Пожалуйста, попробуйте заново.";
             redirectAttributes.addFlashAttribute("error", errorMessage);
-            return String.format("redirect:/%s/product-management/products/add", getURIBeginning(request));
+            return String.format("redirect:/%s/product-management/products/add", model.getAttribute("URIBeginning"));
         }
 
         EStep productStep = processAndGetNextStep(model, (EStep)model.getAttribute("productStep"));
         model.addAttribute("productStep", productStep);
-        model.addAttribute("URIBeginning", getURIBeginning(request));
+        model.addAttribute("URIBeginning", model.getAttribute("URIBeginning"));
 
         return "common/products/add-new-product";
     }
 
     private String updateProduct(Product product, BindingResult bindingResult,
-                                 RedirectAttributes redirectAttributes, HttpServletRequest request) {
+                                 RedirectAttributes redirectAttributes, Model model) {
         completeProduct(product);
 
         if (bindingResult.hasErrors()) {
             String errorMessage = "Возникла ошибка при редактировании товара. Пожалуйста, попробуйте заново.";
             redirectAttributes.addFlashAttribute("error", errorMessage);
 
-            return String.format("redirect:/%s/product-management/products/%d",
-                    isPrestigeRequest(request.getRequestURI()) ? "prestige" : "sklad", product.getId());
+            return String.format("redirect:/%s/product-management/products/%d", model.getAttribute("URIBeginning"));
         }
         else if (product.equals(commonProductsDAO.findProductById(product.getId()))) {
-            return String.format("redirect:/%s/product-management/products",
-                    isPrestigeRequest(request.getRequestURI()) ? "prestige" : "sklad");
+            return String.format("redirect:/%s/product-management/products", model.getAttribute("URIBeginning"));
         }
         else if (commonProductsDAO.checkIfProductExists(product)) {
             String errorMessage = "Указанный Вами товар уже существует.";
 
             redirectAttributes.addFlashAttribute("error", errorMessage);
 
-            return String.format("redirect:/%s/product-management/products/%d",
-                    isPrestigeRequest(request.getRequestURI()) ? "prestige" : "sklad", product.getId());
+            return String.format("redirect:/%s/product-management/products/%d", model.getAttribute("URIBeginning"));
         }
         commonProductsDAO.updateProduct(product);
 
-        return String.format("redirect:/%s/product-management/products",
-                isPrestigeRequest(request.getRequestURI()) ? "prestige" : "sklad");
+        return String.format("redirect:/%s/product-management/products", model.getAttribute("URIBeginning"));
     }
 
-    private String deleteProduct(Integer productId, RedirectAttributes redirectAttributes, HttpServletRequest request) {
+    private String deleteProduct(Integer productId, RedirectAttributes redirectAttributes, Model model) {
         // TODO: add skladAllSuppliesDAO.checkIfProductExists
         if  (prestigeAllSuppliesDAO.checkIfProductExists(productId) ||
             commonProductEquivalentsDAO.checkIfProductExists(productId)) {
             String errorMessage = String.format("Невозможно удалить этот товар, т.к он используется в поступлениях %s " +
                                                 "либо состоит объединениях с другими товарами.  ",
-                    isPrestigeRequest(request.getRequestURI()) ? "магазина" : "склада");
+                    model.getAttribute("URIBeginning").equals("prestige") ? "магазина" : "склада");
 
             redirectAttributes.addFlashAttribute("error", errorMessage);
 
-            return String.format("redirect:/%s/product-management/products/%d",
-                    isPrestigeRequest(request.getRequestURI()) ? "prestige" : "sklad", productId);
+            return String.format("redirect:/%s/product-management/products/%d", model.getAttribute("URIBeginning"));
         }
 
         commonProductsDAO.deleteProductById(productId);
 
-        return String.format("redirect:/%s/product-management/products",
-                isPrestigeRequest(request.getRequestURI()) ? "prestige" : "sklad");
+        return String.format("redirect:/%s/product-management/products", model.getAttribute("URIBeginning"));
     }
 
     private void completeProduct(Product product) {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" th:href="@{/css/common-header.css}">
-    <title>Управление номенклатурой товаров</title>
+    <title>Склад</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -54,35 +54,48 @@
 </head>
 <body>
 
-    <div th:replace="fragments/common-header :: common-header"></div>
+<div th:replace="fragments/common-header :: common-header"></div>
 
-    <div class="container">
-        <div class="block" id="product-names">
-            <a href="/prestige/product-management/product-names"><h2>Показать названия товаров</h2></a>
-        </div>
-
-        <div class="block" id="product-names-add">
-            <a href="/prestige/product-management/product-names/add"><h2>Добавить новое название товара</h2></a>
-        </div>
+<div class="container">
+    <div class="block" id="sklad-products">
+        <a href="/sklad/products"><h2>Показать все товары в магазине</h2></a>
     </div>
-    <div class="container">
-        <div class="block" id="brands">
-            <a href="/prestige/product-management/brands"><h2>Показать список всех брендов</h2></a>
-        </div>
 
-        <div class="block" id="brands-add">
-            <a href="/prestige/product-management/brands/add"><h2>Добавить новый бренд</h2></a>
-        </div>
+    <div class="block" id="sklad-products-add">
+        <a href="/sklad/supplies/baskets/add"><h2>Оприходовать новый товар в магазин</h2></a>
     </div>
-    <div class="container">
-        <div class="block" id="products">
-            <a href="/prestige/product-management/products"><h2>Показать товары</h2></a>
-        </div>
+</div>
 
-        <div class="block" id="products-add">
-            <a href="/prestige/product-management/products/add"><h2>Добавить новый товар</h2></a>
-        </div>
+<div class="container">
+    <div class="block" id="supplies">
+        <a href="/sklad/supplies/baskets"><h2>Поступления</h2></a>
     </div>
+
+    <div class="block" id="sales">
+        <a href="/sklad/sales/baskets"><h2>Продажи</h2></a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="block" id="clients">
+        <a href="/sklad/clients"><h2>Клиенты</h2></a>
+    </div>
+
+    <div class="block" id="suppliers">
+        <a href="/sklad/suppliers"><h2>Поставщики</h2></a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="block" id="product-management">
+        <a href="/sklad/product-management"><h2>Управление номенклатурой товаров</h2></a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="block" id="settings">
+        <a href="/sklad/settings"><h2>Настройки</h2></a>
+    </div>
+</div>
 </body>
 </html>
-

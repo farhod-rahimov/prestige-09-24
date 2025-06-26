@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/common-header.css}">
+    <title>Управление номенклатурой товаров</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0; /* Убираем стандартные отступы */
+            padding: 0; /* Убираем стандартные отступы */
+            padding-top: 60px;
+        }
+
+        .container {
+            display: flex; /* Располагаем блоки по горизонтали */
+            align-items: center; /* Вертикальное выравнивание по центру */
+            padding: 10px; /* Внутренний отступ, чтобы блоки не прилипали к краю */
+        }
+
+        .block {
+            width: 250px; /* Ширина блоков */
+            height: 100px; /* Высота блоков */
+            border: 1px solid black; /* Граница блоков */
+            margin-right: 20px; /* Отступ между блоками */
+            display: flex; /* Используем flex для выравнивания содержимого */
+            align-items: center; /* Вертикальное выравнивание по центру */
+            justify-content: center; /* Горизонтальное выравнивание по центру */
+            text-align: center;
+            padding: 10px; /* Внутренний отступ */
+            box-sizing: border-box; /* Учитываем отступы и границы в ширине и высоте */
+            background-color: #4CAF50; /* Зеленая заливка */
+            color: white; /* Белый текст */
+            transition: background-color 0.3s ease; /* Плавное изменение фона */
+        }
+
+        .block a {
+            text-decoration: none; /* Убираем стандартное подчеркивание у ссылок */
+            color: white; /* Белый цвет текста */
+            font-weight: bold; /* Полужирный шрифт */
+            font-size: 1rem;
+        }
+
+        .block a:hover {
+            text-decoration: underline; /* Подчеркивание при наведении */
+        }
+
+        .block h2 {
+            white-space: normal; /* Разрешить перенос текста */
+            margin: 0; /* Удалить стандартные отступы h2 */
+        }
+    </style>
+</head>
+<body>
+
+    <div th:replace="fragments/common-header :: common-header"></div>
+    <div class="container">
+        <div class="block" id="product-names">
+            <a th:href="'/' + ${URIBeginning} + '/product-management/product-names'"><h2>Показать названия товаров</h2></a>
+        </div>
+
+        <div class="block" id="product-names-add">
+            <a th:href="'/' + ${URIBeginning} + '/product-management/product-names/add'"><h2>Добавить новое название товара</h2></a>
+        </div>
+    </div>
+    <div class="container">
+        <div class="block" id="brands">
+            <a th:href="'/' + ${URIBeginning} + '/product-management/brands'"><h2>Показать список всех брендов</h2></a>
+        </div>
+
+        <div class="block" id="brands-add">
+            <a th:href="'/' + ${URIBeginning} + '/product-management/brands/add'"><h2>Добавить новый бренд</h2></a>
+        </div>
+    </div>
+    <div class="container">
+        <div class="block" id="products">
+            <a th:href="'/' + ${URIBeginning} + '/product-management/products'"><h2>Показать товары</h2></a>
+        </div>
+
+        <div class="block" id="products-add">
+            <a th:href="'/' + ${URIBeginning} + '/product-management/products/add'"><h2>Добавить новый товар</h2></a>
+        </div>
+    </div>
+</body>
+</html>
+
