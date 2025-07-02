@@ -58,7 +58,8 @@
 
 <h2>Добавление нового параметра</h2>
 
-<form th:method="POST" th:action="@{/prestige/settings}" th:object="${settings}">
+<form th:method="POST" th:action="@{${'/' + URIBeginning + '/settings'}}" th:object="${settings}">
+
     <!-- Отображение сообщения об ошибке -->
     <div th:if="${error}" class="error-message" th:text="${error}"></div>
 

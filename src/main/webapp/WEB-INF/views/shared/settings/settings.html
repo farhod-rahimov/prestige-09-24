@@ -84,7 +84,7 @@
 
 <div class="header">
     <h2>Все параметры</h2>
-    <a href="/prestige/settings/add" class="add-settings-link">Добавить новый параметр</a>
+    <a th:href="'/' + ${URIBeginning} + '/settings/add'" class="add-settings-link">Добавить новый параметр</a>
 </div>
 
 <div th:if="${error}" class="error-message" th:text="${error}"></div>
@@ -98,7 +98,7 @@
     </tr>
     </thead>
     <tbody>
-    <tr th:each="settings : ${allSettings}" th:with="link=@{/prestige/settings/{settingsId}/(settingsId=${settings.getId()})}">
+    <tr th:each="settings : ${allSettings}" th:with="link='/' + ${URIBeginning} + '/settings/' + ${settings.getId()}">
         <td><a th:href="${link}" th:text="${settings.id}"></a></td>
         <td><a th:href="${link}" th:text="${settings.key}"></a></td>
         <td><a th:href="${link}" th:text="${settings.value}"></a></td>

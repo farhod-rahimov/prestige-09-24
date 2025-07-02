@@ -73,7 +73,7 @@
 
 <h2>Редактирование клиента</h2>
 
-<form method="POST" action="/prestige/settings" th:object="${settings}">
+<form th:method="POST" th:action="@{${'/' + URIBeginning + '/settings'}}" th:object="${settings}">
 
     <!-- Отображение сообщения об ошибке -->
     <div class="error-message" th:if="${error}" th:text="${error}"></div>
