@@ -1,4 +1,4 @@
-package com.prestige.controllers.abstracts;
+package com.prestige.dao.abstracts;
 
 import com.prestige.dao.mappers.SettingsMap;
 import com.prestige.models.Settings;

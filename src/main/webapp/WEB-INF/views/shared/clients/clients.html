@@ -84,7 +84,8 @@
 
 <div class="header">
     <h2>Список всех клиентов</h2>
-    <a href="/prestige/clients/add" class="add-client-link">Добавить нового клиента</a>
+    <a th:href="'/' + ${URIBeginning} + '/clients/add'" class="add-client-link">Добавить нового клиента</a>
+
 </div>
 
 <div th:if="${error}" class="error-message" th:text="${error}"></div>
@@ -98,7 +99,8 @@
     </tr>
     </thead>
     <tbody>
-    <tr th:each="client : ${allClients}" th:with="link=@{/prestige/clients/{clientId}/(clientId=${client.getId()})}">
+    <tr th:each="client : ${allClients}" th:with="link='/' + ${URIBeginning} + '/clients/' + ${client.getId()}">
+
         <td><a th:href="${link}" th:text="${client.getId()}"></a></td>
         <td><a th:href="${link}" th:text="${client.getName()}"></a></td>
         <td><a th:href="${link}" th:text="${client.getPhoneNumber()}"></a></td>

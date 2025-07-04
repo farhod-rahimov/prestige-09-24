@@ -58,7 +58,8 @@
 
 <h2>Добавление нового клиента</h2>
 
-<form th:method="POST" th:action="@{/prestige/clients}" th:object="${client}">
+<form th:method="POST" th:action="@{${'/' + URIBeginning + '/clients'}}" th:object="${client}">
+
     <!-- Отображение сообщения об ошибке -->
     <div th:if="${error}" class="error-message" th:text="${error}"></div>
 

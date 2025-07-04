@@ -1,6 +1,6 @@
 package com.prestige.dao.sklad;
 
-import com.prestige.controllers.abstracts.AbstractSettingsDAO;
+import com.prestige.dao.abstracts.AbstractSettingsDAO;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 

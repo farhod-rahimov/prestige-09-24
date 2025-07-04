@@ -1,5 +1,6 @@
 package com.prestige.controllers.abstracts;
 
+import com.prestige.dao.abstracts.AbstractSettingsDAO;
 import com.prestige.models.Settings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
