@@ -2,23 +2,19 @@ package com.prestige.controllers.abstracts;
 
 import com.prestige.dao.abstracts.AbstractSettingsDAO;
 import com.prestige.models.Settings;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-@Controller
 public abstract class AbstractSettingsController {
 
     protected final AbstractSettingsDAO settingsDAO;
 
     protected final String uriPrefix;
 
-    @Autowired
     public AbstractSettingsController(AbstractSettingsDAO settingsDAO, String uriPrefix) {
         this.settingsDAO = settingsDAO;
         this.uriPrefix = uriPrefix;

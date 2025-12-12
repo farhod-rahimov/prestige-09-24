@@ -121,6 +121,7 @@ public class Utils {
             case PRODUCT_NAME_SELECTION:
                 return allProductNames != null && allProductNames.isEmpty() ? false : true;
             case PRODUCT_SELECTION_DONE:
+            case PRODUCT_SELECTION_WITH_FULL_LIST:
                 return false;
             default:
                 return true;

@@ -124,7 +124,7 @@ public class CommonProductNamesController {
             String errorMessage = "Невозможно удалить это название продукта, т.к оно используется в номенклатуре товаров.";
             redirectAttributes.addFlashAttribute("error", errorMessage);
 
-            return String.format("redirect:/%s/product-management/product-names/%d", model.getAttribute("URIBeginning"));
+            return String.format("redirect:/%s/product-management/product-names/%d", model.getAttribute("URIBeginning"), productNameId);
         }
 
         commonProductNamesDAO.deleteProductNameById(productNameId);

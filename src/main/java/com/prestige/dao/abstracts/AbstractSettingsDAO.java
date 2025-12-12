@@ -13,14 +13,12 @@ import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
 public abstract class AbstractSettingsDAO {
 
     protected final JdbcTemplate jdbcTemplate;
 
     protected final String tableName;
 
-    @Autowired
     public AbstractSettingsDAO(JdbcTemplate jdbcTemplate, String tableName) {
         this.jdbcTemplate = jdbcTemplate;
         this.tableName = tableName;
@@ -111,7 +109,7 @@ public abstract class AbstractSettingsDAO {
         String sql = String.format(
                         "SELECT ps.id, ps.key, ps.value " +
                         "FROM %s ps " +
-                        "WHERE ps.key = ?");
+                        "WHERE ps.key = ?", tableName);
 
         try {
             return jdbcTemplate.queryForObject(sql, new Object[] {settingsName}, new SettingsMap());

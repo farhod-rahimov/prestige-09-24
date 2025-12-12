@@ -1,26 +1,26 @@
 package com.prestige.controllers.abstracts;
 
 import com.prestige.dao.abstracts.AbstractClientsDAO;
+import com.prestige.dao.abstracts.AbstractSalesBasketsDAO;
 import com.prestige.models.Client;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-@Controller
 public abstract class AbstractClientsController {
 
     private final AbstractClientsDAO clientsDAO;
 
+    private final AbstractSalesBasketsDAO salesBasketsDAO;
+
     protected final String uriPrefix;
 
-    @Autowired
-    public AbstractClientsController(AbstractClientsDAO clientsDAO, String uriPrefix) {
+    public AbstractClientsController(AbstractClientsDAO clientsDAO, AbstractSalesBasketsDAO salesBasketsDAO, String uriPrefix) {
         this.clientsDAO = clientsDAO;
+        this.salesBasketsDAO = salesBasketsDAO;
         this.uriPrefix = uriPrefix;
     }
 
@@ -47,7 +47,7 @@ public abstract class AbstractClientsController {
             case "put":
                 return updateClient(client, bindingResult, redirectAttributes);
             case "delete":
-                return deleteClient(client.getId());
+                return deleteClient(client.getId(), redirectAttributes);
             default:
                 return saveNewClient(client, bindingResult, redirectAttributes);
         }
@@ -101,14 +101,26 @@ public abstract class AbstractClientsController {
             String errorMessage = "Указанный Вами клиент уже существует.";
 
             redirectAttributes.addFlashAttribute("error", errorMessage);
-            return "redirect:/prestige/clients/" + client.getId();
+            return String.format("redirect:/%s/clients/", uriPrefix, client.getId());
         }
         clientsDAO.updateClient(client);
         return String.format("redirect:/%s/clients/", uriPrefix);
     }
 
-    private String deleteClient(Integer clientId) {
+    private String deleteClient(Integer clientId, RedirectAttributes redirectAttributes) {
+
+        if(checkIfClientIsInUse(clientId)) {
+            String errorMessage = "Невозможно удалить этого клиента, т.к у него есть корзины в продажах";
+            redirectAttributes.addFlashAttribute("error", errorMessage);
+
+            return String.format("redirect:/%s/clients/%d", uriPrefix, clientId);
+
+        }
         clientsDAO.deleteClientById(clientId);
         return String.format("redirect:/%s/clients/", uriPrefix);
+    }
+
+    private Boolean checkIfClientIsInUse(Integer clientId) {
+        return salesBasketsDAO.checkIfClientIdExists(clientId);
     }
 }

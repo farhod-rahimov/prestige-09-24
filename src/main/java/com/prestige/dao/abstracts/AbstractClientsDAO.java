@@ -3,19 +3,16 @@ package com.prestige.dao.abstracts;
 import com.prestige.dao.mappers.ClientMapper;
 import com.prestige.models.Client;
 import com.prestige.service.Utils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.stereotype.Component;
 
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Component
 public abstract class AbstractClientsDAO {
 
     protected final JdbcTemplate jdbcTemplate;
@@ -24,7 +21,6 @@ public abstract class AbstractClientsDAO {
 
     private final Utils utils;
 
-    @Autowired
     public AbstractClientsDAO(JdbcTemplate jdbcTemplate, String tableName, Utils utils) {
         this.jdbcTemplate = jdbcTemplate;
         this.tableName = tableName;
