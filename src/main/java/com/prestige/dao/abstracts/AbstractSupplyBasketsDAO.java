@@ -3,7 +3,7 @@ package com.prestige.dao.abstracts;
 import com.prestige.service.Utils;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-public class AbstractSupplyBasketsDAO {
+public abstract class AbstractSupplyBasketsDAO {
 
     protected final JdbcTemplate jdbcTemplate;
 

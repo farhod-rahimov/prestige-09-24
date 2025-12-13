@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-public class AbstractSuppliersController {
+public abstract class AbstractSuppliersController {
 
     private final AbstractSuppliersDAO suppliersDAO;
 

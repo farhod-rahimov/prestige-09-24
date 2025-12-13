@@ -12,7 +12,7 @@ import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AbstractSuppliersDAO {
+public abstract class AbstractSuppliersDAO {
 
     protected final JdbcTemplate jdbcTemplate;
 
