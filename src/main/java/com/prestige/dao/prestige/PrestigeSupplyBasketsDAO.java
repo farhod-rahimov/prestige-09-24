@@ -1,5 +1,6 @@
 package com.prestige.dao.prestige;
 
+import com.prestige.dao.abstracts.AbstractSupplyBasketsDAO;
 import com.prestige.service.Utils;
 import com.prestige.dao.mappers.SupplyBasketMapper;
 import com.prestige.models.SupplyBasket;
@@ -14,16 +15,13 @@ import java.sql.PreparedStatement;
 import java.util.List;
 
 @Component
-public class PrestigeSupplyBasketsDAO {
+public class PrestigeSupplyBasketsDAO extends AbstractSupplyBasketsDAO {
 
-    private final JdbcTemplate jdbcTemplate;
-
-    private Utils utils;
+    //TODO: общие методы с SkladSupplyBasketsDAO нужно вынести в AbstractSupplyBasketsDAO
 
     @Autowired
     public PrestigeSupplyBasketsDAO(JdbcTemplate jdbcTemplate, Utils utils) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.utils = utils;
+        super(jdbcTemplate, "prestige_supply_baskets", utils);
     }
 
     public List<SupplyBasket> findAllBaskets() {

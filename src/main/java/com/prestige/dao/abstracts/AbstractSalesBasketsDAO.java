@@ -17,7 +17,7 @@ public class AbstractSalesBasketsDAO {
         this.utils = utils;
     }
 
-    public boolean checkIfClientIdExists(Integer clientId) {
+    public Boolean checkIfClientIdExists(Integer clientId) {
         String sql = String.format(
                         "SELECT EXISTS (" +
                             "SELECT 1 FROM %s WHERE client_id = ?)", tableName);

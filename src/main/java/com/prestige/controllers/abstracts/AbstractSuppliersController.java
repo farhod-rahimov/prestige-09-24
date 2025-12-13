@@ -1,6 +1,7 @@
 package com.prestige.controllers.abstracts;
 
 import com.prestige.dao.abstracts.AbstractSuppliersDAO;
+import com.prestige.dao.abstracts.AbstractSupplyBasketsDAO;
 import com.prestige.models.Supplier;
 import org.springframework.http.HttpStatus;
 import org.springframework.ui.Model;
@@ -13,10 +14,13 @@ public class AbstractSuppliersController {
 
     private final AbstractSuppliersDAO suppliersDAO;
 
+    private final AbstractSupplyBasketsDAO supplyBasketsDAO;
+
     protected final String uriPrefix;
 
-    public AbstractSuppliersController(AbstractSuppliersDAO suppliersDAO, String uriPrefix) {
+    public AbstractSuppliersController(AbstractSuppliersDAO suppliersDAO, AbstractSupplyBasketsDAO supplyBasketsDAO, String uriPrefix) {
         this.suppliersDAO = suppliersDAO;
+        this.supplyBasketsDAO = supplyBasketsDAO;
         this.uriPrefix = uriPrefix;
     }
 
@@ -43,7 +47,7 @@ public class AbstractSuppliersController {
             case "put":
                 return updateSupplier(supplier, bindingResult, redirectAttributes);
             case "delete":
-                return deleteSupplier(supplier.getId());
+                return deleteSupplier(supplier.getId(), redirectAttributes);
             default:
                 return saveNewSupplier(supplier, bindingResult, redirectAttributes);
         }
@@ -103,8 +107,20 @@ public class AbstractSuppliersController {
         return String.format("redirect:/%s/suppliers", uriPrefix);
     }
 
-    private String deleteSupplier(Integer supplierId) {
+    private String deleteSupplier(Integer supplierId, RedirectAttributes redirectAttributes) {
+
+        if(checkIfSupplierIsInUse(supplierId)) {
+            String errorMessage = "Невозможно удалить этого поставщика, т.к у него есть корзины в поставках";
+            redirectAttributes.addFlashAttribute("error", errorMessage);
+
+            return String.format("redirect:/%s/suppliers/%d", uriPrefix, supplierId);
+        }
+
         suppliersDAO.deleteSupplierById(supplierId);
         return String.format("redirect:/%s/suppliers", uriPrefix);
+    }
+
+    private Boolean checkIfSupplierIsInUse(Integer supplierId) {
+        return supplyBasketsDAO.checkIfSupplierIdExists(supplierId);
     }
 }
