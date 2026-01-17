@@ -161,7 +161,7 @@
                 </a>
             </td>
             <td><a th:href="${link}" th:text="${basket.getSupplier().getStoreName()}"></a></td>
-            <td><a th:href="${link}" th:text="${basket.getTotalSum()}"></a></td>
+            <td><a th:href="${link}" th:text="${#numbers.formatDecimal(basket.getTotalSum(), 1, 'WHITESPACE', 2, 'POINT')}"></a></td>
             <td><a th:href="${link}" th:text="${utils.getDateTimeFormatted(basket.getLastChangedDateTime())}"></a></td>
             <td><a th:href="${link}" th:text="${utils.getDateTimeFormatted(basket.getCreatedDateTime())}"></a></td>
             <td><a th:href="${link}" th:text="${basket.getNotes()}"></a></td>

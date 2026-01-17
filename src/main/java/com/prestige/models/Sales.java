@@ -68,10 +68,10 @@ public class Sales {
                 Objects.equals(wholesalePrice, other.wholesalePrice);
     }
 
-    public boolean equalsOnlyProductWithoutNotes(Sales other) {
+    public boolean equalsOnlyProductWithoutNotesAndEquivalentProductInfo(Sales other) {
         if (this == other) return true;
         if (other == null) return false;
 
-        return product.equalsWithoutNotes(other.product);
+        return product.equalsWithoutNotesAndEquivalentProductInfo(other.product);
     }
 }

@@ -12,19 +12,9 @@ import java.util.Objects;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Supply {
-
-    private Integer id;
-
-    private Product product;
+public class Supply extends BaseSupply {
 
     private Integer quantity;
-
-    private BigDecimal priceDollar;
-
-    // private infos
-
-    private Integer stockBeforeSale;
 
     public Supply(Product product) {
         this.product = product;
@@ -40,6 +30,14 @@ public class Supply {
             this.quantity = supply.getQuantity();
             this.priceDollar = supply.getPriceDollar();
         }
+    }
+
+    public BigDecimal getSumUsd() {
+
+        if (quantity == null || priceDollar == null) {
+            return null;
+        }
+        return priceDollar.multiply(BigDecimal.valueOf(quantity));
     }
 
     @Override
@@ -59,6 +57,6 @@ public class Supply {
         if (this == other) return true;
         if (other == null) return false;
 
-        return product.equalsWithoutNotes(other.product);
+        return super.equalsOnlyProductWithoutNotes(other);
     }
 }

@@ -288,7 +288,7 @@ public class PrestigeSalesBasketsController {
 
         for (int i = 0; i < salesBasket.getSalesList().size() - 1; i++) {
 
-            if (sales.equalsOnlyProductWithoutNotes(salesBasket.getSalesList().get(i))) {
+            if (sales.equalsOnlyProductWithoutNotesAndEquivalentProductInfo(salesBasket.getSalesList().get(i))) {
                 salesBasket.getSalesList().remove(salesBasket.getSalesList().size() - 1);
 
                 String errorMsg = String.format("|%s| |%s| |%s| |%s| |%s| |%s| уже есть в корзине!",

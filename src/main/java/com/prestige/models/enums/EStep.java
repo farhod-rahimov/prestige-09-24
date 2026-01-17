@@ -24,5 +24,7 @@ public enum EStep {
     PRODUCT_QUANTITY_AND_PRICE_SELECTION("PRODUCT_QUANTITY_AND_PRICE_SELECTION"),
     PRODUCT_SELECTION_DONE("PRODUCT_SELECTION_DONE");
 
+    // steps only for SKLAD controllers
+
     private final String value;
 }

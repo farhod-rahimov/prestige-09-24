@@ -1,10 +1,11 @@
 package com.prestige.dao.prestige;
 
+import com.prestige.dao.abstracts.AbstractAllSuppliesDAO;
+import com.prestige.dao.mappers.*;
+import com.prestige.models.*;
 import com.prestige.models.filters.BasketFilter;
 import com.prestige.models.filters.ProductFilter;
 import com.prestige.service.Utils;
-import com.prestige.dao.mappers.*;
-import com.prestige.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -20,18 +21,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
-public class PrestigeAllSuppliesDAO {
-
-    private final JdbcTemplate jdbcTemplate;
-
-    private Utils utils;
+public class PrestigeAllSuppliesDAO extends AbstractAllSuppliesDAO<Supply, SupplyBasket> {
 
     @Autowired
     public PrestigeAllSuppliesDAO(JdbcTemplate jdbcTemplate, Utils utils) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.utils = utils;
+        super(jdbcTemplate, "prestige_all_supplies", "prestige_supply_baskets",
+                "prestige_all_sales", "prestige_sales_baskets", utils);
     }
 
+    @Override
     public List<Supply> findAllSuppliesByBasketId(Integer basketId) {
 
         String sql =    "SELECT " +
@@ -67,13 +65,8 @@ public class PrestigeAllSuppliesDAO {
         return jdbcTemplate.query(sql, new Object[] {basketId}, new SupplyMapper());
     }
 
-    public void updateBasketTotalSum(SupplyBasket basket) {
-        String sql =    "UPDATE prestige_supply_baskets SET total_sum = ?, last_changed_date_time = ? WHERE id = ?";
-
-        jdbcTemplate.update(sql, new Object[]{basket.getTotalSum(), utils.getCurrentDateAndTime(), basket.getId()});
-    }
-
-    public void saveNewPrestigeSupply(SupplyBasket basket, Supply supply) {
+    @Override
+    public void saveNewSupply(SupplyBasket basket, Supply supply) {
         String sql =    "INSERT INTO prestige_all_supplies (" +
 
                             "common_product_id, " +
@@ -97,55 +90,7 @@ public class PrestigeAllSuppliesDAO {
         supply.setId(keyHolder.getKey().intValue());
     }
 
-    public Map<Integer, Integer> findStockBeforeSale(Set<Integer> productIds, BaseBasket basket) {
-        String inClause = productIds.stream().map(id -> "?").collect(Collectors.joining(", "));
-
-        String sql =    "SELECT cp.id AS product_id, " +
-                            "(" +
-                                "(COALESCE( " +
-                                    "(SELECT SUM(pas1.quantity) " +
-                                    "FROM prestige_all_supplies pas1 " +
-                                    "JOIN prestige_supply_baskets psb1 ON pas1.basket_id = psb1.id " +
-                                    "WHERE " +
-                                        "pas1.common_product_id = cp.id AND " +
-                                        "psb1.status = " + SupplyBasket.EStatus.RECEIVED.getIntValue() + " AND " +
-                                        "psb1.created_date_time < ?), 0))" +
-
-                                    " - " +
-
-                                "(COALESCE( " +
-                                    "(SELECT SUM(pas2.quantity) " +
-                                    "FROM prestige_all_sales pas2 " +
-                                    "JOIN prestige_sales_baskets psb2 on pas2.basket_id = psb2.id " +
-                                    "WHERE " +
-                                        "pas2.common_product_id = cp.id AND " +
-                                        "psb2.status = " + SalesBasket.EStatus.SOLD.getIntValue() + " AND " +
-                                        "psb2.created_date_time < ?), 0))" +
-                            ") AS stock_before_sale " +
-                        "FROM common_products cp " +
-                        "WHERE cp.id IN (" + inClause + ")";
-
-        List<Object> bindings = new ArrayList();
-
-        bindings.add(basket.getCreatedDateTime());
-        bindings.add(basket.getCreatedDateTime());
-        bindings.addAll(productIds);
-
-        return jdbcTemplate.query(sql, bindings.toArray(), rs -> {
-            Map<Integer, Integer> result = new HashMap<>();
-
-            while (rs.next()) {
-                result.put(rs.getInt(1), rs.getInt(2));
-            }
-            return result;
-        });
-    }
-
-    public void saveNewPrestigeSuppliesList(SupplyBasket basket, List<Supply> suppliesList) {
-        saveBatch(suppliesList, basket.getId());
-        setSuppliesIds(suppliesList, basket.getId());
-    }
-
+    @Override
     public void updateQuantityAndPrices(List<Supply> suppliesList) {
         int batchSize = 500;
         int totalSize = suppliesList.size();
@@ -172,7 +117,8 @@ public class PrestigeAllSuppliesDAO {
         }
     }
 
-    private void saveBatch(List<Supply> suppliesList, Integer basketId) {
+    @Override
+    protected void saveBatch(List<Supply> suppliesList, Integer basketId) {
         int batchSize = 500;
         int totalSize = suppliesList.size();
 
@@ -206,31 +152,10 @@ public class PrestigeAllSuppliesDAO {
         }
     }
 
-    private void setSuppliesIds(List<Supply> suppliesList, Integer basketId) {
-        List<Supply> allBasketSavedSupplies = findAllSuppliesByBasketId(basketId);
-        Map<Integer, Integer> productIdSupplyIdMap = allBasketSavedSupplies.stream()
-                .collect(Collectors.toMap(s -> s.getProduct().getId(), s -> s.getId())); // map <productId, salesId>
+    public void updateBasketTotalSum(SupplyBasket basket) {
+        String sql =    "UPDATE prestige_supply_baskets SET total_sum = ?, last_changed_date_time = ? WHERE id = ?";
 
-        for(Supply supply : suppliesList) {
-            supply.setId(productIdSupplyIdMap.get(supply.getProduct().getId()));
-        }
-    }
-
-    public void deleteSuppliesIds(List<Integer> suppliesIds) {
-        String sql =    "DELETE FROM prestige_all_supplies WHERE id = ?";
-
-        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
-
-            @Override
-            public void setValues(PreparedStatement ps, int index) throws SQLException {
-                ps.setInt(1, suppliesIds.get(index));
-            }
-
-            @Override
-            public int getBatchSize() {
-                return suppliesIds.size();
-            }
-        });
+        jdbcTemplate.update(sql, new Object[]{basket.getTotalSum(), utils.getCurrentDateAndTime(), basket.getId()});
     }
 
     public List<RetailProductView> findAllPrestigeProductsInStock() {
@@ -246,25 +171,36 @@ public class PrestigeAllSuppliesDAO {
 
         String sql =    "WITH sales_info AS (" +
                             "SELECT " +
-                                "common_product_id, " +
+                                "common_product_id AS id, " +
                                 "SUM(quantity) AS total_quantity " +
                             "FROM prestige_all_sales pas " +
                             "JOIN prestige_sales_baskets psb ON pas.basket_id = psb.id " +
                             "WHERE psb.status = " + SalesBasket.EStatus.SOLD.getIntValue() + " " +
-                            "GROUP BY (common_product_id)), " +
+                            "GROUP BY pas.common_product_id), " +
 
                         "supply_info AS (" +
                             "SELECT " +
-                                "pas.common_product_id AS cp_id, " +
-                                "ROUND(SUM(pas.price_dollar * pas.quantity) / NULLIF(SUM(pas.quantity), 0), 2) AS avg_price, " +
-                                "SUM(pas.quantity) - COALESCE(MAX(sales_info.total_quantity), 0) AS stock " + // обязательно использовать агрегатную ф-ию для sales_info.total_quantity
-
+                                "common_product_id AS id, " +
+                                "SUM(quantity) as total_quantity, " +
+                                "CASE " +
+                                    "WHEN SUM(pas.quantity) = 0 " +
+                                    "THEN 0 " +
+                                    "ELSE ROUND(SUM(pas.price_dollar * pas.quantity) / SUM(pas.quantity), 2) " +
+                                "END AS avg_price " +
                             "FROM prestige_all_supplies pas " +
                             "JOIN prestige_supply_baskets psb ON pas.basket_id = psb.id " +
-                            "LEFT JOIN sales_info ON pas.common_product_id = sales_info.common_product_id " +
                             "WHERE psb.status = " + SupplyBasket.EStatus.RECEIVED.getIntValue() + " " +
-                            "GROUP BY (cp_id) " +
-                        ")" +
+                            "GROUP BY pas.common_product_id " +
+                        "), " +
+
+                        "stock_table AS (" +
+                            "SELECT " +
+                                "cp.id, " +
+                                "COALESCE(supply_info.total_quantity, 0) - COALESCE(sales_info.total_quantity, 0) AS stock " +
+                            "FROM common_products cp " +
+                            "LEFT JOIN sales_info ON sales_info.id = cp.id " +
+                            "LEFT JOIN supply_info ON supply_info.id = cp.id" +
+                        ") " +
 
                         "SELECT " +
                             "cp.id as cp_id, " +
@@ -278,7 +214,7 @@ public class PrestigeAllSuppliesDAO {
                             "cbn.brand_name, " +
                             "cp.notes, " +
                             "COALESCE(supply_info.avg_price, 0) AS avg_price, " +
-                            "COALESCE(supply_info.stock, 0) AS stock, " +
+                            "stock_table.stock AS stock, " +
                             "cpe.id, " +
                             "cpe.group_id, " +
                             "cpe.product_id " +
@@ -287,7 +223,8 @@ public class PrestigeAllSuppliesDAO {
 
                         "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
                         "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
-                        "LEFT JOIN supply_info ON cp.id = supply_info.cp_id " +
+                        "LEFT JOIN supply_info ON cp.id = supply_info.id " +
+                        "LEFT JOIN stock_table ON cp.id = stock_table.id " +
                         "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id " +
 
                         "WHERE 1 = 1 ";
@@ -604,63 +541,83 @@ public class PrestigeAllSuppliesDAO {
     }
 
     public Map<Integer, BigDecimal> findWholesalePrice(Set<Integer> productIds) {
-        String inClause = productIds.stream().map(id -> "?").collect(Collectors.joining(", "));
+        String jointProductIds = productIds.stream().map(String::valueOf).collect(Collectors.joining(","));
 
-        String sql =   "WITH    latest_prices AS ( " +
-                                    "SELECT DISTINCT ON (common_product_id) " +
-                                        "pas.common_product_id, " +
-                                        "pas.price_dollar, " +
-                                        "psb.created_date_time " +
-                                    "FROM prestige_all_supplies pas " +
-                                    "JOIN prestige_supply_baskets psb ON pas.basket_id = psb.id " +
-                                    "WHERE " +
-                                        "common_product_id IN (" + inClause + ") AND " +
-                                        "psb.status = " + SupplyBasket.EStatus.RECEIVED.getIntValue() + " " +
-                                    "ORDER BY common_product_id, psb.created_date_time DESC), " +
+        String sql = "WITH " +
+                        "base_table AS (" +
+                            "SELECT id FROM unnest(ARRAY[" + jointProductIds + "]::int4[]) AS base_table(id)), " +
 
-                                    "stock_data AS ( " +
+                        "latest_prices AS (" +
+                            "SELECT " +
+                                "id, " +
+                                "price_dollar AS latest_price " +
+
+                            "FROM   (" +
                                         "SELECT " +
-                                            "pas.common_product_id as pp_id, " +
-                                            "SUM(pas.quantity) AS total_stock, " +
-                                            "SUM(pas.quantity * pas.price_dollar) AS total_stock_value, " +
-                                            "lp.price_dollar AS latest_price " +
-                                    "FROM prestige_all_supplies pas " +
-                                    "JOIN latest_prices lp ON pas.common_product_id = lp.common_product_id " +
-                                    "JOIN prestige_supply_baskets psb ON pas.basket_id = psb.id " +
-                                    "WHERE " +
-                                        "pas.common_product_id IN ("+ inClause +") AND " +
-                                        "psb.status = " + SupplyBasket.EStatus.RECEIVED.getIntValue() + " " +
-                                    "GROUP BY pp_id, lp.price_dollar), " +
+                                            "pas.common_product_id AS id, " +
+                                            "pas.price_dollar AS price_dollar, " +
+                                            "row_number() over (" +
+                                                "PARTITION BY pas.common_product_id " +
+                                                "ORDER BY psb.created_date_time DESC) rn " +
 
-                                    "sales_data AS ( " +
-                                        "SELECT " +
-                                            "pas.common_product_id as pas_id, " +
-                                            "COALESCE(SUM(pas.quantity), 0) AS total_sold, " +
-                                            "COALESCE(SUM(pas.quantity * pas.wholesale_price), 0) AS total_sold_value " +
-                                    "FROM prestige_all_sales pas " +
-                                    "JOIN prestige_sales_baskets psb ON psb.id = pas.basket_id " +
-                                    "WHERE pas.common_product_id IN (" + inClause + ") AND " +
-                                            "psb.status = " + SalesBasket.EStatus.SOLD.getIntValue() + " " +
-                                    "GROUP BY pas_id) " +
+                                        "FROM prestige_all_supplies pas " +
+                                        "JOIN prestige_supply_baskets psb ON psb.id = pas.basket_id " +
+                                        "JOIN base_table bt ON bt.id = pas.common_product_id " +
 
-                                "SELECT " +
-                                    "sd.pp_id, " +
-                                    "CASE " +
-                                        "WHEN COALESCE((sd.total_stock - sd2.total_sold), 0) = 0 OR sd.total_stock = 0 " +
-                                            "THEN sd.latest_price " +
-                                        "WHEN sd2.total_sold IS NULL " +
-                                            "THEN sd.total_stock_value / sd.total_stock " + // ср. взвешенная цена поступления
-                                        "ELSE (sd.total_stock_value - sd2.total_sold_value) / (sd.total_stock - sd2.total_sold) " +
-                                    "END AS calculated_price " +
-                                "FROM stock_data sd " +
-                                "LEFT JOIN sales_data sd2 ON sd.pp_id = sd2.pas_id";
+                                        "WHERE psb.status = " + SupplyBasket.EStatus.RECEIVED.getIntValue() + " " +
+                                    ") tmp_table " +
 
-        List<Object> bindings = new ArrayList();
-        bindings.addAll(productIds);
-        bindings.addAll(productIds);
-        bindings.addAll(productIds);
+                            "WHERE rn = 1), " +
 
-        return jdbcTemplate.query(sql, bindings.toArray(), rs -> {
+                        "stock_data AS (" +
+                            "SELECT " +
+                                "pas.common_product_id AS id, " +
+                                "SUM(pas.quantity) AS total_stock, " +
+                                "SUM(pas.quantity * pas.price_dollar) AS total_stock_value " +
+
+                            "FROM prestige_all_supplies pas " +
+                            "JOIN prestige_supply_baskets psb ON psb.id = pas.basket_id " +
+                            "JOIN base_table bt ON bt.id = pas.common_product_id " +
+
+                            "WHERE psb.status = " + SupplyBasket.EStatus.RECEIVED.getIntValue() + " " +
+                            "GROUP BY pas.common_product_id), " +
+
+                        "sales_data AS (" +
+                            "SELECT " +
+                                "pas.common_product_id AS id, " +
+                                "SUM(pas.quantity) AS total_sold, " +
+                                "SUM(pas.quantity * pas.wholesale_price) AS total_sold_value " +
+
+                            "FROM prestige_all_sales pas " +
+                            "JOIN prestige_sales_baskets psb ON psb.id = pas.basket_id " +
+                            "JOIN base_table bt ON bt.id = pas.common_product_id " +
+
+                            "WHERE psb.status = " + SupplyBasket.EStatus.RECEIVED.getIntValue() + " " +
+                            "GROUP BY pas.common_product_id) " +
+
+                        "SELECT " +
+                            "bt.id, " +
+                            "CASE " +
+                                "WHEN total_stock IS NULL " +
+                                "THEN 0 " +
+
+                                "WHEN total_stock = 0 OR (total_stock -  COALESCE(total_sold, 0) = 0) " +
+                                "THEN COALESCE(lp.latest_price, 0) " +
+
+                                "WHEN total_sold IS NULL " +
+                                "THEN COALESCE(stock_data.total_stock_value / NULLIF(stock_data.total_stock, 0), 0) " +
+
+                                "ELSE COALESCE(" +
+                                        "(stock_data.total_stock_value - sales_data.total_sold_value)" +
+                                            " / " +
+                                        "NULLIF(stock_data.total_stock - sales_data.total_sold, 0), 0) " +
+                            "END as calculated_price " +
+                            "FROM base_table bt " +
+                            "LEFT JOIN latest_prices lp ON lp.id = bt.id " +
+                            "LEFT JOIN stock_data ON stock_data.id = bt.id " +
+                            "LEFT JOIN sales_data ON sales_data.id = bt.id";
+
+        return jdbcTemplate.query(sql, rs -> {
             Map<Integer, BigDecimal> result = new HashMap<>();
 
             while (rs.next()) {
@@ -710,11 +667,5 @@ public class PrestigeAllSuppliesDAO {
                         "ORDER BY(psb.created_date_time)";
 
         return jdbcTemplate.query(sql, new Object[]{productId}, new RetailProductMapper());
-    }
-
-    public boolean checkIfProductExists(Integer productId) {
-        String sql = "SELECT EXISTS (SELECT 1 FROM prestige_all_supplies WHERE common_product_id = ?)";
-
-        return jdbcTemplate.queryForObject(sql, new Object[]{productId}, Boolean.class);
     }
 }

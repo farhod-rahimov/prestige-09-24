@@ -47,6 +47,30 @@ public class BasketFilter extends AbstractBaseFilter {
         brand = "";
     }
 
+    public void clearAllBeforeCarModel() {
+        productName = "";
+    }
+
+    public void clearAllBeforeEngineModel() {
+        clearAllBeforeCarModel();
+        carModel = "";
+    }
+
+    public void clearAllBeforeOemArticleNumber() {
+        clearAllBeforeEngineModel();
+        engineModel = "";
+    }
+
+    public void clearAllBeforeCrossArticleNumber() {
+        clearAllBeforeOemArticleNumber();
+        oemArticleNumber = "";
+    }
+
+    public void clearAllBeforeBrand() {
+        clearAllBeforeCrossArticleNumber();
+        crossArticleNumber = "";
+    }
+
     @Override
     public void prepareAllFields() {
 

@@ -1,4 +1,4 @@
-package com.prestige.service;
+package com.prestige.initializers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -25,7 +25,6 @@ public class DatabaseInitializer {
 
         try {
             executeSqlScript("classpath:sql/schema.sql");
-            executeSqlScript("classpath:sql/data.sql");
         }
         catch (RuntimeException e) {
             System.err.println(e.getMessage());

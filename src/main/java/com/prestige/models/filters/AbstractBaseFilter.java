@@ -4,6 +4,10 @@ public abstract class AbstractBaseFilter {
 
     public String getPreparedField(String value) {
 
+        if (value == null || value.isEmpty()) {
+            return value;
+        }
+
         return "%" +
                 value.replace("\\", "\\\\") // экранирование спец символа в ILIKE
                         .replace("%", "\\%") // экранирование спец символа в ILIKE

@@ -24,7 +24,6 @@ public abstract class AbstractSuppliersController {
         this.uriPrefix = uriPrefix;
     }
 
-    @GetMapping
     public String showAllSuppliers(Model model) {
         model.addAttribute("allSuppliers", suppliersDAO.findAllSuppliers());
         return "shared/suppliers/suppliers";

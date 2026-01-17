@@ -15,15 +15,16 @@ import java.sql.PreparedStatement;
 import java.util.List;
 
 @Component
-public class PrestigeSupplyBasketsDAO extends AbstractSupplyBasketsDAO {
+public class PrestigeSupplyBasketsDAO extends AbstractSupplyBasketsDAO<SupplyBasket> {
 
     //TODO: общие методы с SkladSupplyBasketsDAO нужно вынести в AbstractSupplyBasketsDAO
 
     @Autowired
     public PrestigeSupplyBasketsDAO(JdbcTemplate jdbcTemplate, Utils utils) {
-        super(jdbcTemplate, "prestige_supply_baskets", utils);
+        super(jdbcTemplate, "prestige_supply_baskets", "prestige_all_supplies", utils);
     }
 
+    @Override
     public List<SupplyBasket> findAllBaskets() {
         String sql =    "SELECT " +
                             "psb.id, psb.created_date_time, psb.last_changed_date_time, " +
@@ -36,6 +37,7 @@ public class PrestigeSupplyBasketsDAO extends AbstractSupplyBasketsDAO {
         return jdbcTemplate.query(sql, new SupplyBasketMapper());
     }
 
+    @Override
     public SupplyBasket findBasketById(Integer basketId) {
         String sql =    "SELECT " +
                             "psb.id, psb.created_date_time, psb.last_changed_date_time, " +
@@ -48,6 +50,7 @@ public class PrestigeSupplyBasketsDAO extends AbstractSupplyBasketsDAO {
         return jdbcTemplate.queryForObject(sql, new Object[]{basketId}, new SupplyBasketMapper());
     }
 
+    @Override
     public void saveNewBasket(SupplyBasket basket) {
         String sql =    "INSERT INTO prestige_supply_baskets (" +
 
@@ -78,23 +81,5 @@ public class PrestigeSupplyBasketsDAO extends AbstractSupplyBasketsDAO {
         }, keyHolder);
 
         basket.setId(keyHolder.getKey().intValue());
-    }
-
-    public void updateBasketStatus(SupplyBasket basket) {
-        String sql =    "UPDATE prestige_supply_baskets SET status = ?, last_changed_date_time = ? WHERE id = ?";
-
-        jdbcTemplate.update(sql, new Object[]{basket.getStatus().getIntValue(), utils.getCurrentDateAndTime(), basket.getId()});
-    }
-
-    public void updateBasketNotes(SupplyBasket basket) {
-        String sql =    "UPDATE prestige_supply_baskets SET notes = ?, last_changed_date_time = ? WHERE id = ?";
-
-        jdbcTemplate.update(sql, new Object[]{basket.getNotes(), utils.getCurrentDateAndTime(), basket.getId()});
-    }
-
-    public void deleteAllEmptyBaskets() {
-        String sql = "DELETE FROM prestige_supply_baskets WHERE total_sum = 0";
-
-        jdbcTemplate.update(sql);
     }
 }

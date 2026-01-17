@@ -36,15 +36,36 @@ create table if not exists sklad_suppliers (
 	store_name varchar(200) unique not null
 );
 
-create table if not exists sklad_products (
+create table if not exists sklad_supply_baskets (
+	id serial primary key,
+	basket_name varchar(100),
+	created_date_time TIMESTAMP not null,
+	last_changed_date_time TIMESTAMP not null,
+	supplier_id int references sklad_suppliers(id) not null,
+	total_sum_usd numeric(15, 4) not null,
+	total_sum_supplier_currency numeric(15, 4) not null,
+	usd_supplier_currency_rate numeric(15, 4) not null,
+	currency_name varchar(20),
+    notes TEXT,
+    status int not null
+);
+
+create table if not exists sklad_products_margin (
+	id serial primary key,
+    common_product_id int references common_products(id) unique not null,
+    margin_percentage int not null
+);
+
+create table if not exists sklad_all_supplies (
 	id serial primary key,
 	common_product_id int references common_products(id) not null,
-	stock_balance int default 0,
-	price_won numeric(15, 4) default 0,
+	ordered_quantity int default 0,
+	received_quantity int default 0,
 	price_dollar numeric(15, 4) default 0,
-	margin_percentage int default 0,
-	supplier_id int references sklad_suppliers(id) not null,
-	date_time timestamp not null
+	price_supplier_currency numeric(15, 4) default 0,
+	import_cost_percentage numeric(8,4) default 0, /* макс значение 9999,9999 процент */
+	basket_id int references sklad_supply_baskets(id) not null,
+	notes TEXT
 );
 
 create table if not exists prestige_suppliers (

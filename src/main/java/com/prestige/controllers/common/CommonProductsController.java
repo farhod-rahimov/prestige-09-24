@@ -4,7 +4,10 @@ import com.prestige.dao.common.CommonBrandNamesDAO;
 import com.prestige.dao.common.CommonProductEquivalentsDAO;
 import com.prestige.dao.common.CommonProductNamesDAO;
 import com.prestige.dao.common.CommonProductsDAO;
+import com.prestige.dao.prestige.PrestigeAllSalesDAO;
 import com.prestige.dao.prestige.PrestigeAllSuppliesDAO;
+import com.prestige.dao.sklad.SkladAllSalesDAO;
+import com.prestige.dao.sklad.SkladAllSuppliesDAO;
 import com.prestige.models.Product;
 import com.prestige.models.enums.EStep;
 import com.prestige.models.filters.ProductFilter;
@@ -39,18 +42,30 @@ public class CommonProductsController {
 
     private final PrestigeAllSuppliesDAO prestigeAllSuppliesDAO;
 
+    private final PrestigeAllSalesDAO prestigeAllSalesDAO;
+
+    private final SkladAllSuppliesDAO skladAllSuppliesDAO;
+
+    private final SkladAllSalesDAO skladAllSalesDAO;
+
     @Autowired
     public CommonProductsController(CommonProductsDAO commonProductsDAO,
                                     CommonProductNamesDAO commonProductNamesDAO,
                                     CommonBrandNamesDAO commonBrandNamesDAO,
                                     CommonProductEquivalentsDAO commonProductEquivalentsDAO,
-                                    PrestigeAllSuppliesDAO prestigeAllSuppliesDAO) {
+                                    PrestigeAllSuppliesDAO prestigeAllSuppliesDAO,
+                                    PrestigeAllSalesDAO prestigeAllSalesDAO,
+                                    SkladAllSuppliesDAO skladAllSuppliesDAO,
+                                    SkladAllSalesDAO skladAllSalesDAO) {
 
         this.commonProductsDAO = commonProductsDAO;
         this.commonProductNamesDAO = commonProductNamesDAO;
         this.commonBrandNamesDAO = commonBrandNamesDAO;
         this.commonProductEquivalentsDAO = commonProductEquivalentsDAO;
         this.prestigeAllSuppliesDAO = prestigeAllSuppliesDAO;
+        this.prestigeAllSalesDAO = prestigeAllSalesDAO;
+        this.skladAllSuppliesDAO = skladAllSuppliesDAO;
+        this.skladAllSalesDAO = skladAllSalesDAO;
     }
 
     @GetMapping
@@ -286,20 +301,26 @@ public class CommonProductsController {
     }
 
     private String deleteProduct(Integer productId, RedirectAttributes redirectAttributes, Model model) {
-        // TODO: add skladAllSuppliesDAO.checkIfProductExists
-        if  (prestigeAllSuppliesDAO.checkIfProductExists(productId) ||
-            commonProductEquivalentsDAO.checkIfProductExists(productId)) {
-            String errorMessage = String.format("Невозможно удалить этот товар, т.к он используется в поступлениях %s " +
-                                                "либо состоит объединениях с другими товарами.  ",
+        String errorMessage = null;
+
+        if (prestigeAllSuppliesDAO.checkIfProductExists(productId) || skladAllSuppliesDAO.checkIfProductExists(productId)) {
+            errorMessage = String.format("Невозможно удалить этот товар, т.к он используется в поступлениях %s.",
                     model.getAttribute("URIBeginning").equals("prestige") ? "магазина" : "склада");
+        }
+        else if (prestigeAllSalesDAO.checkIfProductExists(productId) || skladAllSalesDAO.checkIfProductExists(productId)) {
+            errorMessage = String.format("Невозможно удалить этот товар, т.к он используется в продажах %s.",
+                    model.getAttribute("URIBeginning").equals("prestige") ? "магазина" : "склада");
+        }
+        else if (commonProductEquivalentsDAO.checkIfProductExists(productId)) {
+            errorMessage = "Невозможно удалить этот товар, т.к он состоит в объединениях с другими товарами.";
+        }
 
+        if (errorMessage != null) {
             redirectAttributes.addFlashAttribute("error", errorMessage);
-
-            return String.format("redirect:/%s/product-management/products/%d", model.getAttribute("URIBeginning"));
+            return String.format("redirect:/%s/product-management/products/%d", model.getAttribute("URIBeginning"), productId);
         }
 
         commonProductsDAO.deleteProductById(productId);
-
         return String.format("redirect:/%s/product-management/products", model.getAttribute("URIBeginning"));
     }
 

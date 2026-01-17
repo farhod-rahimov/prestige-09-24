@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" th:href="@{/css/common-header.css}">
+    <title>Новое поступление</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            padding-top: 60px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            table-layout: fixed;
+            font-size: 13px;
+        }
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            white-space: normal;
+            word-break: normal;
+            overflow-wrap: normal;
+        }
+        td {
+            text-align: left;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+       .client-table {
+            width: 65%;
+        }
+        .button-container {
+            position: sticky;
+            bottom: 0;
+            background-color: #fff;
+            padding: 15px;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            z-index: 10;
+        }
+        .btn {
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .btn-turquoise {
+            background-color: #20c997;
+        }
+        .btn-turquoise:hover {
+            background-color: #17b384;
+        }
+        .btn-green {
+            background-color: #4CAF50;
+        }
+        .btn-green:hover {
+            background-color: #45a049;
+        }
+        .btn-blue {
+            background-color: #2196F3;
+        }
+        .btn-blue:hover {
+            background-color: #1976D2;
+        }
+        .btn-orange {
+            background-color: #ff9800;
+        }
+        .btn-orange:hover {
+            background-color: #fb8c00;
+        }
+        .btn-purple {
+            background-color: #ba68c8;
+        }
+        .btn-purple:hover {
+            background-color: #9c27b0;
+        }
+        .btn-red {
+            background-color: #f66f6f;
+        }
+        .btn-red:hover {
+            background-color: #f44336;
+        }
+        .btn-pink {
+            background-color: #f06292;
+        }
+        .btn-pink:hover {
+            background-color: #ec407a;
+        }
+        .error-message {
+            color: red;
+            margin-bottom: 20px;
+        }
+        .private-info {
+            background-color: #a8ada8;
+        }
+        a {
+            text-decoration: none;
+            color: #000000; /* Цвет текста ссылок */
+            font-weight: normal;
+            transition: color 0.3s ease, text-decoration 0.3s ease;
+        }
+        a:hover {
+            text-decoration: underline; /* Подчеркивание при наведении */
+        }
+        a:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(72, 168, 72, 0.6); /* Эффект при фокусе на ссылке */
+        }
+        input[type="checkbox"].styled-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #4CAF50;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="fragments/common-header :: common-header"></div>
+
+<div class="header">
+    <h2>Новое поступление</h2>
+</div>
+
+<form th:method="POST" th:action="@{/sklad/supplies/baskets}" th:object="${skladSupplyBasket}">
+    <!-- Отображение сообщения об ошибке -->
+    <div th:if="${error}" class="error-message" th:text="${error}"></div>
+
+    <h3>Поставщик</h3>
+
+    <table class="client-table">
+        <thead>
+        <tr>
+            <th>Наименование поставщика</th>
+            <th>Имя менеджера</th>
+            <th>Телефон</th>
+            <th>
+                Общая сумма корзины,<br>
+                <strong
+                    th:if="${skladSupplyBasket.getCurrencyName() != null}"
+                    th:text="${skladSupplyBasket.getCurrencyName()}">
+                </strong>
+                <strong
+                    th:unless="${skladSupplyBasket.getCurrencyName() != null}"
+                    th:text="'ВАЛЮТА ПОСТАВЩИКА'">
+                </strong>
+            </th>
+            <th>
+                Общая сумма корзины,<br>
+                <strong>ДОЛЛАР</strong>
+            </th>
+            <th>
+                Курс,<br>
+                <strong
+                        th:if="${skladSupplyBasket.getCurrencyName() != null}"
+                        th:text="'ДОЛЛАР - ' + ${skladSupplyBasket.getCurrencyName()}">
+                </strong>
+                <strong
+                        th:unless="${skladSupplyBasket.getCurrencyName() != null}"
+                        th:text="'ДОЛЛАР - ВАЛЮТА ПОСТАВЩИКА'">
+                </strong>
+            </th>
+            <th style="width: 200px">Название корзины</th>
+            <th>Комментарий</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:if="${skladSupplyStep.value == 'SUPPLIER_STORE_NAME_SELECTION'}">
+            <td>
+                <select type="text" th:field="*{supplier.storeName}" required>
+                    <option th:each="supplierStoreName : ${allSupplierStoreNames}" th:value="${supplierStoreName}" th:text="${supplierStoreName}">Выберите наименование поставщика</option>
+                </select>
+            </td>
+            <td th:each="i : ${#numbers.sequence(1, 2)}">
+                <select required><option value="constant" selected>...</option></select>
+            </td>
+            <td th:each="i : ${#numbers.sequence(1, 5)}">
+                <input type="text" th:value="..." readonly>
+            </td>
+        </tr>
+
+        <tr th:if="${skladSupplyStep.value == 'SUPPLIER_MANAGER_NAME_SELECTION'}">
+            <td>
+                <select required>
+                    <option value="constant" selected th:text="${skladSupplyBasket.getSupplier().getStoreName()}"></option>
+                </select>
+            </td>
+            <td>
+                <select type="text" th:field="*{supplier.name}" required>
+                    <option th:each="supplierName : ${allSupplierNames}" th:value="${supplierName}" th:text="${supplierName}">Выберите имя менеджера</option>
+                </select>
+            </td>
+            <td th:each="i : ${#numbers.sequence(1, 1)}">
+                <select required><option value="constant" selected>...</option></select>
+            </td>
+            <td th:each="i : ${#numbers.sequence(1, 5)}">
+                <input type="text" th:value="..." readonly>
+            </td>
+        </tr>
+
+        <tr th:if="${skladSupplyStep.value == 'SUPPLIER_PHONE_NUMBER_SELECTION'}">
+            <td>
+                <select required>
+                    <option value="constant" selected th:text="${skladSupplyBasket.getSupplier().getStoreName()}"></option>
+                </select>
+            </td>
+            <td>
+                <select required>
+                    <option value="constant" selected th:text="${skladSupplyBasket.getSupplier().getName()}"></option>
+                </select>
+            </td>
+            <td>
+                <select type="text" th:field="*{supplier.phoneNumber}" required>
+                    <option th:each="supplierPhoneNumber : ${allSupplierPhoneNumbers}" th:value="${supplierPhoneNumber}" th:text="${supplierPhoneNumber}">Выберите номер телефона</option>
+                </select>
+            </td>
+            <td th:each="i : ${#numbers.sequence(1, 5)}">
+                <input type="text" th:value="..." readonly>
+            </td>
+        </tr>
+
+        <tr th:if="${utils.supplierSelectionDone(skladSupplyStep)}">
+            <td>
+                <select required>
+                    <option value="constant" selected th:text="${skladSupplyBasket.getSupplier().getStoreName()}"></option>
+                </select>
+            </td>
+            <td>
+                <select required>
+                    <option value="constant" selected th:text="${skladSupplyBasket.getSupplier().getName()}"></option>
+                </select>
+            </td>
+            <td>
+                <select required>
+                    <option value="constant" selected th:text="${skladSupplyBasket.getSupplier().getPhoneNumber()}"></option>
+                </select>
+            </td>
+            <td>
+                <input type="text" th:value="${#numbers.formatDecimal(skladSupplyBasket.getTotalSumSupplierCurrency(), 1, 'WHITESPACE', 2, 'POINT')}" readonly>
+            </td>
+            <td>
+                <input type="text" th:value="${#numbers.formatDecimal(skladSupplyBasket.getTotalSumUsd(), 1, 'WHITESPACE', 2, 'POINT')}" readonly>
+            </td>
+            <td>
+                <input type="text" th:field="*{usdSupplierCurrencyRate}">
+            </td>
+            <td>
+                <input type="text" th:field="*{basketName}">
+            </td>
+            <td>
+                <input type="text" th:field="*{notes}">
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h3>Товары к оприходованию</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Название товара</th>
+                <th>Модель машины</th>
+                <th>Модель мотора</th>
+                <th>Артикул, OEM</th>
+                <th>Артикул, КРОСС</th>
+                <th>БРЕНД</th>
+                <th>Заказанное<br>кол-во</th>
+                <th>Полученное<br>кол-во</th>
+                <th>
+                    Цена,<br>
+                    <strong
+                            th:if="${skladSupplyBasket.getCurrencyName() != null}"
+                            th:text="${skladSupplyBasket.getCurrencyName()}">
+                    </strong>
+                    <strong style="font-size: 9px;"
+                            th:unless="${skladSupplyBasket.getCurrencyName() != null}"
+                            th:text="'ВАЛЮТА ПОСТАВЩИКА'">
+                    </strong>
+                </th>
+                <th>
+                    Цена,<br>
+                    <strong>ДОЛЛАР</strong>
+                </th>
+                <th>
+                    Сумма,<br>
+                    <strong
+                            th:if="${skladSupplyBasket.getCurrencyName() != null}"
+                            th:text="${skladSupplyBasket.getCurrencyName()}">
+                    </strong>
+                    <strong style="font-size: 9px;"
+                            th:unless="${skladSupplyBasket.getCurrencyName() != null}"
+                            th:text="'ВАЛЮТА ПОСТАВЩИКА'">
+                    </strong>
+                </th>
+                <th>
+                    Сумма,<br>
+                    <strong>ДОЛЛАР</strong>
+                </th>
+                <th style="font-size: 10px;" class="private-info">Остаток до оприходования</th>
+                <th class="private-info">Импортные расходы, %</th>
+                <th class="private-info"></th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr th:if="${skladSupplyStep.value == 'PRODUCT_SELECTION_WITH_FILTER'}">
+                <td>
+                    <input type="text" th:field="*{filter.productName}">
+                </td>
+                <td>
+                    <input type="text" th:field="*{filter.carModel}">
+                </td>
+                <td>
+                    <input type="text" th:field="*{filter.engineModel}">
+                </td>
+                <td>
+                    <input type="text" th:field="*{filter.oemArticleNumber}">
+                </td>
+                <td>
+                    <input type="text" th:field="*{filter.crossArticleNumber}">
+                </td>
+                <td>
+                    <input type="text" th:field="*{filter.brand}">
+                </td>
+                <td th:each="i : ${#numbers.sequence(1, 8)}">...</td>
+                <td>
+                    <button type="submit" name="method" class="btn btn-red" value="resetAddingNewProduct">Удалить</button>
+                </td>
+            </tr>
+
+            <tr th:if="${skladSupplyStep.value == 'PRODUCT_NAME_SELECTION'}" th:with="lastIndex=${skladSupplyBasket.suppliesList.size() - 1}">
+                <td th:if="${#lists.isEmpty(allProductNames)}">
+                    Нет товаров для выбора
+                </td>
+                <td th:unless="${#lists.isEmpty(allProductNames)}">
+                    <select type="text" th:field="*{suppliesList[__${lastIndex}__].product.productName.id}" required>
+                        <option th:each="productName : ${allProductNames}" th:value="${productName.id}" th:text="${productName.productName}">
+                            Выберите название товара
+                        </option>
+                    </select>
+                </td>
+                <td th:each="i : ${#numbers.sequence(1, 13)}">...</td>
+                <td>
+                    <button type="submit" name="method" class="btn btn-red" value="resetAddingNewProduct">Удалить</button>
+                </td>
+            </tr>
+
+            <tr th:if="${skladSupplyStep.value == 'PRODUCT_CAR_MODEL_SELECTION'}" th:with="lastIndex=${skladSupplyBasket.suppliesList.size() - 1}">
+                <td>
+                    <select required>
+                        <option value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.productName.productName}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select type="text" th:field="*{suppliesList[__${lastIndex}__].product.carModel}" required>
+                        <option th:each="carModel : ${allCarModels}" th:value="${carModel}" th:text="${carModel}">
+                            Выберите модель машины
+                        </option>
+                    </select>
+                </td>
+                <td th:each="i : ${#numbers.sequence(1, 12)}">...</td>
+                <td>
+                    <button type="submit" name="method" class="btn btn-red" value="resetAddingNewProduct">Удалить</button>
+                </td>
+            </tr>
+
+            <tr th:if="${skladSupplyStep.value == 'PRODUCT_ENGINE_MODEL_SELECTION'}" th:with="lastIndex=${skladSupplyBasket.suppliesList.size() - 1}">
+                <td>
+                    <select required>
+                        <option value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.productName.productName}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select required>
+                        <option value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.carModel}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select type="text" th:field="*{suppliesList[__${lastIndex}__].product.engineModel}" required>
+                        <option th:each="engineModel : ${allEngineModels}" th:value="${engineModel}" th:text="${engineModel}">
+                            Выберите модель мотора
+                        </option>
+                    </select>
+                </td>
+                <td th:each="i : ${#numbers.sequence(1, 11)}">...</td>
+                <td>
+                    <button type="submit" name="method" class="btn btn-red" value="resetAddingNewProduct">Удалить</button>
+                </td>
+            </tr>
+
+            <tr th:if="${skladSupplyStep.value == 'PRODUCT_OEM_ARTICLE_NUMBER_SELECTION'}" th:with="lastIndex=${skladSupplyBasket.suppliesList.size() - 1}">
+                <td>
+                    <select required>
+                        <option value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.productName.productName}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select required>
+                        <option value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.carModel}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select required>
+                        <option th:if="*{suppliesList[__${lastIndex}__].product.engineModel == null}" value="constant" selected th:text="'(пусто)'"></option>
+                        <option th:unless="*{suppliesList[__${lastIndex}__].product.engineModel == null}" value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.engineModel}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select type="text" th:field="*{suppliesList[__${lastIndex}__].product.oemArticleNumber}" required>
+                        <option th:each="oemArticleNumber : ${allOemArticleNumbers}" th:value="${oemArticleNumber}" th:text="${oemArticleNumber}">
+                            Выберите OEM артикул
+                        </option>
+                    </select>
+                </td>
+                <td th:each="i : ${#numbers.sequence(1, 10)}">...</td>
+                <td>
+                    <button type="submit" name="method" class="btn btn-red" value="resetAddingNewProduct">Удалить</button>
+                </td>
+            </tr>
+
+            <tr th:if="${skladSupplyStep.value == 'PRODUCT_CROSS_ARTICLE_NUMBER_SELECTION'}" th:with="lastIndex=${skladSupplyBasket.suppliesList.size() - 1}">
+                <td>
+                    <select required>
+                        <option value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.productName.productName}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select required>
+                        <option value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.carModel}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select required>
+                        <option th:if="*{suppliesList[__${lastIndex}__].product.engineModel == null}" value="constant" selected th:text="'(пусто)'"></option>
+                        <option th:unless="*{suppliesList[__${lastIndex}__].product.engineModel == null}" value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.engineModel}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select required>
+                        <option th:if="*{suppliesList[__${lastIndex}__].product.oemArticleNumber == null}" value="constant" selected th:text="'(пусто)'"></option>
+                        <option th:unless="*{suppliesList[__${lastIndex}__].product.oemArticleNumber == null}" value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.oemArticleNumber}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select type="text" th:field="*{suppliesList[__${lastIndex}__].product.crossArticleNumber}" required>
+                        <option th:each="crossArticleNumber : ${allCrossArticleNumbers}" th:value="${crossArticleNumber}" th:text="${crossArticleNumber}">
+                            Выберите КРОСС артикул
+                        </option>
+                    </select>
+                </td>
+                <td th:each="i : ${#numbers.sequence(1, 9)}">...</td>
+                <td>
+                    <button type="submit" name="method" class="btn btn-red" value="resetAddingNewProduct">Удалить</button>
+                </td>
+            </tr>
+
+            <tr th:if="${skladSupplyStep.value == 'PRODUCT_BRAND_SELECTION'}" th:with="lastIndex=${skladSupplyBasket.suppliesList.size() - 1}">
+                <td>
+                    <select required>
+                        <option value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.productName.productName}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select required>
+                        <option value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.carModel}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select required>
+                        <option th:if="*{suppliesList[__${lastIndex}__].product.engineModel == null}" value="constant" selected th:text="'(пусто)'"></option>
+                        <option th:unless="*{suppliesList[__${lastIndex}__].product.engineModel == null}" value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.engineModel}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select required>
+                        <option th:if="*{suppliesList[__${lastIndex}__].product.oemArticleNumber == null}" value="constant" selected th:text="'(пусто)'"></option>
+                        <option th:unless="*{suppliesList[__${lastIndex}__].product.oemArticleNumber == null}" value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.oemArticleNumber}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select required>
+                        <option th:if="*{suppliesList[__${lastIndex}__].product.crossArticleNumber == null}" value="constant" selected th:text="'(пусто)'"></option>
+                        <option th:unless="*{suppliesList[__${lastIndex}__].product.crossArticleNumber == null}" value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.crossArticleNumber}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select type="text" th:field="*{suppliesList[__${lastIndex}__].product.brand.id}" required>
+                        <option th:each="brand : ${allBrands}" th:value="${brand.id}" th:text="${brand.brandName}">
+                            Выберите бренд
+                        </option>
+                    </select>
+                </td>
+                <td th:each="i : ${#numbers.sequence(1, 8)}">...</td>
+                <td>
+                    <button type="submit" name="method" class="btn btn-red" value="resetAddingNewProduct">Удалить</button>
+                </td>
+            </tr>
+
+            <tr th:if="${skladSupplyStep.value == 'PRODUCT_QUANTITY_AND_PRICE_SELECTION'}" th:with="lastIndex=${skladSupplyBasket.suppliesList.size() - 1}">
+                <td>
+                    <select required>
+                        <option value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.productName.productName}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select required>
+                        <option value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.carModel}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select required>
+                        <option th:if="*{suppliesList[__${lastIndex}__].product.engineModel == null}" value="constant" selected th:text="'(пусто)'"></option>
+                        <option th:unless="*{suppliesList[__${lastIndex}__].product.engineModel == null}" value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.engineModel}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select required>
+                        <option th:if="*{suppliesList[__${lastIndex}__].product.oemArticleNumber == null}" value="constant" selected th:text="'(пусто)'"></option>
+                        <option th:unless="*{suppliesList[__${lastIndex}__].product.oemArticleNumber == null}" value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.oemArticleNumber}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select required>
+                        <option th:if="*{suppliesList[__${lastIndex}__].product.crossArticleNumber == null}" value="constant" selected th:text="'(пусто)'"></option>
+                        <option th:unless="*{suppliesList[__${lastIndex}__].product.crossArticleNumber == null}" value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.crossArticleNumber}"></option>
+                    </select>
+                </td>
+                <td>
+                    <select required>
+                        <option value="constant" selected th:text="*{suppliesList[__${lastIndex}__].product.brand.brandName}"></option>
+                    </select>
+                </td>
+                <td>
+                    <input type="number" step="1" id="orderedQuantity" th:field="*{suppliesList[__${lastIndex}__].orderedQuantity}" required>
+                </td>
+                <td>
+                    <input type="number" step="1" id="receivedQuantity" th:field="*{suppliesList[__${lastIndex}__].receivedQuantity}" required>
+                </td>
+                <td>
+                    <input type="number" step="any" id="priceSupplierCurrency" th:field="*{suppliesList[__${lastIndex}__].priceSupplierCurrency}" required>
+                </td>
+                <td>
+                    <input type="text" id="priceDollar" th:value="*{suppliesList[__${lastIndex}__].priceDollar}" readonly>
+                </td>
+                <td>
+                    <input th:if="${skladSupplyBasket.suppliesList[lastIndex].receivedQuantity == null}" type="text" th:value="0" readonly>
+                    <input th:unless="${skladSupplyBasket.suppliesList[lastIndex].receivedQuantity == null}" type="text"
+                           th:value="${#numbers.formatDecimal(skladSupplyBasket.suppliesList[lastIndex].getReceivedSumSupplierCurrency(), 1, 'WHITESPACE', 2, 'POINT')}" readonly>
+                </td>
+                <td>
+                    <input th:if="${skladSupplyBasket.suppliesList[lastIndex].receivedQuantity == null}" type="text" th:value="0" readonly>
+                    <input th:unless="${skladSupplyBasket.suppliesList[lastIndex].receivedQuantity == null}" type="text"
+                           th:value="${#numbers.formatDecimal(skladSupplyBasket.suppliesList[lastIndex].getReceivedSumUsd(), 1, 'WHITESPACE', 2, 'POINT')}" readonly>
+                </td>
+                <td>
+                    <input type="text" th:value="*{suppliesList[__${lastIndex}__].stockBeforeSale}" readonly>
+                </td>
+                <td>
+                    <input type="number" step="any" id="importCostPercentage" th:field="*{suppliesList[__${lastIndex}__].importCostPercentage}" required>
+                </td>
+                <td>
+                    <button type="submit" name="method" class="btn btn-red" value="resetAddingNewProduct">Удалить</button>
+                </td>
+            </tr>
+
+            <tr th:if="${utils.shouldShowAddedItemsInTheBasket(skladSupplyStep, skladSupplyBasket.suppliesList, iterStat.last)}"
+                th:each="supply, iterStat : ${skladSupplyBasket.suppliesList}">
+
+                <td th:text="*{suppliesList[__${iterStat.index}__].product.productName.productName}"></td>
+                <td th:text="*{suppliesList[__${iterStat.index}__].product.carModel}"></td>
+                <td th:text="*{suppliesList[__${iterStat.index}__].product.engineModel}"></td>
+                <td th:text="*{suppliesList[__${iterStat.index}__].product.oemArticleNumber}"></td>
+                <td th:text="*{suppliesList[__${iterStat.index}__].product.crossArticleNumber}"></td>
+                <td th:text="*{suppliesList[__${iterStat.index}__].product.brand.brandName}"></td>
+                <td>
+                    <input type="number" step="1" th:field="*{suppliesList[__${iterStat.index}__].orderedQuantity}" required>
+                </td>
+                <td>
+                    <input type="number" step="1" th:field="*{suppliesList[__${iterStat.index}__].receivedQuantity}" required>
+                </td>
+                <td>
+                    <input type="number" step="any" th:field="*{suppliesList[__${iterStat.index}__].priceSupplierCurrency}" required>
+                </td>
+                <td th:text="*{suppliesList[__${iterStat.index}__].priceDollar}"></td>
+                <td th:text="${#numbers.formatDecimal(skladSupplyBasket.suppliesList[iterStat.index].getReceivedSumSupplierCurrency(), 1, 'WHITESPACE', 2, 'POINT')}"></td>
+                <td th:text="${#numbers.formatDecimal(skladSupplyBasket.suppliesList[iterStat.index].getReceivedSumUsd(), 1, 'WHITESPACE', 2, 'POINT')}"></td>
+                <td th:text="*{suppliesList[__${iterStat.index}__].stockBeforeSale}"></td>
+                <td>
+                    <input type="number" step="any" th:field="*{suppliesList[__${iterStat.index}__].importCostPercentage}" required>
+                </td>
+                <td th:if="${utils.shouldShowCheckBox(skladSupplyStep)}">
+                    <input type="checkbox" name="selectedSuppliesIds" class="styled-checkbox" th:value="*{suppliesList[__${iterStat.index}__].id}">
+                </td>
+                <td th:unless="${utils.shouldShowCheckBox(skladSupplyStep)}">
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="button-container" style="display: block;"
+         th:if="${skladSupplyStep.value == 'PRODUCT_SELECTION_DONE' or skladSupplyStep.value == 'PRODUCT_SELECTION_WITH_FULL_LIST'}">
+
+        <div style="margin-bottom: 15px; text-align: center;">
+            <button th:if="${skladSupplyStep.value == 'PRODUCT_SELECTION_DONE'}"
+                    type="submit" name="method" class="btn btn-blue" value="post">Добавить новый товар</button>
+
+            <button th:if="${skladSupplyStep.value == 'PRODUCT_SELECTION_DONE'}"
+                    type="submit" name="method" class="btn btn-blue" value="changeBasketType">
+
+                Добавление товаров через полный список
+            </button>
+
+            <button th:if="${skladSupplyStep.value == 'PRODUCT_SELECTION_WITH_FULL_LIST'}"
+                    type="submit" name="method" class="btn btn-blue" value="changeBasketType">
+
+                Добавление товаров через частичный список
+            </button>
+
+            <button th:if="${skladSupplyStep.value == 'PRODUCT_SELECTION_DONE'}" type="submit" name="method" value="deleteSelected"
+                    onclick="return confirm('Удалить выбранные товары?')"
+                    class="btn btn-red">Удалить выбранные товары</button>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <button th:if="${skladSupplyBasket.getStatus().getIntValue() == 3}"
+                    type="submit" name="method" value="markAsReceived"
+                    class="btn btn-orange">Оприходовать корзину</button>
+
+            <button type="submit" name="method" class="btn btn-turquoise" value="patch">Обновить и сохранить корзину</button>
+
+            <button type="submit" name="method" class="btn btn-green" value="patchAndClose">Закрыть корзину с сохранением</button>
+
+            <button type="submit" name="method" value="close"
+                    onclick="return confirm('Вы уверены, что хотите закрыть корзину без сохранения?')"
+                    class="btn btn-pink">Закрыть корзину без сохранения</button>
+
+            <button th:if="${skladSupplyBasket.getStatus().getIntValue() == 1 or skladSupplyBasket.getStatus().getIntValue() == 3}"
+                    type="submit" name="method" value="delete"
+                    onclick="return confirm('Вы уверены, что хотите удалить корзину?')"
+                    class="btn btn-red">Удалить корзину</button>
+
+            <button th:if="${skladSupplyBasket.getStatus().getIntValue() == 2}"
+                    type="submit" name="method" value="markAsReceived"
+                    class="btn btn-purple">Восстановить корзину</button>
+        </div>
+    </div>
+    <div class="button-container" th:if="${utils.shouldShowNextButton(skladSupplyStep, allProductNames)}">
+        <button th:if="${skladSupplyStep.value != 'PRODUCT_SELECTION_WITH_FULL_LIST'}"
+                type="submit" name="method" class="btn btn-green" value="post">Далее</button>
+
+        <button th:if="${skladSupplyStep.value == 'PRODUCT_NAME_SELECTION'}"
+                type="submit" name="method" class="btn btn-orange"
+                value="changeSearchType">Изменить выбор товаров через ФИЛЬТР</button>
+
+        <button th:if="${skladSupplyStep.value == 'PRODUCT_SELECTION_WITH_FILTER'}"
+                type="submit" name="method" class="btn btn-orange"
+                value="changeSearchType">Изменить выбор товаров через СПИСОК</button>
+    </div>
+</form>
+
+</body>
+</html>

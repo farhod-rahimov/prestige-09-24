@@ -1,6 +1,7 @@
 package com.prestige.dao.prestige;
 
 
+import com.prestige.dao.abstracts.AbstractAllSalesDAO;
 import com.prestige.dao.mappers.SalesMapper;
 import com.prestige.models.SalesBasket;
 import com.prestige.models.Sales;
@@ -19,13 +20,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
-public class PrestigeAllSalesDAO {
-
-    private final JdbcTemplate jdbcTemplate;
+public class PrestigeAllSalesDAO extends AbstractAllSalesDAO {
 
     @Autowired
     public PrestigeAllSalesDAO(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+        super(jdbcTemplate, "prestige_all_sales");
     }
 
     public void saveNewPrestigeSale(SalesBasket basket, Sales sales) {
@@ -187,26 +186,33 @@ public class PrestigeAllSalesDAO {
     public Map<Integer, BigDecimal> findRecommendedPrice(Set<Integer> productIds, SalesBasket basket) {
         String inClause = productIds.stream().map(id -> "?").collect(Collectors.joining(", "));
 
-        String sql =    "SELECT " +
+        String sql =    "WITH recommended_price_table AS (" +
+                            "SELECT " +
+                                "pas.common_product_id AS id, " +
+                                "SUM(COALESCE(pas.quantity, 0) * COALESCE(pas.sold_price_smn, 0)) / " +
+                                    "NULLIF(SUM(pas.quantity), 0) AS recommended_price " + // в случае если pas.quantity = 0, результат будет null
+                            "FROM prestige_all_sales pas " +
+                            "JOIN prestige_sales_baskets psb ON psb.id = pas.basket_id " +
+                            "WHERE " +
+                                "pas.common_product_id IN (" + inClause + ") AND " +
+                                "psb.created_date_time >= ( " +
+                                    "SELECT created_date_time - INTERVAL '2 years' " +
+                                    "FROM prestige_sales_baskets " +
+                                    "WHERE id = ? " +
+                                ") AND " +
+                                "psb.created_date_time < (" +
+                                    "SELECT created_date_time " +
+                                    "FROM prestige_sales_baskets " +
+                                    "WHERE id = ? " +
+                                ") AND " +
+                                "psb.status = " + SalesBasket.EStatus.SOLD.getIntValue() + " " +
+                            "GROUP BY (pas.common_product_id)) " +
+
+                        "SELECT " +
                             "pas.common_product_id, " +
-                            "SUM(COALESCE(pas.quantity, 0) * COALESCE(pas.sold_price_smn, 0)) / " +
-                                "NULLIF(SUM(pas.quantity), 0) " + // в случае если pas.quantity = 0, результат будет null
+                            "COALESCE(rpt.recommended_price, 0) " +
                         "FROM prestige_all_sales pas " +
-                        "JOIN prestige_sales_baskets psb ON psb.id = pas.basket_id " +
-                        "WHERE " +
-                            "pas.common_product_id IN (" + inClause + ") AND " +
-                            "psb.created_date_time >= ( " +
-                                "SELECT created_date_time - INTERVAL '2 years' " +
-                                "FROM prestige_sales_baskets " +
-                                "WHERE id = ? " +
-                            ") AND " +
-                            "psb.created_date_time < (" +
-                                "SELECT created_date_time " +
-                                "FROM prestige_sales_baskets " +
-                                "WHERE id = ? " +
-                            ") AND " +
-                            "psb.status = " + SalesBasket.EStatus.SOLD.getIntValue() + " " +
-                        "GROUP BY (pas.common_product_id)";
+                        "LEFT JOIN recommended_price_table rpt ON rpt.id = pas.common_product_id";
 
         List<Object> bindings = new ArrayList();
         bindings.addAll(productIds);

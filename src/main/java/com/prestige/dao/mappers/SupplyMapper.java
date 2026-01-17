@@ -3,6 +3,7 @@ package com.prestige.dao.mappers;
 import com.prestige.models.*;
 import org.springframework.jdbc.core.RowMapper;
 
+import java.math.RoundingMode;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -15,7 +16,7 @@ public class SupplyMapper implements RowMapper<Supply> {
 
         supply.setId(rs.getInt(1));
         supply.setQuantity(rs.getInt(2));
-        supply.setPriceDollar(rs.getBigDecimal(3));
+        supply.setPriceDollar(rs.getBigDecimal(3).setScale(2, RoundingMode.HALF_UP));
 
         ProductName productName = new ProductName(rs.getInt(5), rs.getString(6));
         Brand brand = new Brand(rs.getInt(11), rs.getString(12));

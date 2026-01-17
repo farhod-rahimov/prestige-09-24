@@ -41,36 +41,21 @@ public class ProductFilter extends AbstractBaseFilter {
         if (product != null) {
 
             ProductName productName = product.getProductName();
-            if (productName != null && productName.getProductName() != null &&
-                    !productName.getProductName().isEmpty()) {
-
+            if (productName != null) {
                 productName.setProductName(getPreparedField(productName.getProductName()));
             }
 
-            if (product.getCarModel() != null && !product.getCarModel().isEmpty()) {
-                product.setCarModel(getPreparedField(product.getCarModel()));
-            }
-
-            if (product.getEngineModel() != null && !product.getEngineModel().isEmpty()) {
-                product.setEngineModel(getPreparedField(product.getEngineModel()));
-            }
-
-            if (product.getOemArticleNumber() != null && !product.getOemArticleNumber().isEmpty()) {
-                product.setOemArticleNumber(getPreparedField(product.getOemArticleNumber()));
-            }
-
-            if (product.getCrossArticleNumber() != null && !product.getCrossArticleNumber().isEmpty()) {
-                product.setCrossArticleNumber(getPreparedField(product.getCrossArticleNumber()));
-            }
+            product.setCarModel(getPreparedField(product.getCarModel()));
+            product.setEngineModel(getPreparedField(product.getEngineModel()));
+            product.setOemArticleNumber(getPreparedField(product.getOemArticleNumber()));
+            product.setCrossArticleNumber(getPreparedField(product.getCrossArticleNumber()));
 
             Brand brand = product.getBrand();
-            if (brand != null && brand.getBrandName() != null && !brand.getBrandName().isEmpty()) {
+            if (brand != null) {
                 brand.setBrandName(getPreparedField(brand.getBrandName()));
             }
 
-            if (product.getNotes() != null && !product.getNotes().isEmpty()) {
-                product.setNotes(getPreparedField(product.getNotes()));
-            }
+            product.setNotes(getPreparedField(product.getNotes()));
         }
     }
 

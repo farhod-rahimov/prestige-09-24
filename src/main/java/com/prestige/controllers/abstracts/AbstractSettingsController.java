@@ -1,6 +1,7 @@
 package com.prestige.controllers.abstracts;
 
 import com.prestige.dao.abstracts.AbstractSettingsDAO;
+import com.prestige.initializers.AbstractSettingsInitializer;
 import com.prestige.models.Settings;
 import org.springframework.http.HttpStatus;
 import org.springframework.ui.Model;
@@ -9,36 +10,26 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-public abstract class AbstractSettingsController {
+public abstract class AbstractSettingsController<S extends AbstractSettingsDAO> {
+
+    protected final AbstractSettingsInitializer<S> settingsInitializer;
 
     protected final AbstractSettingsDAO settingsDAO;
 
     protected final String uriPrefix;
 
-    public AbstractSettingsController(AbstractSettingsDAO settingsDAO, String uriPrefix) {
+    public AbstractSettingsController(AbstractSettingsInitializer<S> settingsInitializer,
+                                      AbstractSettingsDAO settingsDAO, String uriPrefix) {
+
+        this.settingsInitializer = settingsInitializer;
         this.settingsDAO = settingsDAO;
         this.uriPrefix = uriPrefix;
     }
 
-    private void initializeMustHaveSettings() {
-
-        Settings magicValue = new Settings(null, "magicValue", "20");
-        if (!settingsDAO.checkIfSettingsExists(magicValue)) {
-            settingsDAO.saveNewSettings(magicValue);
-        }
-
-        Settings exchangeRate = new Settings(null, "exchangeRate", "11.00");
-        if (!settingsDAO.checkIfSettingsExists(exchangeRate)) {
-            settingsDAO.saveNewSettings(exchangeRate);
-        }
-    }
-
     @GetMapping
     public String showAllSettings(Model model) {
-        initializeMustHaveSettings();
-
+        settingsInitializer.init(); // init must have settings
         model.addAttribute("allSettings", settingsDAO.findAllSettings());
-
         return "shared/settings/settings";
     }
 

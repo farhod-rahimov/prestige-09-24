@@ -16,17 +16,17 @@ import java.util.Objects;
 @NoArgsConstructor
 public abstract class BaseBasket {
 
-    private Integer id;
+    protected Integer id;
 
-    private Timestamp createdDateTime;
+    protected Timestamp createdDateTime;
 
-    private Timestamp lastChangedDateTime;
+    protected Timestamp lastChangedDateTime;
 
-    private BigDecimal totalSum;
+    protected BigDecimal totalSum;
 
-    private String notes;
+    protected String notes;
 
-    private BasketFilter filter;
+    protected BasketFilter filter;
 
     public BaseBasket(BaseBasket baseBasket) {
 

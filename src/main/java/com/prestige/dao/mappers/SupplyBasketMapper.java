@@ -4,6 +4,7 @@ import com.prestige.models.Supplier;
 import com.prestige.models.SupplyBasket;
 import org.springframework.jdbc.core.RowMapper;
 
+import java.math.RoundingMode;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -18,6 +19,7 @@ public class SupplyBasketMapper implements RowMapper<SupplyBasket> {
         SupplyBasket.EStatus status = SupplyBasket.EStatus.fromIntValue(rs.getInt(10));
 
         return new SupplyBasket(rs.getInt(1), rs.getTimestamp(2), rs.getTimestamp(3),
-                                supplier, rs.getBigDecimal(8), rs.getString(9), null, status, null);
+                                supplier, rs.getBigDecimal(8).setScale(2, RoundingMode.HALF_UP),
+                                rs.getString(9), null, status, null);
     }
 }

@@ -1,21 +1,33 @@
 package com.prestige.dao.abstracts;
 
+import com.prestige.models.BaseSupplyBasket;
 import com.prestige.service.Utils;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-public abstract class AbstractSupplyBasketsDAO {
+import java.util.List;
+
+public abstract class AbstractSupplyBasketsDAO<B extends BaseSupplyBasket> {
 
     protected final JdbcTemplate jdbcTemplate;
 
     protected final String tableName;
 
+    protected final String suppliesTableName;
+
     protected final Utils utils;
 
-    public AbstractSupplyBasketsDAO(JdbcTemplate jdbcTemplate, String tableName, Utils utils) {
+    public AbstractSupplyBasketsDAO(JdbcTemplate jdbcTemplate, String tableName, String suppliesTableName, Utils utils) {
         this.jdbcTemplate = jdbcTemplate;
         this.tableName = tableName;
+        this.suppliesTableName = suppliesTableName;
         this.utils = utils;
     }
+
+    public abstract List<B> findAllBaskets();
+
+    public abstract B findBasketById(Integer basketId);
+
+    public abstract void saveNewBasket(B basket);
 
     public Boolean checkIfSupplierIdExists(Integer supplierId) {
 
@@ -29,5 +41,28 @@ public abstract class AbstractSupplyBasketsDAO {
                             "SELECT 1 FROM %s WHERE supplier_id = ?)", tableName);
 
         return jdbcTemplate.queryForObject(sql, new Object[] {supplierId}, Boolean.class);
+    }
+
+    public void deleteAllEmptyBaskets() {
+        String sql = String.format(
+                        "DELETE FROM %s psb " +
+                        "WHERE NOT EXISTS ( " +
+                            "SELECT 1 " +
+                            "FROM %s pas " +
+                            "WHERE pas.basket_id  = psb.id)", tableName, suppliesTableName);
+
+        jdbcTemplate.update(sql);
+    }
+
+    public void updateBasketNotes(BaseSupplyBasket basket) {
+        String sql = String.format("UPDATE %s SET notes = ?, last_changed_date_time = ? WHERE id = ?", tableName);
+
+        jdbcTemplate.update(sql, new Object[]{basket.getNotes(), utils.getCurrentDateAndTime(), basket.getId()});
+    }
+
+    public void updateBasketStatus(BaseSupplyBasket basket) {
+        String sql = String.format("UPDATE %s SET status = ?, last_changed_date_time = ? WHERE id = ?", tableName);
+
+        jdbcTemplate.update(sql, new Object[]{basket.getStatus().getIntValue(), utils.getCurrentDateAndTime(), basket.getId()});
     }
 }

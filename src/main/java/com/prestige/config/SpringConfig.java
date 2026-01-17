@@ -1,7 +1,6 @@
 package com.prestige.config;
 
 import com.prestige.converters.StringToTimestampConverter;
-import com.prestige.service.DatabaseInitializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -92,11 +91,5 @@ public class SpringConfig implements WebMvcConfigurer {
     @Bean
     public JdbcTemplate jdbcTemplate() {
         return new JdbcTemplate(dataSource());
-    }
-
-    // Инициализация базы данных при старте приложения
-    @Bean(initMethod = "initializeDatabase")
-    public DatabaseInitializer initDatabase(DatabaseInitializer initializer) {
-        return new DatabaseInitializer();
     }
 }
