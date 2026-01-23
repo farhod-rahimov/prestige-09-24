@@ -441,8 +441,7 @@ public class CommonProductsDAO {
 
                         "WHERE " +
                             "cpn.id = ? AND " +
-                            "cp.car_model = ? AND " +
-                            "cp.engine_model IS NOT NULL AND cp.engine_model != '' ";
+                            "cp.car_model = ? ";
 
         List<Object> bindings = new ArrayList();
         bindings.add(product.getProductName().getId());
@@ -472,10 +471,7 @@ public class CommonProductsDAO {
                         "WHERE " +
                             "cpn.id = ? AND " +
                             "cp.car_model = ? AND " +
-                            "cp.engine_model = ? AND " +
-                            "cp.oem_article_number IS NOT NULL AND cp.oem_article_number != '' ";
-
-
+                            "cp.engine_model = ? ";
 
         List<Object> bindings = new ArrayList();
 
@@ -508,10 +504,7 @@ public class CommonProductsDAO {
                             "cpn.id = ? AND " +
                             "cp.car_model = ? AND " +
                             "cp.engine_model = ? AND " +
-                            "cp.oem_article_number = ? AND " +
-                            "cp.cross_article_number IS NOT NULL AND cp.cross_article_number != '' ";
-
-
+                            "cp.oem_article_number = ? ";
 
         List<Object> bindings = new ArrayList();
 

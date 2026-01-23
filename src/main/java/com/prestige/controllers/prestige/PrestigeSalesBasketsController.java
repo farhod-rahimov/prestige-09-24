@@ -182,7 +182,7 @@ public class PrestigeSalesBasketsController {
         salesBasket.setSalesList(new LinkedList<>());
         salesBasket.setStatus(SalesBasket.EStatus.PENDING);
 
-        prestigeSalesBasketsDAO.saveNewPrestigeBasket(salesBasket);
+        prestigeSalesBasketsDAO.saveNewBasket(salesBasket);
 
         return getNextStep(salesStep);
     }
@@ -373,7 +373,7 @@ public class PrestigeSalesBasketsController {
     private EStep processProductQuantityAndPriceSelection(SalesBasket salesBasket, Model model, EStep salesStep) {
         Sales newSales = salesBasket.getSalesList().get(salesBasket.getSalesList().size() - 1);
 
-        prestigeAllSalesDAO.saveNewPrestigeSale(salesBasket, newSales);
+        prestigeAllSalesDAO.saveNewSale(salesBasket, newSales);
         updateBasketTotalSum(salesBasket);
         return getNextStep(salesStep);
     }
@@ -485,7 +485,7 @@ public class PrestigeSalesBasketsController {
     }
 
     private void patchBasketInternal(SalesBasket salesBasket) {
-        prestigeAllSalesDAO.saveNewPrestigeSalesList(salesBasket, salesBasket.getSalesListForSave());
+        prestigeAllSalesDAO.saveNewSalesList(salesBasket, salesBasket.getSalesListForSave());
         prestigeAllSalesDAO.updateQuantityAndPrices(salesBasket.getSalesListForUpdate());
         prestigeSalesBasketsDAO.updateBasketNotes(salesBasket);
         updateBasketTotalSum(salesBasket);

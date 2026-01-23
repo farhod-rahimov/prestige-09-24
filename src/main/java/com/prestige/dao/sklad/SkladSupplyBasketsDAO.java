@@ -94,13 +94,13 @@ public class SkladSupplyBasketsDAO extends AbstractSupplyBasketsDAO<SkladSupplyB
     }
 
     public void updateBasketName(SkladSupplyBasket basket) {
-        String sql = String.format("UPDATE %s SET basket_name = ?, last_changed_date_time = ? WHERE id = ?", tableName);
+        String sql = String.format("UPDATE %s SET basket_name = ?, last_changed_date_time = ? WHERE id = ?", supplyBasketsTableName);
 
         jdbcTemplate.update(sql, new Object[]{basket.getBasketName(), utils.getCurrentDateAndTime(), basket.getId()});
     }
 
     public void updateUsdSupplierCurrencyRate(SkladSupplyBasket basket) {
-        String sql = String.format("UPDATE %s SET usd_supplier_currency_rate = ?, last_changed_date_time = ? WHERE id = ?", tableName);
+        String sql = String.format("UPDATE %s SET usd_supplier_currency_rate = ?, last_changed_date_time = ? WHERE id = ?", supplyBasketsTableName);
 
         jdbcTemplate.update(sql, new Object[]{basket.getUsdSupplierCurrencyRate(), utils.getCurrentDateAndTime(), basket.getId()});
     }

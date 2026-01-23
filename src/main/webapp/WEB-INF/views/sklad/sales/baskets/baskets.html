@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" th:href="@{/css/common-header.css}">
+    <title>Корзины</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            padding-top: 60px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+        }
+        .add-basket-link {
+            display: inline-block;
+            padding: 10px 20px;
+            color: white;
+            background-color: #4CAF50;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .add-basket-link:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            table-layout: fixed;
+        }
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+        }
+        td {
+            text-align: left;
+        }
+        th:nth-child(1), td:nth-child(1) {
+            width: 10ch;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .error-message {
+            color: red;
+            margin-bottom: 20px;
+        }
+        .private-info {
+            background-color: #a8ada8;
+        }
+        .id-status {
+          display: inline-block;
+          padding: 10px 20px;
+          font-weight: bold;
+          font-size: 0.9em;
+          text-align: center;
+          border-radius: 5px;  /* Плавные углы */
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .id-status:hover {
+          transform: scale(1.05);
+          box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        .sold {
+          background-color: #c8e6c9;
+        }
+        .deleted {
+          background-color: #f8d7da;
+        }
+        .pending {
+          background-color: #fff3cd;
+        }
+        a {
+            text-decoration: none;
+            color: inherit; /* Цвет текста ссылок */
+            transition: color 0.3s ease, text-decoration 0.3s ease;
+        }
+        a:hover {
+            text-decoration: underline; /* Подчеркивание при наведении */
+        }
+        a:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(72, 168, 72, 0.6); /* Эффект при фокусе на ссылке */
+        }
+        .btn {
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .btn-red {
+            background-color: #f66f6f;
+        }
+        .btn-red:hover {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="fragments/common-header :: common-header"></div>
+
+<form th:method="POST" th:action="@{/sklad/sales/baskets}">
+
+    <div class="header">
+        <h2>Корзины</h2>
+        <div style="display: flex; gap: 10px;">
+            <a th:href="@{/sklad/sales/baskets/add}" class="add-basket-link">Добавить новую корзину</a>
+            <button type="submit" name="method" value="deleteAllEmptyBaskets"
+                    onclick="return confirm('Вы уверены, что хотите удалить все пустые корзины?')"
+                    class="btn btn-red">Удалить все пустые корзины</button>
+        </div>
+    </div>
+
+    <div th:if="${error}" class="error-message" th:text="${error}"></div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID корзины</th>
+            <th>Имя покупателя</th>
+            <th>Телефон</th>
+            <th>Сумма</th>
+            <th>Дата и время последнего изменения</th>
+            <th>Дата и время создания</th>
+            <th>Комментарий</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        <tr th:each="basket : ${allBaskets}"
+            th:with="link='/sklad/sales/baskets/' + ${basket.getId()}">
+
+            <td>
+                <a th:href="${link}">
+                    <span th:if="${basket.getStatus().getIntValue() == 1}" class="id-status sold"
+                          title="Продано" th:text="${basket.getId()}"></span>
+                    <span th:if="${basket.getStatus().getIntValue() == 2}" class="id-status deleted"
+                          title="Помечено на удаление" th:text="${basket.getId()}"></span>
+                    <span th:if="${basket.getStatus().getIntValue() == 3}" class="id-status pending"
+                          title="Новая корзина: ожидает действия" th:text="${basket.getId()}"></span>
+                </a>
+            </td>
+            <td><a th:href="${link}" th:text="${basket.getClient().getName()}"></a></td>
+            <td><a th:href="${link}" th:text="${basket.getClient().getPhoneNumber()}"></a></td>
+            <td><a th:href="${link}" th:text="${basket.getTotalSum()}"></a></td>
+            <td><a th:href="${link}" th:text="${utils.getDateTimeFormatted(basket.getLastChangedDateTime())}"></a></td>
+            <td><a th:href="${link}" th:text="${utils.getDateTimeFormatted(basket.getCreatedDateTime())}"></a></td>
+            <td><a th:href="${link}" th:text="${basket.getNotes()}"></a></td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+</body>
+</html>

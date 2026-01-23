@@ -11,6 +11,7 @@ public class SkladSalesBasketsDAO extends AbstractSalesBasketsDAO {
 
     @Autowired
     public SkladSalesBasketsDAO(JdbcTemplate jdbcTemplate, Utils utils) {
-        super(jdbcTemplate, "sklad_sales_baskets", utils);
+        super(jdbcTemplate, "sklad_sales_baskets", "sklad_all_sales",
+                "sklad_clients", utils);
     }
 }

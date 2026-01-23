@@ -117,7 +117,7 @@ create table if not exists sklad_all_sales (
 	id serial primary key,
 	common_product_id int references common_products(id) not null,
     quantity int not null,
-    sold_price_dollar numeric(15, 4) not null,
+    sold_price numeric(15, 4) not null,
     wholesale_price numeric(15, 4) not null,
 	basket_id int references sklad_sales_baskets(id) not null
 );
@@ -150,7 +150,7 @@ create table if not exists prestige_all_sales (
 	id serial primary key,
 	common_product_id int references common_products(id) not null,
 	quantity int not null,
-	sold_price_smn numeric(15, 4) not null,
+	sold_price numeric(15, 4) not null,
     wholesale_price numeric(15, 4) not null,
 	basket_id int references prestige_sales_baskets(id) not null
 );

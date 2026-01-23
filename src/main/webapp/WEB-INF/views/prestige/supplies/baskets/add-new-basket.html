@@ -342,7 +342,7 @@
                     </select>
                 </td>
                 <td>
-                    <select type="text" th:field="*{suppliesList[__${lastIndex}__].product.engineModel}" required>
+                    <select type="text" th:field="*{suppliesList[__${lastIndex}__].product.engineModel}">
                         <option th:each="engineModel : ${allEngineModels}" th:value="${engineModel}" th:text="${engineModel}">
                             Выберите модель мотора
                         </option>
@@ -372,7 +372,7 @@
                     </select>
                 </td>
                 <td>
-                    <select type="text" th:field="*{suppliesList[__${lastIndex}__].product.oemArticleNumber}" required>
+                    <select type="text" th:field="*{suppliesList[__${lastIndex}__].product.oemArticleNumber}">
                         <option th:each="oemArticleNumber : ${allOemArticleNumbers}" th:value="${oemArticleNumber}" th:text="${oemArticleNumber}">
                             Выберите OEM артикул
                         </option>
@@ -408,7 +408,7 @@
                     </select>
                 </td>
                 <td>
-                    <select type="text" th:field="*{suppliesList[__${lastIndex}__].product.crossArticleNumber}" required>
+                    <select type="text" th:field="*{suppliesList[__${lastIndex}__].product.crossArticleNumber}">
                         <option th:each="crossArticleNumber : ${allCrossArticleNumbers}" th:value="${crossArticleNumber}" th:text="${crossArticleNumber}">
                             Выберите КРОСС артикул
                         </option>
