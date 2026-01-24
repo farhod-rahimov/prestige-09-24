@@ -3,6 +3,7 @@ package com.prestige.controllers.abstracts;
 import com.prestige.dao.abstracts.AbstractSettingsDAO;
 import com.prestige.initializers.AbstractSettingsInitializer;
 import com.prestige.models.Settings;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+@AllArgsConstructor
 public abstract class AbstractSettingsController<S extends AbstractSettingsDAO> {
 
     protected final AbstractSettingsInitializer<S> settingsInitializer;
@@ -17,14 +19,6 @@ public abstract class AbstractSettingsController<S extends AbstractSettingsDAO> 
     protected final AbstractSettingsDAO settingsDAO;
 
     protected final String uriPrefix;
-
-    public AbstractSettingsController(AbstractSettingsInitializer<S> settingsInitializer,
-                                      AbstractSettingsDAO settingsDAO, String uriPrefix) {
-
-        this.settingsInitializer = settingsInitializer;
-        this.settingsDAO = settingsDAO;
-        this.uriPrefix = uriPrefix;
-    }
 
     @GetMapping
     public String showAllSettings(Model model) {

@@ -3,6 +3,7 @@ package com.prestige.controllers.abstracts;
 import com.prestige.dao.abstracts.AbstractSuppliersDAO;
 import com.prestige.dao.abstracts.AbstractSupplyBasketsDAO;
 import com.prestige.models.Supplier;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+@AllArgsConstructor
 public abstract class AbstractSuppliersController {
 
     private final AbstractSuppliersDAO suppliersDAO;
@@ -17,12 +19,6 @@ public abstract class AbstractSuppliersController {
     private final AbstractSupplyBasketsDAO supplyBasketsDAO;
 
     protected final String uriPrefix;
-
-    public AbstractSuppliersController(AbstractSuppliersDAO suppliersDAO, AbstractSupplyBasketsDAO supplyBasketsDAO, String uriPrefix) {
-        this.suppliersDAO = suppliersDAO;
-        this.supplyBasketsDAO = supplyBasketsDAO;
-        this.uriPrefix = uriPrefix;
-    }
 
     @GetMapping
     public String showAllSuppliers(Model model) {

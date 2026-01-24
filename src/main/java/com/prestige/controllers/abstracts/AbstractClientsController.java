@@ -3,6 +3,7 @@ package com.prestige.controllers.abstracts;
 import com.prestige.dao.abstracts.AbstractClientsDAO;
 import com.prestige.dao.abstracts.AbstractSalesBasketsDAO;
 import com.prestige.models.Client;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+@AllArgsConstructor
 public abstract class AbstractClientsController {
 
     private final AbstractClientsDAO clientsDAO;
@@ -17,12 +19,6 @@ public abstract class AbstractClientsController {
     private final AbstractSalesBasketsDAO salesBasketsDAO;
 
     protected final String uriPrefix;
-
-    public AbstractClientsController(AbstractClientsDAO clientsDAO, AbstractSalesBasketsDAO salesBasketsDAO, String uriPrefix) {
-        this.clientsDAO = clientsDAO;
-        this.salesBasketsDAO = salesBasketsDAO;
-        this.uriPrefix = uriPrefix;
-    }
 
     @GetMapping
     public String showAllClients(Model model) {

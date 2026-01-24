@@ -8,10 +8,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public abstract class AbstractAllSalesDAO {
@@ -24,6 +26,8 @@ public abstract class AbstractAllSalesDAO {
         this.jdbcTemplate = jdbcTemplate;
         this.allSalesTableName = allSalesTableName;
     }
+
+    public abstract Map<Integer, BigDecimal> findRecommendedPrice(Set<Integer> productIds, SalesBasket basket);
 
     public boolean checkIfProductExists(Integer productId) {
         String sql = String.format("SELECT EXISTS (SELECT 1 FROM %s WHERE common_product_id = ?)", allSalesTableName);

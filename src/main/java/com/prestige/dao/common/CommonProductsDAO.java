@@ -348,36 +348,34 @@ public class CommonProductsDAO {
     private String getFilterClause(BasketFilter filter, List<Object> bindings) {
         String sql = "";
 
-        if (filter != null) {
-            if (!filter.getProductName().isEmpty()) {
-                sql += "AND cpn.product_name ILIKE ? ESCAPE '\\' ";
-                bindings.add(filter.getProductName());
-            }
+        if (!filter.getProductName().isEmpty()) {
+            sql += "AND cpn.product_name ILIKE ? ESCAPE '\\' ";
+            bindings.add(filter.getProductName());
+        }
 
-            if (!filter.getCarModel().isEmpty()) {
-                sql += "AND cp.car_model ILIKE ? ESCAPE '\\' ";
-                bindings.add(filter.getCarModel());
-            }
+        if (!filter.getCarModel().isEmpty()) {
+            sql += "AND cp.car_model ILIKE ? ESCAPE '\\' ";
+            bindings.add(filter.getCarModel());
+        }
 
-            if (!filter.getEngineModel().isEmpty()) {
-                sql += "AND cp.engine_model ILIKE ? ESCAPE '\\' ";
-                bindings.add(filter.getEngineModel());
-            }
+        if (!filter.getEngineModel().isEmpty()) {
+            sql += "AND cp.engine_model ILIKE ? ESCAPE '\\' ";
+            bindings.add(filter.getEngineModel());
+        }
 
-            if (!filter.getOemArticleNumber().isEmpty()) {
-                sql += "AND cp.oem_article_number ILIKE ? ESCAPE '\\' ";
-                bindings.add(filter.getOemArticleNumber());
-            }
+        if (!filter.getOemArticleNumber().isEmpty()) {
+            sql += "AND cp.oem_article_number ILIKE ? ESCAPE '\\' ";
+            bindings.add(filter.getOemArticleNumber());
+        }
 
-            if (!filter.getCrossArticleNumber().isEmpty()) {
-                sql += "AND cp.cross_article_number ILIKE ? ESCAPE '\\' ";
-                bindings.add(filter.getCrossArticleNumber());
-            }
+        if (!filter.getCrossArticleNumber().isEmpty()) {
+            sql += "AND cp.cross_article_number ILIKE ? ESCAPE '\\' ";
+            bindings.add(filter.getCrossArticleNumber());
+        }
 
-            if (!filter.getBrand().isEmpty()) {
-                sql += "AND cbn.brand_name ILIKE ? ESCAPE '\\' ";
-                bindings.add(filter.getBrand());
-            }
+        if (!filter.getBrand().isEmpty()) {
+            sql += "AND cbn.brand_name ILIKE ? ESCAPE '\\' ";
+            bindings.add(filter.getBrand());
         }
         return sql;
     }
@@ -394,7 +392,9 @@ public class CommonProductsDAO {
 
         List<Object> bindings = new ArrayList();
 
-        sql += getFilterClause(filter, bindings);
+        if (filter != null) {
+            sql += getFilterClause(filter, bindings);
+        }
 
         sql +=          "GROUP BY (cpn.id) " +
                         "ORDER BY (cpn.product_name)";

@@ -161,35 +161,7 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
         List<Object> bindings = new ArrayList();
 
         if (filter != null) {
-            if (!filter.getProductName().isEmpty()) {
-                sql += "AND cpn.product_name ILIKE ? ESCAPE '\\' ";
-                bindings.add(filter.getProductName());
-            }
-
-            if (!filter.getCarModel().isEmpty()) {
-                sql += "AND cp.car_model ILIKE ? ESCAPE '\\' ";
-                bindings.add(filter.getCarModel());
-            }
-
-            if (!filter.getEngineModel().isEmpty()) {
-                sql += "AND cp.engine_model ILIKE ? ESCAPE '\\' ";
-                bindings.add(filter.getEngineModel());
-            }
-
-            if (!filter.getOemArticleNumber().isEmpty()) {
-                sql += "AND cp.oem_article_number ILIKE ? ESCAPE '\\' ";
-                bindings.add(filter.getOemArticleNumber());
-            }
-
-            if (!filter.getCrossArticleNumber().isEmpty()) {
-                sql += "AND cp.cross_article_number ILIKE ? ESCAPE '\\' ";
-                bindings.add(filter.getCrossArticleNumber());
-            }
-
-            if (!filter.getBrand().isEmpty()) {
-                sql += "AND cbn.brand_name ILIKE ? ESCAPE '\\' ";
-                bindings.add(filter.getBrand());
-            }
+            sql += getFilterClause(filter, bindings);
         }
 
         sql +=          "GROUP BY (cpn.id) " +
@@ -336,7 +308,173 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
         });
     }
 
-    public List<Brand> findAvailableBrands(Product product) {
+    private String getFilterClause(BasketFilter filter, List<Object> bindings) {
+        String sql = "";
+
+        if (!filter.getProductName().isEmpty()) {
+            sql += "AND cpn.product_name ILIKE ? ESCAPE '\\' ";
+            bindings.add(filter.getProductName());
+        }
+
+        if (!filter.getCarModel().isEmpty()) {
+            sql += "AND cp.car_model ILIKE ? ESCAPE '\\' ";
+            bindings.add(filter.getCarModel());
+        }
+
+        if (!filter.getEngineModel().isEmpty()) {
+            sql += "AND cp.engine_model ILIKE ? ESCAPE '\\' ";
+            bindings.add(filter.getEngineModel());
+        }
+
+        if (!filter.getOemArticleNumber().isEmpty()) {
+            sql += "AND cp.oem_article_number ILIKE ? ESCAPE '\\' ";
+            bindings.add(filter.getOemArticleNumber());
+        }
+
+        if (!filter.getCrossArticleNumber().isEmpty()) {
+            sql += "AND cp.cross_article_number ILIKE ? ESCAPE '\\' ";
+            bindings.add(filter.getCrossArticleNumber());
+        }
+
+        if (!filter.getBrand().isEmpty()) {
+            sql += "AND cbn.brand_name ILIKE ? ESCAPE '\\' ";
+            bindings.add(filter.getBrand());
+        }
+
+        return sql;
+    }
+
+    public List<String> findAvailableCarModels(Product product, BasketFilter filter) {
+        String sql =    "SELECT cp.car_model " +
+
+                        "FROM " + allSuppliesTableName + " pas " +
+
+                        "JOIN common_products cp ON pas.common_product_id = cp.id " +
+                        "JOIN common_product_names cpn ON cpn.id = cp.product_name_id " +
+                        "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+
+                        "WHERE cpn.id = ? ";
+
+        List<Object> bindings = new ArrayList();
+        bindings.add(product.getProductName().getId());
+
+        if (filter != null) {
+            BasketFilter filterCpy = new BasketFilter(filter);
+            filterCpy.clearAllBeforeCarModel();
+
+            sql += getFilterClause(filterCpy, bindings);
+        }
+
+        sql +=          "GROUP BY (cp.car_model) " +
+                        "ORDER by (cp.car_model)";
+
+        return jdbcTemplate.queryForList(sql, bindings.toArray(), String.class);
+    }
+
+    public List<String> findAvailableEngineModels(Product product, BasketFilter filter) {
+        String sql =    "SELECT cp.engine_model " +
+
+                        "FROM " + allSuppliesTableName + " pas " +
+
+                        "JOIN common_products cp ON pas.common_product_id = cp.id " +
+                        "JOIN common_product_names cpn ON cpn.id = cp.product_name_id " +
+                        "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+
+                        "WHERE " +
+                            "cpn.id = ? AND " +
+                            "cp.car_model = ? ";
+
+        List<Object> bindings = new ArrayList();
+        bindings.add(product.getProductName().getId());
+        bindings.add(product.getCarModel());
+
+        if (filter != null) {
+            BasketFilter filterCpy = new BasketFilter(filter);
+            filterCpy.clearAllBeforeEngineModel();
+
+            sql += getFilterClause(filterCpy, bindings);
+        }
+
+        sql +=          "GROUP BY (cp.engine_model) " +
+                        "ORDER by (cp.engine_model)";
+
+        return jdbcTemplate.queryForList(sql, bindings.toArray(), String.class);
+    }
+
+    public List<String> findAvailableOemArticleNumbers(Product product, BasketFilter filter) {
+        String sql =    "SELECT cp.oem_article_number " +
+
+                        "FROM " + allSuppliesTableName + " pas " +
+
+                        "JOIN common_products cp ON pas.common_product_id = cp.id " +
+                        "JOIN common_product_names cpn ON cpn.id = cp.product_name_id " +
+                        "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+
+                        "WHERE " +
+                            "cpn.id = ? AND " +
+                            "cp.car_model = ? ";
+
+        List<Object> bindings = new ArrayList();
+        bindings.addAll(Arrays.asList(product.getProductName().getId(), product.getCarModel()));
+
+        if (product.getEngineModel() != null) {
+            sql +=          "AND cp.engine_model = ? ";
+            bindings.add(product.getEngineModel());
+        }
+
+        if (filter != null) {
+            BasketFilter filterCpy = new BasketFilter(filter);
+            filterCpy.clearAllBeforeOemArticleNumber();
+
+            sql += getFilterClause(filterCpy, bindings);
+        }
+
+        sql +=              "GROUP BY (cp.oem_article_number) " +
+                            "ORDER by (cp.oem_article_number)";
+
+        return jdbcTemplate.queryForList(sql, bindings.toArray(), String.class);
+    }
+
+    public List<String> findAvailableCrossArticleNumbers(Product product, BasketFilter filter) {
+        String sql =    "SELECT cp.cross_article_number " +
+
+                        "FROM " + allSuppliesTableName + " pas " +
+
+                        "JOIN common_products cp ON pas.common_product_id = cp.id " +
+                        "JOIN common_product_names cpn ON cpn.id = cp.product_name_id " +
+                        "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+
+                        "WHERE " +
+                            "cpn.id = ? AND " +
+                            "cp.car_model = ? ";
+
+        List<Object> bindings = new ArrayList();
+        bindings.addAll(Arrays.asList(product.getProductName().getId(), product.getCarModel()));
+
+        if (product.getEngineModel() != null) {
+            sql +=          "AND cp.engine_model = ? ";
+            bindings.add(product.getEngineModel());
+        }
+
+        if (product.getOemArticleNumber() != null) {
+            sql +=          "AND cp.oem_article_number = ? ";
+            bindings.add(product.getOemArticleNumber());
+        }
+
+        if (filter != null) {
+            BasketFilter filterCpy = new BasketFilter(filter);
+            filterCpy.clearAllBeforeCrossArticleNumber();
+
+            sql += getFilterClause(filterCpy, bindings);
+        }
+
+        sql +=          "GROUP BY (cp.cross_article_number) " +
+                        "ORDER by (cp.cross_article_number)";
+
+        return jdbcTemplate.queryForList(sql, bindings.toArray(), String.class);
+    }
+
+    public List<Brand> findAvailableBrands(Product product, BasketFilter filter) {
         String sql =    "SELECT cbn.id, cbn.brand_name " +
 
                         "FROM " + allSuppliesTableName + " pas " +
@@ -367,103 +505,16 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
             bindings.add(product.getCrossArticleNumber());
         }
 
-        sql +=              "GROUP BY (cbn.id) " +
-                "ORDER by (cbn.brand_name)";
+        if (filter != null) {
+            BasketFilter filterCpy = new BasketFilter(filter);
+            filterCpy.clearAllBeforeBrand();
+
+            sql += getFilterClause(filterCpy, bindings);
+        }
+
+        sql +=          "GROUP BY (cbn.id) " +
+                        "ORDER by (cbn.brand_name)";
 
         return jdbcTemplate.query(sql, bindings.toArray(), new BrandMapper());
-    }
-
-    public List<String> findAvailableCrossArticleNumbers(Product product) {
-        String sql =    "SELECT cp.cross_article_number " +
-
-                        "FROM " + allSuppliesTableName + " pas " +
-
-                        "JOIN common_products cp ON pas.common_product_id = cp.id " +
-                        "JOIN common_product_names cpn ON cpn.id = cp.product_name_id " +
-
-                        "WHERE " +
-                            "cpn.id = ? AND " +
-                            "cp.car_model = ? ";
-
-        List<Object> bindings = new ArrayList();
-        bindings.addAll(Arrays.asList(product.getProductName().getId(), product.getCarModel()));
-
-        if (product.getEngineModel() != null) {
-            sql +=          "AND cp.engine_model = ? ";
-            bindings.add(product.getEngineModel());
-        }
-
-        if (product.getOemArticleNumber() != null) {
-            sql +=          "AND cp.oem_article_number = ? ";
-            bindings.add(product.getOemArticleNumber());
-        }
-
-        sql +=              "GROUP BY (cp.cross_article_number) " +
-                            "ORDER by (cp.cross_article_number)";
-
-        return jdbcTemplate.queryForList(sql, bindings.toArray(), String.class);
-    }
-
-
-    public List<String> findAvailableOemArticleNumbers(Product product) {
-        String sql =    "SELECT cp.oem_article_number " +
-
-                        "FROM " + allSuppliesTableName + " pas " +
-
-                        "JOIN common_products cp ON pas.common_product_id = cp.id " +
-                        "JOIN common_product_names cpn ON cpn.id = cp.product_name_id " +
-
-                        "WHERE " +
-                            "cpn.id = ? AND " +
-                            "cp.car_model = ? ";
-
-        List<Object> bindings = new ArrayList();
-        bindings.addAll(Arrays.asList(product.getProductName().getId(), product.getCarModel()));
-
-        if (product.getEngineModel() != null) {
-            sql +=          "AND cp.engine_model = ? ";
-            bindings.add(product.getEngineModel());
-        }
-
-        sql +=              "GROUP BY (cp.oem_article_number) " +
-                            "ORDER by (cp.oem_article_number)";
-
-        return jdbcTemplate.queryForList(sql, bindings.toArray(), String.class);
-    }
-
-    public List<String> findAvailableEngineModels(Product product) {
-        String sql =    "SELECT cp.engine_model " +
-
-                        "FROM " + allSuppliesTableName + " pas " +
-
-                        "JOIN common_products cp ON pas.common_product_id = cp.id " +
-                        "JOIN common_product_names cpn ON cpn.id = cp.product_name_id " +
-
-                        "WHERE " +
-                        "cpn.id = ? AND " +
-                        "cp.car_model = ? " +
-
-                        "GROUP BY (cp.engine_model) " +
-                        "ORDER by (cp.engine_model)";
-
-        List<Object> bindings = new ArrayList();
-        bindings.addAll(Arrays.asList(product.getProductName().getId(), product.getCarModel()));
-
-        return jdbcTemplate.queryForList(sql, bindings.toArray(), String.class);
-    }
-
-    public List<String> findAvailableCarModels(Product product) {
-        String sql =    "SELECT cp.car_model " +
-
-                        "FROM " + allSuppliesTableName + " pas " +
-
-                        "JOIN common_products cp ON pas.common_product_id = cp.id " +
-                        "JOIN common_product_names cpn ON cpn.id = cp.product_name_id " +
-
-                        "WHERE cpn.id = ? " +
-                        "GROUP BY (cp.car_model) " +
-                        "ORDER by (cp.car_model)";
-
-        return jdbcTemplate.queryForList(sql, new Object[]{product.getProductName().getId()}, String.class);
     }
 }
