@@ -315,7 +315,7 @@ public class PrestigeAllSuppliesDAO extends AbstractAllSuppliesDAO<Supply, Suppl
                             "ps.name, " +
                             "ps.phone_number, " +
                             "ps.store_name, " +
-                            "psb.created_date_time, " + // TODO: заменить на received_date_time
+                            "psb.last_changed_date_time, " +
                             "cpe.id, " +
                             "cpe.group_id, " +
                             "cpe.product_id " +
@@ -333,7 +333,7 @@ public class PrestigeAllSuppliesDAO extends AbstractAllSuppliesDAO<Supply, Suppl
                             "cp.id = ? AND " +
                             "psb.status = " + SupplyBasket.EStatus.RECEIVED.getIntValue() + " " +
 
-                        "ORDER BY(psb.created_date_time)";
+                        "ORDER BY(psb.last_changed_date_time)";
 
         return jdbcTemplate.query(sql, new Object[]{productId}, new RetailProductMapper());
     }

@@ -112,12 +112,12 @@
         <td><a th:text="${product.getOemArticleNumber()}"></a></td>
         <td><a th:text="${product.getCrossArticleNumber()}"></a></td>
 
-        <td><a th:text="${utils.getFormattedBigDecimal(item.getStockBalance(), 0)}"></a></td>
+        <td><a th:text="${item.getStockBalance()}"></a></td>
         <td><a th:text="${utils.getConvertedPriceToSmn(item.getPriceDollar(), magicValue, exchangeRate, 0) + ' СМН'}"></a></td>
 
         <td><a th:text="${product.getBrand().getBrandName()}"></a></td>
-        <td><a th:text="${utils.getFormattedBigDecimal(item.getPriceDollar(), 2)}"></a></td>
         <td><a th:text="${utils.getConvertedPriceToSmn(item.getPriceDollar(), 0, exchangeRate, 2)}"></a></td>
+        <td><a th:text="${item.getPriceDollar()}"></a></td>
 
         <td><a th:text="${item.getSupplier().getStoreName()}"></a></td>
         <td><a th:text="${utils.getDateTimeFormatted(item.getReceivedDateTime())}"></a></td>

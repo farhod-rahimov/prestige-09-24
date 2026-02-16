@@ -164,11 +164,11 @@
 
             <th><input type="text" th:field="*{product.brand.brandName}" style="width: 100%;"></th>
 
-            <th></th>
+            <th class="private-info"></th>
 
-            <th></th>
+            <th class="private-info"></th>
 
-            <th><input type="text" th:field="*{product.notes}" style="width: 100%;"></th>
+            <th class="private-info"><input type="text" th:field="*{product.notes}" style="width: 100%;"></th>
         </tr>
         </thead>
         <tbody>
@@ -191,12 +191,12 @@
             <td><a th:href="${link}" th:text="${product.getOemArticleNumber()}"></a></td>
             <td><a th:href="${link}" th:text="${product.getCrossArticleNumber()}"></a></td>
 
-            <td><a th:href="${link}" th:text="${utils.getFormattedBigDecimal(productView.getStockBalance(), 0)}"></a></td>
+            <td><a th:href="${link}" th:text="${productView.getStockBalance()}"></a></td>
             <td><a th:href="${link}" th:text="${utils.getConvertedPriceToSmn(productView.getPriceDollar(), magicValue, exchangeRate, 0) + ' СМН'}"></a></td>
 
             <td><a th:href="${link}" th:text="${product.getBrand().getBrandName()}"></a></td>
             <td><a th:href="${link}" th:text="${utils.getConvertedPriceToSmn(productView.getPriceDollar(), 0, exchangeRate, 2)}"></a></td>
-            <td><a th:href="${link}" th:text="${utils.getFormattedBigDecimal(productView.getPriceDollar(), 2)}"></a></td>
+            <td><a th:href="${link}" th:text="${productView.getPriceDollar()}"></a></td>
 
             <td><a th:href="${link}" th:title="${product.getNotes()}" th:text="${utils.getTruncatedText(product.getNotes(), 7)}"></a></td>
         </tr>

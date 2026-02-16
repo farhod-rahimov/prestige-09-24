@@ -24,8 +24,7 @@ public class PrestigeProductsController {
     private final PrestigeSettingsDAO prestigeSettingsDAO;
 
     @Autowired
-    public PrestigeProductsController(PrestigeAllSuppliesDAO prestigeAllSuppliesDAO,
-                                      PrestigeSettingsDAO prestigeSettingsDAO) {
+    public PrestigeProductsController(PrestigeAllSuppliesDAO prestigeAllSuppliesDAO, PrestigeSettingsDAO prestigeSettingsDAO) {
         this.prestigeAllSuppliesDAO = prestigeAllSuppliesDAO;
         this.prestigeSettingsDAO = prestigeSettingsDAO;
     }

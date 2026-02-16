@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" th:href="@{/css/common-header.css}">
+    <title>Товары в магазине</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            padding-top: 60px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+        }
+        .add-product-link {
+            display: inline-block;
+            padding: 10px 20px;
+            color: white;
+            background-color: #4CAF50;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .add-product-link:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            table-layout: fixed;
+        }
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+        }
+        td {
+            text-align: left;
+        }
+        th:first-child, td:first-child {
+            width: 100px;
+            text-align: center;
+        }
+        th:nth-child(7), td:nth-child(7), th:nth-child(9), td:nth-child(9) {
+            width: 60px;
+            text-align: center;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .error-message {
+            color: red;
+            margin-bottom: 20px;
+        }
+        .private-info {
+            background-color: #a8ada8;
+        }
+        a {
+            text-decoration: none;
+            color: #000000; /* Цвет текста ссылок */
+            font-weight: normal;
+            transition: color 0.3s ease, text-decoration 0.3s ease;
+        }
+        a:hover {
+            text-decoration: underline; /* Подчеркивание при наведении */
+        }
+        a:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(72, 168, 72, 0.6); /* Эффект при фокусе на ссылке */
+        }
+        .btn {
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .btn-pink {
+            background-color: #f06292;
+        }
+        .btn-pink:hover {
+            background-color: #ec407a;
+        }
+        .btn-green {
+            background-color: #4CAF50;
+        }
+        .btn-green:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="fragments/common-header :: common-header"></div>
+
+<form th:method="POST" th:action="@{/sklad/products}" th:object="${skladProductFilter}">
+
+    <div class="header">
+        <h2>Товары в магазине</h2>
+
+        <!-- Отображение сообщения об ошибке -->
+        <div th:if="${error}" class="error-message" th:text="${error}"></div>
+
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+            <div style="display: flex; gap: 10px;">
+                <a th:href="@{/sklad/supplies/baskets/add}" class="add-product-link">Оприходовать новый товар</a>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" name="method" class="btn btn-green" value="applyFilter">Применить фильтр</button>
+                <button type="submit" name="method" class="btn btn-pink" value="resetFilter">Сбросить фильтр</button>
+            </div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>EQUIVALENT GROUP ID</th>
+            <th>Название товара</th>
+            <th>Модель машины</th>
+            <th>Модель мотора</th>
+            <th>Артикул, OEM</th>
+            <th>Артикул, КРОСС</th>
+            <th>Остаток</th>
+            <th>Бренд</th>
+            <th class="private-info">(INNER)</th>
+            <th class="private-info">Комментарий</th>
+        </tr>
+        <tr>
+            <th><input type="text" th:field="*{equivalentProductInfo.groupId}" style="width: 100%;"></th>
+
+            <th><input type="text" th:field="*{product.productName.productName}" style="width: 100%;"></th>
+
+            <th><input type="text" th:field="*{product.carModel}" style="width: 100%;"></th>
+
+            <th><input type="text" th:field="*{product.engineModel}" style="width: 100%;"></th>
+
+            <th><input type="text" th:field="*{product.oemArticleNumber}" style="width: 100%;"></th>
+
+            <th><input type="text" th:field="*{product.crossArticleNumber}" style="width: 100%;"></th>
+
+            <th></th>
+
+            <th><input type="text" th:field="*{product.brand.brandName}" style="width: 100%;"></th>
+
+            <th class="private-info"></th>
+
+            <th class="private-info"><input type="text" th:field="*{product.notes}" style="width: 100%;"></th>
+        </tr>
+        </thead>
+        <tbody>
+
+        <tr>
+            <td colspan="10"></td>
+        </tr>
+
+        <tr th:each="productView : ${allProductsInStock}"
+            th:with="link='/sklad/products/' + ${productView.getProduct().getId()} + '/supplies', product=${productView.getProduct()},
+                     groupId=${product.getEquivalentProductInfo().getGroupId()}"
+            th:style="${groupId != 0} ? 'background-color: ' + ${utils.getBackgroundColorByGroupId(groupId)} : ''">
+
+            <td th:if="${groupId != 0}"><a th:href="${link}" th:text="${groupId}"></a></td>
+            <td th:unless="${groupId != 0}"></td>
+
+            <td><a th:href="${link}" th:text="${product.getProductName().getProductName()}"></a></td>
+            <td><a th:href="${link}" th:text="${product.getCarModel()}"></a></td>
+            <td><a th:href="${link}" th:text="${product.getEngineModel()}"></a></td>
+            <td><a th:href="${link}" th:text="${product.getOemArticleNumber()}"></a></td>
+            <td><a th:href="${link}" th:text="${product.getCrossArticleNumber()}"></a></td>
+
+            <td><a th:href="${link}" th:text="${productView.getStockBalance()}"></a></td>
+
+            <td><a th:href="${link}" th:text="${product.getBrand().getBrandName()}"></a></td>
+            <td><a th:href="${link}" th:text="${productView.getPriceDollar()}"></a></td>
+
+            <td><a th:href="${link}" th:title="${product.getNotes()}" th:text="${utils.getTruncatedText(product.getNotes(), 7)}"></a></td>
+        </tr>
+        </tbody>
+    </table>
+</form>
+
+</body>
+</html>
