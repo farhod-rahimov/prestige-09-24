@@ -1,6 +1,7 @@
 package com.prestige.controllers.prestige;
 
 import com.prestige.controllers.abstracts.AbstractProductsController;
+import com.prestige.dao.prestige.PrestigeAllSalesDAO;
 import com.prestige.dao.prestige.PrestigeAllSuppliesDAO;
 import com.prestige.dao.prestige.PrestigeSettingsDAO;
 import com.prestige.models.filters.ProductFilter;
@@ -17,8 +18,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class PrestigeProductsController extends AbstractProductsController {
 
     @Autowired
-    public PrestigeProductsController(PrestigeAllSuppliesDAO prestigeAllSuppliesDAO, PrestigeSettingsDAO prestigeSettingsDAO) {
-        super(prestigeAllSuppliesDAO, prestigeSettingsDAO, "prestige");
+    public PrestigeProductsController(PrestigeAllSuppliesDAO prestigeAllSuppliesDAO,
+                                      PrestigeSettingsDAO prestigeSettingsDAO,
+                                      PrestigeAllSalesDAO prestigeAllSalesDAO) {
+
+        super(prestigeAllSuppliesDAO, prestigeAllSalesDAO, prestigeSettingsDAO, "prestige");
     }
 
     @PostMapping()

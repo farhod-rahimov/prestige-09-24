@@ -1,6 +1,7 @@
 package com.prestige.controllers.sklad;
 
 import com.prestige.controllers.abstracts.AbstractProductsController;
+import com.prestige.dao.sklad.SkladAllSalesDAO;
 import com.prestige.dao.sklad.SkladAllSuppliesDAO;
 import com.prestige.dao.sklad.SkladSettingsDAO;
 import com.prestige.models.filters.ProductFilter;
@@ -17,8 +18,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class SkladProductsController extends AbstractProductsController {
 
     @Autowired
-    public SkladProductsController(SkladAllSuppliesDAO skladAllSuppliesDAO, SkladSettingsDAO skladSettingsDAO) {
-        super(skladAllSuppliesDAO, skladSettingsDAO, "sklad");
+    public SkladProductsController(SkladAllSuppliesDAO skladAllSuppliesDAO,
+                                   SkladSettingsDAO skladSettingsDAO,
+                                   SkladAllSalesDAO skladAllSalesDAO) {
+
+        super(skladAllSuppliesDAO, skladAllSalesDAO, skladSettingsDAO, "sklad");
     }
 
     @PostMapping()

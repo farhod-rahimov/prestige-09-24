@@ -1,5 +1,6 @@
 package com.prestige.controllers.abstracts;
 
+import com.prestige.dao.abstracts.AbstractAllSalesDAO;
 import com.prestige.dao.abstracts.AbstractAllSuppliesDAO;
 import com.prestige.dao.abstracts.AbstractSettingsDAO;
 import com.prestige.models.RetailProduct;
@@ -19,6 +20,8 @@ import java.util.List;
 public abstract class AbstractProductsController {
 
     protected final AbstractAllSuppliesDAO allSuppliesDAO;
+
+    protected final AbstractAllSalesDAO allSalesDAO;
 
     protected final AbstractSettingsDAO settingsDAO;
 
