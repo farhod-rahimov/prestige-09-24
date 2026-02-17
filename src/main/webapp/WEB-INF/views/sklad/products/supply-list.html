@@ -94,7 +94,6 @@
         <th>Кол-во</th>
         <th>Бренд</th>
         <th class="private-info">(INNER)</th>
-        <th class="private-info">ID корзины</th>
         <th class="private-info">Поставщик</th>
         <th class="private-info">Дата и время поступления</th>
         <th class="private-info">Комментарий</th>
@@ -102,7 +101,7 @@
     </thead>
     <tbody>
 
-    <tr th:each="item : ${skladProductSupplyList}"
+    <tr th:each="item : ${productSupplyList}"
         th:with="product=${item.getProduct()}">
 
         <td><a th:text="${product.getProductName().getProductName()}"></a></td>
@@ -114,7 +113,6 @@
         <td><a th:text="${item.getStockBalance()}"></a></td>
 
         <td><a th:text="${product.getBrand().getBrandName()}"></a></td>
-        <td><a th:text="${item.getPriceDollar()}"></a></td>
         <td><a th:text="${item.getPriceDollar()}"></a></td>
 
         <td><a th:text="${item.getSupplier().getStoreName()}"></a></td>

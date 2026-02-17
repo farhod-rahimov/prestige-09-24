@@ -5,6 +5,7 @@ import com.prestige.dao.mappers.ProductMapperWrappedInSales;
 import com.prestige.dao.mappers.ProductNameMapper;
 import com.prestige.models.*;
 import com.prestige.models.filters.BasketFilter;
+import com.prestige.models.filters.ProductFilter;
 import com.prestige.service.Utils;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -48,6 +49,12 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
     public abstract void saveNewSupply(B basket, S supply);
 
     public abstract void updateQuantityAndPrices(List<S> suppliesList);
+
+    public abstract List<RetailProduct> findProductSupplyListByProductId(Integer productId);
+
+    public abstract List<RetailProductView> findAllProductsInStock();
+
+    public abstract List<RetailProductView> findAllProductsInStockWIthFilter(ProductFilter productFilter);
 
     protected void setSuppliesIds(List<S> suppliesList, Integer basketId) {
         List<S> allBasketSavedSupplies = findAllSuppliesByBasketId(basketId);

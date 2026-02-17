@@ -192,11 +192,13 @@ public class SkladAllSuppliesDAO extends AbstractAllSuppliesDAO<SkladSupply, Skl
         jdbcTemplate.update(sql, new Object[]{basket.getTotalSumSupplierCurrency(), utils.getCurrentDateAndTime(), basket.getId()});
     }
 
-    public List<RetailProductView> findAllSkladProductsInStock() {
+    @Override
+    public List<RetailProductView> findAllProductsInStock() {
         return findAllSkladProductsInStockInternal(null);
     }
 
-    public List<RetailProductView> findAllSkladProductsInStockWIthFilter(ProductFilter productFilter) {
+    @Override
+    public List<RetailProductView> findAllProductsInStockWIthFilter(ProductFilter productFilter) {
         return findAllSkladProductsInStockInternal(productFilter);
     }
 
@@ -331,7 +333,8 @@ public class SkladAllSuppliesDAO extends AbstractAllSuppliesDAO<SkladSupply, Skl
         return jdbcTemplate.query(sql, bindings.toArray(), new RetailProductViewMapper());
     }
 
-    public List<RetailProduct> findSkladProductSupplyListByProductId(Integer productId) {
+    @Override
+    public List<RetailProduct> findProductSupplyListByProductId(Integer productId) {
         String sql =    "SELECT " +
                             "sas.id as pas_id, " +
                             "cp.id as cp_id, " +

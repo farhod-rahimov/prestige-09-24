@@ -157,11 +157,13 @@ public class PrestigeAllSuppliesDAO extends AbstractAllSuppliesDAO<Supply, Suppl
         jdbcTemplate.update(sql, new Object[]{basket.getTotalSum(), utils.getCurrentDateAndTime(), basket.getId()});
     }
 
-    public List<RetailProductView> findAllPrestigeProductsInStock() {
+    @Override
+    public List<RetailProductView> findAllProductsInStock() {
         return findAllPrestigeProductsInStockInternal(null);
     }
 
-    public List<RetailProductView> findAllPrestigeProductsInStockWIthFilter(ProductFilter productFilter) {
+    @Override
+    public List<RetailProductView> findAllProductsInStockWIthFilter(ProductFilter productFilter) {
         return findAllPrestigeProductsInStockInternal(productFilter);
     }
 
@@ -296,7 +298,8 @@ public class PrestigeAllSuppliesDAO extends AbstractAllSuppliesDAO<Supply, Suppl
         return jdbcTemplate.query(sql, bindings.toArray(), new RetailProductViewMapper());
     }
 
-    public List<RetailProduct> findPrestigeProductSupplyListByProductId(Integer productId) {
+    @Override
+    public List<RetailProduct> findProductSupplyListByProductId(Integer productId) {
         String sql =    "SELECT " +
                             "pas.id as pas_id, " +
                             "cp.id as cp_id, " +

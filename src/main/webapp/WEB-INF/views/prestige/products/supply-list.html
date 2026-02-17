@@ -103,7 +103,7 @@
     </thead>
     <tbody>
 
-    <tr th:each="item : ${prestigeProductSupplyList}"
+    <tr th:each="item : ${productSupplyList}"
         th:with="product=${item.getProduct()}">
 
         <td><a th:text="${product.getProductName().getProductName()}"></a></td>
