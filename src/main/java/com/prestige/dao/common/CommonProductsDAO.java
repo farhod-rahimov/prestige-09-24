@@ -71,61 +71,58 @@ public class CommonProductsDAO {
 
                         "WHERE 1 = 1 ";
 
-        if (productFilter != null) {
+        if (productFilter != null && productFilter.getProduct() != null) {
+            Product product = productFilter.getProduct();
 
-            Integer groupId = productFilter.getEquivalentProductInfo().getGroupId();
+            Integer groupId = product.getEquivalentProductInfo().getGroupId();
             if (groupId != null && groupId != 0) {
                 sql +=  "AND cpe.group_id = ? ";
                 bindings.add(groupId);
             }
 
-            Integer productId = productFilter.getEquivalentProductInfo().getProductId();
+            Integer productId = product.getId();
             if (productId != null && productId != 0) {
                 sql +=  "AND cp.id  = ? ";
                 bindings.add(productId);
             }
 
-            Product product = productFilter.getProduct();
-            if (product != null) {
+            ProductName productName = product.getProductName();
+            if (productName != null && productName.getProductName() != null &&
+                    !productName.getProductName().isEmpty()) {
 
-                ProductName productName = product.getProductName();
-                if (productName != null && productName.getProductName() != null &&
-                        !productName.getProductName().isEmpty()) {
+                sql +=  "AND cpn.product_name ILIKE ? ESCAPE '\\' ";
+                bindings.add(productName.getProductName());
+            }
 
-                    sql +=  "AND cpn.product_name ILIKE ? ESCAPE '\\' ";
-                    bindings.add(productName.getProductName());
-                }
+            if (product.getCarModel() != null && !product.getCarModel().isEmpty()) {
+                sql +=  "AND cp.car_model ILIKE ? ESCAPE '\\' ";
+                bindings.add(product.getCarModel());
+            }
 
-                if (product.getCarModel() != null && !product.getCarModel().isEmpty()) {
-                    sql +=  "AND cp.car_model ILIKE ? ESCAPE '\\' ";
-                    bindings.add(product.getCarModel());
-                }
+            if (product.getEngineModel() != null && !product.getEngineModel().isEmpty()) {
+                sql +=  "AND cp.engine_model ILIKE ? ESCAPE '\\' ";
+                bindings.add(product.getEngineModel());
+            }
 
-                if (product.getEngineModel() != null && !product.getEngineModel().isEmpty()) {
-                    sql +=  "AND cp.engine_model ILIKE ? ESCAPE '\\' ";
-                    bindings.add(product.getEngineModel());
-                }
+            if (product.getOemArticleNumber() != null && !product.getOemArticleNumber().isEmpty()) {
+                sql +=  "AND cp.oem_article_number ILIKE ? ESCAPE '\\' ";
+                bindings.add(product.getOemArticleNumber());
+            }
 
-                if (product.getOemArticleNumber() != null && !product.getOemArticleNumber().isEmpty()) {
-                    sql +=  "AND cp.oem_article_number ILIKE ? ESCAPE '\\' ";
-                    bindings.add(product.getOemArticleNumber());
-                }
+            if (product.getCrossArticleNumber() != null && !product.getCrossArticleNumber().isEmpty()) {
+                sql +=  "AND cp.cross_article_number ILIKE ? ESCAPE '\\' ";
+                bindings.add(product.getCrossArticleNumber());
+            }
 
-                if (product.getCrossArticleNumber() != null && !product.getCrossArticleNumber().isEmpty()) {
-                    sql +=  "AND cp.cross_article_number ILIKE ? ESCAPE '\\' ";
-                    bindings.add(product.getCrossArticleNumber());
-                }
+            Brand brand = product.getBrand();
+            if (brand != null && brand.getBrandName() != null && !brand.getBrandName().isEmpty()) {
+                sql +=  "AND cbn.brand_name ILIKE ? ESCAPE '\\' ";
+                bindings.add(brand.getBrandName());
+            }
 
-                Brand brand = product.getBrand();
-                if (brand != null && brand.getBrandName() != null && !brand.getBrandName().isEmpty()) {
-                    sql +=  "AND cbn.brand_name ILIKE ? ESCAPE '\\' ";
-                    bindings.add(brand.getBrandName());
-                }
-
-                if (product.getNotes() != null && !product.getNotes().isEmpty()) {
-                    sql +=  "AND cp.notes ILIKE ? ESCAPE '\\' ";
-                    bindings.add(product.getNotes());
-                }
+            if (product.getNotes() != null && !product.getNotes().isEmpty()) {
+                sql +=  "AND cp.notes ILIKE ? ESCAPE '\\' ";
+                bindings.add(product.getNotes());
             }
         }
 

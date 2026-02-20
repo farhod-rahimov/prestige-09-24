@@ -56,7 +56,7 @@
             width: 100px;
             text-align: center;
         }
-        th:nth-child(7), td:nth-child(7), th:nth-child(9), td:nth-child(9) {
+        th:nth-child(2), td:nth-child(2), th:nth-child(8), td:nth-child(8), th:nth-child(10), td:nth-child(10) {
             width: 60px;
             text-align: center;
         }
@@ -133,6 +133,7 @@
         <thead>
         <tr>
             <th>EQUIVALENT GROUP ID</th>
+            <th>ID товара</th>
             <th>Название товара</th>
             <th>Модель машины</th>
             <th>Модель мотора</th>
@@ -144,7 +145,9 @@
             <th class="private-info">Комментарий</th>
         </tr>
         <tr>
-            <th><input type="text" th:field="*{equivalentProductInfo.groupId}" style="width: 100%;"></th>
+            <th><input type="number" th:field="*{product.equivalentProductInfo.groupId}" style="width: 100%;"></th>
+
+            <th><input type="number" th:field="*{product.id}" style="width: 100%;"></th>
 
             <th><input type="text" th:field="*{product.productName.productName}" style="width: 100%;"></th>
 
@@ -168,7 +171,7 @@
         <tbody>
 
         <tr>
-            <td colspan="10"></td>
+            <td colspan="11"></td>
         </tr>
 
         <tr th:each="productView : ${allProductsInStock}"
@@ -179,6 +182,7 @@
             <td th:if="${groupId != 0}"><a th:href="${link}" th:text="${groupId}"></a></td>
             <td th:unless="${groupId != 0}"></td>
 
+            <td><a th:href="${link}" th:text="${product.getId()}"></a></td>
             <td><a th:href="${link}" th:text="${product.getProductName().getProductName()}"></a></td>
             <td><a th:href="${link}" th:text="${product.getCarModel()}"></a></td>
             <td><a th:href="${link}" th:text="${product.getEngineModel()}"></a></td>

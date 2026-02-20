@@ -17,7 +17,7 @@ public class RetailProduct extends RetailProductView {
 
     private Integer id;
 
-    private Timestamp receivedDateTime; // TODO: заменить значение на receivedDateTime
+    private Timestamp receivedDateTime;
 
     private Supplier supplier;
 

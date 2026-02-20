@@ -1,8 +1,8 @@
 package com.prestige.dao.abstracts;
 
 import com.prestige.dao.mappers.SalesMapper;
-import com.prestige.models.Sales;
-import com.prestige.models.SalesBasket;
+import com.prestige.models.*;
+import com.prestige.models.filters.SalesHistoryFilter;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -11,6 +11,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,6 +37,16 @@ public abstract class AbstractAllSalesDAO {
     }
 
     public List<Sales> findAllSalesByBasketId(Integer basketId) {
+        return findAllSalesByBasketIdInternal(basketId, null);
+    }
+
+    public List<Sales> findAllSalesByBasketIdWithFilter(Integer basketId, SalesHistoryFilter salesHistoryFilter) {
+        return findAllSalesByBasketIdInternal(basketId, salesHistoryFilter);
+    }
+
+    private List<Sales> findAllSalesByBasketIdInternal(Integer basketId, SalesHistoryFilter salesHistoryFilter) {
+        List<Object> bindings = new ArrayList();
+
         String sql =    "SELECT " +
 
                             "pas.id, " +
@@ -65,10 +76,67 @@ public abstract class AbstractAllSalesDAO {
                         "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
                         "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id " +
 
-                        "WHERE pas.basket_id = ? " +
-                        "ORDER BY (pas.id)";
+                        "WHERE pas.basket_id = ? ";
 
-        return jdbcTemplate.query(sql, new Object[] {basketId}, new SalesMapper());
+        bindings.add(basketId);
+
+        if (salesHistoryFilter != null && salesHistoryFilter.getProduct() != null) {
+            Product product = salesHistoryFilter.getProduct();
+
+            Integer groupId = product.getEquivalentProductInfo().getGroupId();
+            if (groupId != null && groupId != 0) {
+                sql +=  "AND cpe.group_id = ? ";
+                bindings.add(groupId);
+            }
+
+            Integer productId = product.getId();
+            if (productId != null && productId != 0) {
+                sql +=  "AND cp.id  = ? ";
+                bindings.add(productId);
+            }
+
+            ProductName productName = product.getProductName();
+            if (productName != null && productName.getProductName() != null &&
+                    !productName.getProductName().isEmpty()) {
+
+                sql +=  "AND cpn.product_name ILIKE ? ESCAPE '\\' ";
+                bindings.add(productName.getProductName());
+            }
+
+            if (product.getCarModel() != null && !product.getCarModel().isEmpty()) {
+                sql +=  "AND cp.car_model ILIKE ? ESCAPE '\\' ";
+                bindings.add(product.getCarModel());
+            }
+
+            if (product.getEngineModel() != null && !product.getEngineModel().isEmpty()) {
+                sql +=  "AND cp.engine_model ILIKE ? ESCAPE '\\' ";
+                bindings.add(product.getEngineModel());
+            }
+
+            if (product.getOemArticleNumber() != null && !product.getOemArticleNumber().isEmpty()) {
+                sql +=  "AND cp.oem_article_number ILIKE ? ESCAPE '\\' ";
+                bindings.add(product.getOemArticleNumber());
+            }
+
+            if (product.getCrossArticleNumber() != null && !product.getCrossArticleNumber().isEmpty()) {
+                sql +=  "AND cp.cross_article_number ILIKE ? ESCAPE '\\' ";
+                bindings.add(product.getCrossArticleNumber());
+            }
+
+            Brand brand = product.getBrand();
+            if (brand != null && brand.getBrandName() != null && !brand.getBrandName().isEmpty()) {
+                sql +=  "AND cbn.brand_name ILIKE ? ESCAPE '\\' ";
+                bindings.add(brand.getBrandName());
+            }
+
+            if (product.getNotes() != null && !product.getNotes().isEmpty()) {
+                sql +=  "AND cp.notes ILIKE ? ESCAPE '\\' ";
+                bindings.add(product.getNotes());
+            }
+        }
+        sql +=          "ORDER BY (pas. id)";
+
+        return jdbcTemplate.query(sql, bindings.toArray(), new SalesMapper());
     }
 
     public void saveNewSalesList(SalesBasket basket, List<Sales> salesList) {

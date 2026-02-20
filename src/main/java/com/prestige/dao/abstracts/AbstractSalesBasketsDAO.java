@@ -2,6 +2,7 @@ package com.prestige.dao.abstracts;
 
 import com.prestige.dao.mappers.SalesBasketMapper;
 import com.prestige.models.SalesBasket;
+import com.prestige.models.filters.SalesHistoryFilter;
 import com.prestige.service.Utils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -9,6 +10,9 @@ import org.springframework.jdbc.support.KeyHolder;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractSalesBasketsDAO {
@@ -42,14 +46,65 @@ public abstract class AbstractSalesBasketsDAO {
     }
 
     public List<SalesBasket> findAllBaskets() {
+        return findAllBasketsInternal(null, null);
+    }
+
+    public List<SalesBasket> findAllSoldBaskets() {
+        return findAllBasketsInternal(SalesBasket.EStatus.SOLD, null);
+    }
+
+    public List<SalesBasket> findAllSoldBasketsWithFilter(SalesHistoryFilter salesHistoryFilter) {
+        return findAllBasketsInternal(SalesBasket.EStatus.SOLD, salesHistoryFilter);
+    }
+
+    public List<SalesBasket> findAllBasketsInternal(SalesBasket.EStatus status, SalesHistoryFilter salesHistoryFilter) {
         String sql =    "SELECT " +
                             "psb.id, psb.created_date_time, psb.last_changed_date_time, " +
                             "pc.id, pc.name, pc.phone_number, " +
                             "psb.total_sum, psb.notes, psb.status " +
                         "FROM " + salesBasketsTableName + " psb " +
                         "JOIN " + clientsTableName + " pc on psb.client_id = pc.id " +
-                        "ORDER BY (psb.id)";
+                        "WHERE 1 = 1 ";
 
+        List<Object> bindings = new ArrayList();
+
+        if (status != null) {
+            sql +=      "AND psb.status = ? ";
+            bindings.add(status.getIntValue());
+        }
+
+        if (salesHistoryFilter != null) {
+
+            if (!salesHistoryFilter.getClientName().isEmpty()) {
+                sql +=  "AND pc.name ILIKE ? ESCAPE '\\' ";
+                bindings.add(salesHistoryFilter.getClientName());
+            }
+
+            if (salesHistoryFilter.getSoldDate() != null) {
+
+                LocalDate date = salesHistoryFilter.getSoldDate();
+
+                LocalDateTime start = date.atStartOfDay();
+                LocalDateTime end = date.plusDays(1).atStartOfDay();
+
+                sql += "AND psb.last_changed_date_time >= ? ";
+                sql += "AND psb.last_changed_date_time < ? ";
+
+                bindings.add(start);
+                bindings.add(end);
+            }
+
+            if (salesHistoryFilter.getBasketId() != null) {
+                sql += "AND psb.id = ? ";
+                bindings.add(salesHistoryFilter.getBasketId());
+            }
+        }
+
+        sql +=          "ORDER BY (psb.id)";
+
+        if (!bindings.isEmpty()) {
+            return jdbcTemplate.query(sql, bindings.toArray() , new SalesBasketMapper());
+        }
         return jdbcTemplate.query(sql, new SalesBasketMapper());
     }
 

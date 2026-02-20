@@ -1,7 +1,6 @@
 package com.prestige.models.filters;
 
 import com.prestige.models.Brand;
-import com.prestige.models.EquivalentProductInfo;
 import com.prestige.models.Product;
 import com.prestige.models.ProductName;
 import lombok.AllArgsConstructor;
@@ -17,21 +16,17 @@ import java.util.Objects;
 @Setter
 public class ProductFilter extends AbstractBaseFilter {
 
-    private EquivalentProductInfo equivalentProductInfo;
-
-    private Product product;
+    protected Product product;
 
     public ProductFilter(ProductFilter productFilter) {
 
         if (productFilter != null) {
-            equivalentProductInfo = new EquivalentProductInfo(productFilter.getEquivalentProductInfo());
             product = new Product(productFilter.getProduct());
         }
     }
 
     @Override
     public void clear() {
-        equivalentProductInfo = new EquivalentProductInfo();
         product = new Product();
     }
 
@@ -65,8 +60,7 @@ public class ProductFilter extends AbstractBaseFilter {
         if (obj == null || getClass() != obj.getClass()) return false;
 
         ProductFilter other = (ProductFilter)obj;
-        return  Objects.equals(equivalentProductInfo, other.equivalentProductInfo) &&
-                Objects.equals(product, other.product);
+        return  Objects.equals(product, other.product);
     }
 
 }

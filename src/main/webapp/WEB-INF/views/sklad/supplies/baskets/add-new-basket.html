@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" th:href="@{/css/common-header.css}">
-    <title>Новое поступление</title>
+    <title th:if="${skladSupplyBasket != null && skladSupplyBasket.getId() != null}" th:text="'Поступление №'+ ${skladSupplyBasket.getId()}"></title>
+    <title th:unless="${skladSupplyBasket != null && skladSupplyBasket.getId() != null}">Новое поступление</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -150,7 +151,8 @@
 <div th:replace="fragments/common-header :: common-header"></div>
 
 <div class="header">
-    <h2>Новое поступление</h2>
+    <h2 th:if="${skladSupplyBasket != null && skladSupplyBasket.getId() != null}" th:text="'Поступление №'+ ${skladSupplyBasket.getId()}"></h2>
+    <h2 th:unless="${skladSupplyBasket != null && skladSupplyBasket.getId() != null}">Новое поступление</h2>
 </div>
 
 <form th:method="POST" th:action="@{/sklad/supplies/baskets}" th:object="${skladSupplyBasket}">
