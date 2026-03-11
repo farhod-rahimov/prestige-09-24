@@ -4,10 +4,7 @@ import com.prestige.dao.abstracts.*;
 import com.prestige.dao.common.CommonBrandNamesDAO;
 import com.prestige.dao.common.CommonProductNamesDAO;
 import com.prestige.dao.common.CommonProductsDAO;
-import com.prestige.models.Brand;
-import com.prestige.models.Sales;
-import com.prestige.models.SalesBasket;
-import com.prestige.models.Settings;
+import com.prestige.models.*;
 import com.prestige.models.enums.EStep;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataAccessException;
@@ -19,8 +16,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,6 +52,32 @@ public abstract class AbstractSalesBasketsController {
         return uriPrefix.contains("prestige") ? "salesBasket" : "skladSalesBasket";
     }
 
+    private Map<String, SalesTabState> getSalesTabStateMap(HttpSession session) {
+        Map<String, SalesTabState> map = (Map<String, SalesTabState>) session.getAttribute("salesTabStateMap");
+
+        if (map == null) {
+            map = new HashMap<>();
+            session.setAttribute("salesTabStateMap", map);
+        }
+        else {
+            map.entrySet().removeIf(e ->
+                    e.getValue().getCreatedDateTime().isBefore(LocalDateTime.now().minusHours(1)));
+        }
+        return map;
+    }
+
+    protected SalesTabState getSalesTabState(HttpSession session, String tabId) {
+        return getSalesTabStateMap(session).get(tabId);
+    }
+
+    protected void saveSalesTabState(HttpSession session, SalesTabState state) {
+        getSalesTabStateMap(session).put(state.getTabId(), state);
+    }
+
+    protected void removeSalesTabState(HttpSession session, String tabId) {
+        getSalesTabStateMap(session).remove(tabId);
+    }
+
     @GetMapping
     public String showAllBaskets(Model model) {
         model.addAttribute("allBaskets", salesBasketsDAO.findAllBaskets());
@@ -62,38 +87,162 @@ public abstract class AbstractSalesBasketsController {
     }
 
     @GetMapping("/add")
-    public String addNewBasketGet(Model model) {
-        model.addAttribute(getModelBasketName(), new SalesBasket());
-        model.addAttribute(getModelStepName(), EStep.CLIENT_NAME_SELECTION);
+    public String addNewBasketGet(Model model, HttpSession session) {
+        SalesTabState state = new SalesTabState(UUID.randomUUID().toString(), EStep.CLIENT_NAME_SELECTION, new SalesBasket());
+        saveSalesTabState(session, state);
+
+        model.addAttribute("tabId", state.getTabId());
+        model.addAttribute(getModelBasketName(), state.getBasket());
+        model.addAttribute(getModelStepName(), state.getStep());
         model.addAttribute("allClientNames", clientsDAO.findUniqueClientNames());
 
         return String.format("%s/sales/baskets/add-new-basket", uriPrefix);
     }
 
-    protected String postMethodDispatcherInternal(SalesBasket salesBasket, String method, List<Integer> selectedSalesIds,
-                                               BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
+    private void patchClientNameSelection(SalesBasket salesBasket, SalesBasket salesBasketForm) {
+        salesBasket.getClient().setName(salesBasketForm.getClient().getName());
+    }
+
+    private void patchClientPhoneNumberSelection(SalesBasket salesBasket, SalesBasket salesBasketForm) {
+        salesBasket.getClient().setPhoneNumber(salesBasketForm.getClient().getPhoneNumber());
+    }
+
+    private void patchProductNameSelection(SalesBasket salesBasket, SalesBasket salesBasketForm) {
+        int lastIndex = salesBasket.getSalesList().size() - 1;
+        ProductName productNameForm = salesBasketForm.getSalesList().get(lastIndex).getProduct().getProductName();
+        ProductName productName = salesBasket.getSalesList().get(lastIndex).getProduct().getProductName();
+
+        productName.setId(productNameForm.getId());
+    }
+
+    private void patchProductCarModelSelection(SalesBasket salesBasket, SalesBasket salesBasketForm) {
+        int lastIndex = salesBasket.getSalesList().size() - 1;
+        salesBasket.getSalesList().get(lastIndex).getProduct().setCarModel(
+                salesBasketForm.getSalesList().get(lastIndex).getProduct().getCarModel());
+    }
+
+    private void patchProductEngineModelSelection(SalesBasket salesBasket, SalesBasket salesBasketForm) {
+        int lastIndex = salesBasket.getSalesList().size() - 1;
+        salesBasket.getSalesList().get(lastIndex).getProduct().setEngineModel(
+                salesBasketForm.getSalesList().get(lastIndex).getProduct().getEngineModel());
+    }
+
+    private void patchProductOemArticleNumberSelection(SalesBasket salesBasket, SalesBasket salesBasketForm) {
+        int lastIndex = salesBasket.getSalesList().size() - 1;
+        salesBasket.getSalesList().get(lastIndex).getProduct().setOemArticleNumber(
+                salesBasketForm.getSalesList().get(lastIndex).getProduct().getOemArticleNumber());
+    }
+
+    private void patchProductCrossArticleNumberSelection(SalesBasket salesBasket, SalesBasket salesBasketForm) {
+        int lastIndex = salesBasket.getSalesList().size() - 1;
+        salesBasket.getSalesList().get(lastIndex).getProduct().setCrossArticleNumber(
+                salesBasketForm.getSalesList().get(lastIndex).getProduct().getCrossArticleNumber());
+    }
+
+    private void patchProductBrandSelection(SalesBasket salesBasket, SalesBasket salesBasketForm) {
+        int lastIndex = salesBasket.getSalesList().size() - 1;
+        salesBasket.getSalesList().get(lastIndex).getProduct().getBrand().setId(
+                salesBasketForm.getSalesList().get(lastIndex).getProduct().getBrand().getId());
+    }
+
+    private void patchProductQuantityAndPriceSelection(SalesBasket salesBasket, SalesBasket salesBasketForm) {
+        int lastIndex = salesBasket.getSalesList().size() - 1;
+        salesBasket.getSalesList().get(lastIndex).setQuantity(salesBasketForm.getSalesList().get(lastIndex).getQuantity());
+        salesBasket.getSalesList().get(lastIndex).setSoldPrice(salesBasketForm.getSalesList().get(lastIndex).getSoldPrice());
+    }
+
+    private void patchProductSelectionWithFilter(SalesBasket salesBasket, SalesBasket salesBasketForm) {
+        salesBasket.setFilter(salesBasketForm.getFilter());
+    }
+
+    private void patchDefault(SalesBasket salesBasket, SalesBasket salesBasketForm) {
+
+        for (int i = 0; i < salesBasket.getSalesList().size(); i++) {
+            salesBasket.getSalesList().get(i).setQuantity(salesBasketForm.getSalesList().get(i).getQuantity());
+            salesBasket.getSalesList().get(i).setSoldPrice(salesBasketForm.getSalesList().get(i).getSoldPrice());
+        }
+    }
+
+    private void patchNotes(SalesBasket salesBasket, SalesBasket salesBasketForm) {
+        salesBasket.setNotes(salesBasketForm.getNotes());
+    }
+
+    private void patchSalesBasketFromForm(SalesBasket salesBasket, SalesBasket salesBasketForm, EStep step) {
+
+        switch (step) {
+            case CLIENT_NAME_SELECTION:
+                patchClientNameSelection(salesBasket, salesBasketForm); break;
+            case CLIENT_PHONE_NUMBER_SELECTION:
+                patchClientPhoneNumberSelection(salesBasket, salesBasketForm); break;
+            case PRODUCT_NAME_SELECTION:
+                patchProductNameSelection(salesBasket, salesBasketForm); break;
+            case PRODUCT_CAR_MODEL_SELECTION:
+                patchProductCarModelSelection(salesBasket, salesBasketForm); break;
+            case PRODUCT_ENGINE_MODEL_SELECTION:
+                patchProductEngineModelSelection(salesBasket, salesBasketForm); break;
+            case PRODUCT_OEM_ARTICLE_NUMBER_SELECTION:
+                patchProductOemArticleNumberSelection(salesBasket, salesBasketForm); break;
+            case PRODUCT_CROSS_ARTICLE_NUMBER_SELECTION:
+                patchProductCrossArticleNumberSelection(salesBasket, salesBasketForm); break;
+            case PRODUCT_BRAND_SELECTION:
+                patchProductBrandSelection(salesBasket, salesBasketForm); break;
+            case PRODUCT_QUANTITY_AND_PRICE_SELECTION:
+                patchProductQuantityAndPriceSelection(salesBasket, salesBasketForm); break;
+            case PRODUCT_SELECTION_WITH_FILTER:
+                patchProductSelectionWithFilter(salesBasket, salesBasketForm); break;
+            default:
+                patchDefault(salesBasket, salesBasketForm); break;
+        }
+    }
+
+    protected String postMethodDispatcherInternal(SalesBasket salesBasketForm, String method, String tabId,
+                                                  List<Integer> selectedSalesIds, BindingResult bindingResult,
+                                                  RedirectAttributes redirectAttributes, Model model, HttpSession session) {
+
+        SalesTabState state = getSalesTabState(session, tabId);
+        SalesBasket salesBasket = null;
+
+        if (state != null) {
+
+            if (!method.equals("close")) {
+                salesBasket = state.getBasket();
+
+                if (!method.equals("changeSearchType") && !method.equals("changeBasketType")) {
+                    patchSalesBasketFromForm(salesBasket, salesBasketForm, state.getStep());
+                }
+                patchNotes(salesBasket, salesBasketForm);
+                model.addAttribute("tabId", tabId);
+            }
+        }
+        else if (!method.equals("deleteAllEmptyBaskets")) { // state timed out
+            return String.format("redirect:/%s/sales/baskets/", uriPrefix);
+        }
 
         switch (method) {
             case "deleteAllEmptyBaskets":
                 return deleteAllEmptyBaskets();
             case "changeBasketType":
-                return changeBasketType(salesBasket, model);
+                return changeBasketType(salesBasket, state, model);
             case "resetAddingNewProduct":
-                return resetAddingNewProduct(salesBasket, model);
+                return resetAddingNewProduct(salesBasket, state, model);
             case "changeSearchType":
-                return changeSearchType(salesBasket, model);
+                return changeSearchType(salesBasket, state, model);
             case "markAsSold":
-                return markAsSoldBasket(salesBasket, bindingResult, redirectAttributes);
+                return markAsSoldBasket(salesBasket, bindingResult, redirectAttributes, state, session);
             case "deleteSelected":
-                return deleteSelected(salesBasket, selectedSalesIds);
+                return deleteSelected(salesBasket, selectedSalesIds, state, session);
             case "delete":
-                return deleteBasket(salesBasket, bindingResult, redirectAttributes);
-            case "close":
+                return deleteBasket(salesBasket, bindingResult, redirectAttributes, state, session);
+            case "close": {
+                removeSalesTabState(session, tabId);
                 return String.format("redirect:/%s/sales/baskets", uriPrefix);
+            }
             case "patch":
-                return patchBasket(salesBasket, bindingResult, redirectAttributes, model);
+                return patchBasket(salesBasket, state, bindingResult, redirectAttributes, session, false);
+            case "patchAndClose":
+                return patchBasket(salesBasket, state, bindingResult, redirectAttributes, session, true);
             default:
-                return saveNewBasket(salesBasket, bindingResult, redirectAttributes, model);
+                return saveNewBasket(salesBasket, state, bindingResult, redirectAttributes, session, model);
         }
     }
 
@@ -180,14 +329,27 @@ public abstract class AbstractSalesBasketsController {
     }
 
     private EStep processProductSelectionWithFilter(SalesBasket salesBasket, Model model, EStep salesStep) {
+        Sales sales = salesBasket.getSalesList().get(salesBasket.getSalesList().size() - 1);
+
         salesBasket.getFilter().prepareAllFields();
-        model.addAttribute("allProductNames", allSuppliesDAO.findAllProductNamesWithFilter(salesBasket.getFilter()));
+        List<ProductName> allProductNames = allSuppliesDAO.findAllProductNamesWithFilter(salesBasket.getFilter());
+
+        if (allProductNames.size() == 1) {
+            sales.getProduct().setProductName(allProductNames.get(0));
+            return processProductNameSelection(salesBasket, model, getNextStep(salesStep));
+        }
+        else {
+            model.addAttribute("allProductNames", allProductNames);
+        }
         return getNextStep(salesStep);
     }
 
     private EStep processProductNameSelection(SalesBasket salesBasket, Model model, EStep salesStep) {
         Sales sales = salesBasket.getSalesList().get(salesBasket.getSalesList().size() - 1);
-        sales.getProduct().setProductName(commonProductNamesDAO.findProductNameById(sales.getProduct().getProductName().getId()));
+
+        if (sales.getProduct().getProductName().getProductName() == null) {
+            sales.getProduct().setProductName(commonProductNamesDAO.findProductNameById(sales.getProduct().getProductName().getId()));
+        }
         List<String> allCarModelsList = allSuppliesDAO.findAvailableCarModels(sales.getProduct(), salesBasket.getFilter());
 
         if (allCarModelsList.size() == 1) {
@@ -380,6 +542,8 @@ public abstract class AbstractSalesBasketsController {
     }
 
     private EStep processProductSelectionDone(SalesBasket salesBasket, Model model, EStep salesStep) {
+        salesBasket.setFilter(null);
+
         salesBasket.getSalesList().add(new Sales());
         model.addAttribute("allProductNames", allSuppliesDAO.findAllProductNames());
 
@@ -387,9 +551,11 @@ public abstract class AbstractSalesBasketsController {
     }
 
     private String changeBasketStatus(SalesBasket salesBasket, BindingResult bindingResult,
-                                      RedirectAttributes redirectAttributes, String errorMsg, SalesBasket.EStatus newStatus) {
+                                      RedirectAttributes redirectAttributes, String errorMsg, SalesBasket.EStatus newStatus,
+                                      SalesTabState state, HttpSession session) {
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("error", errorMsg);
+            removeSalesTabState(session, state.getTabId());
             return String.format("redirect:/%s/sales/baskets/%d", uriPrefix, salesBasket.getId());
         }
 
@@ -397,6 +563,7 @@ public abstract class AbstractSalesBasketsController {
         salesBasket.setStatus(newStatus);
         salesBasketsDAO.updateBasketStatus(salesBasket);
 
+        removeSalesTabState(session, state.getTabId());
         return String.format("redirect:/%s/sales/baskets", uriPrefix);
     }
 
@@ -407,14 +574,14 @@ public abstract class AbstractSalesBasketsController {
     }
 
     private String deleteBasket(SalesBasket salesBasket, BindingResult bindingResult,
-                                RedirectAttributes redirectAttributes) {
+                                RedirectAttributes redirectAttributes, SalesTabState state, HttpSession session) {
         String errorMsg = "Возникла ошибка при удалении корзины. Пожалуйста, попробуйте заново.";
 
-        return changeBasketStatus(salesBasket, bindingResult, redirectAttributes, errorMsg, SalesBasket.EStatus.DELETED);
+        return changeBasketStatus(salesBasket, bindingResult, redirectAttributes, errorMsg, SalesBasket.EStatus.DELETED, state, session);
     }
 
-    private String changeBasketType(SalesBasket salesBasket, Model model) {
-        EStep salesStep = (EStep)model.getAttribute(getModelStepName());
+    private String changeBasketType(SalesBasket salesBasket, SalesTabState state, Model model) {
+        EStep salesStep = state.getStep();
         List<Sales> salesList = salesBasket.getSalesList();
 
         if (salesStep == EStep.PRODUCT_SELECTION_DONE) {
@@ -435,44 +602,52 @@ public abstract class AbstractSalesBasketsController {
             salesBasket.setSalesList(salesBasket.getSalesListForUpdate()); // delete all unsaved sales
         }
 
-        model.addAttribute(getModelStepName(), salesStep);
+        state.setStep(salesStep);
+
+        model.addAttribute(getModelStepName(), state.getStep());
+        model.addAttribute(getModelBasketName(), state.getBasket());
+
         return String.format("%s/sales/baskets/add-new-basket", uriPrefix);
     }
 
-    private String resetAddingNewProduct(SalesBasket salesBasket, Model model) {
+    private String resetAddingNewProduct(SalesBasket salesBasket, SalesTabState state, Model model) {
         salesBasket.getSalesList().remove(salesBasket.getSalesList().size() - 1);
-        model.addAttribute(getModelStepName(), EStep.PRODUCT_SELECTION_DONE);
+        state.setStep(EStep.PRODUCT_SELECTION_DONE);
+
+        model.addAttribute(getModelBasketName(), salesBasket);
+        model.addAttribute(getModelStepName(), state.getStep());
 
         return String.format("%s/sales/baskets/add-new-basket", uriPrefix);
     }
 
-    private String changeSearchType(SalesBasket salesBasket, Model model) {
-        EStep salesStep = (EStep)model.getAttribute(getModelStepName());
+    private String changeSearchType(SalesBasket salesBasket, SalesTabState state, Model model) {
+        EStep salesStep = state.getStep();
 
         if (salesStep != EStep.PRODUCT_SELECTION_WITH_FILTER) {
             salesStep = EStep.PRODUCT_SELECTION_WITH_FILTER;
-
-            if (salesBasket.getFilter() != null) {
-                salesBasket.getFilter().clear();
-            }
         }
         else {
             salesStep = EStep.PRODUCT_NAME_SELECTION;
             model.addAttribute("allProductNames", allSuppliesDAO.findAllProductNames());
         }
-        model.addAttribute(getModelStepName(), salesStep);
+        state.setStep(salesStep);
+
+        model.addAttribute(getModelBasketName(), state.getBasket());
+        model.addAttribute(getModelStepName(), state.getStep());
+
         return String.format("%s/sales/baskets/add-new-basket", uriPrefix);
     }
 
     private String markAsSoldBasket(SalesBasket salesBasket, BindingResult bindingResult,
-                                    RedirectAttributes redirectAttributes) {
+                                    RedirectAttributes redirectAttributes, SalesTabState state, HttpSession session) {
         String errorMsg = String.format("Возникла ошибка при %s корзины. Пожалуйста, попробуйте заново.",
                 salesBasket.getStatus() == SalesBasket.EStatus.DELETED ? "восстановлении" : "продаже");
 
-        return changeBasketStatus(salesBasket, bindingResult, redirectAttributes, errorMsg, SalesBasket.EStatus.SOLD);
+        return changeBasketStatus(salesBasket, bindingResult, redirectAttributes, errorMsg, SalesBasket.EStatus.SOLD, state, session);
     }
 
-    private String deleteSelected(SalesBasket salesBasket, List<Integer> selectedSalesIds) {
+    private String deleteSelected(SalesBasket salesBasket, List<Integer> selectedSalesIds,
+                                  SalesTabState state, HttpSession session) {
 
         if (selectedSalesIds != null && !selectedSalesIds.isEmpty()) {
             for (Integer salesId : selectedSalesIds) {
@@ -482,6 +657,8 @@ public abstract class AbstractSalesBasketsController {
             allSalesDAO.deleteSalesIds(selectedSalesIds);
             updateBasketTotalSum(salesBasket);
         }
+        salesBasketsDAO.updateBasketNotes(salesBasket);
+        removeSalesTabState(session, state.getTabId());
         return String.format("redirect:/%s/sales/baskets/%d", uriPrefix, salesBasket.getId());
     }
 
@@ -492,31 +669,41 @@ public abstract class AbstractSalesBasketsController {
         updateBasketTotalSum(salesBasket);
     }
 
-    private String patchBasket(SalesBasket salesBasket, BindingResult bindingResult,
-                               RedirectAttributes redirectAttributes, Model model) {
+    private String patchBasket(SalesBasket salesBasket, SalesTabState state, BindingResult bindingResult,
+                               RedirectAttributes redirectAttributes, HttpSession session, boolean shouldClose) {
 
         if (bindingResult.hasErrors()) {
             String errorMessage = "Возникла ошибка при сохранении корзины. Пожалуйста, попробуйте заново.";
             redirectAttributes.addFlashAttribute("error", errorMessage);
+            removeSalesTabState(session, state.getTabId());
             return String.format("redirect:/%s/sales/baskets/%d", uriPrefix, salesBasket.getId());
         }
 
         patchBasketInternal(salesBasket);
 
-        return String.format("redirect:/%s/sales/baskets", uriPrefix);
+        removeSalesTabState(session, state.getTabId());
+
+        if (shouldClose) {
+            return String.format("redirect:/%s/sales/baskets", uriPrefix);
+        }
+        return String.format("redirect:/%s/sales/baskets/%d", uriPrefix, salesBasket.getId());
     }
 
-    private String saveNewBasket(SalesBasket salesBasket, BindingResult bindingResult,
-                                 RedirectAttributes redirectAttributes, Model model) {
+    private String saveNewBasket(SalesBasket salesBasket, SalesTabState state, BindingResult bindingResult,
+                                 RedirectAttributes redirectAttributes, HttpSession session, Model model) {
 
         if (bindingResult.hasErrors()) {
             String errorMessage = "Возникла ошибка при добавлении товаров в корзину. Пожалуйста, попробуйте заново.";
             redirectAttributes.addFlashAttribute("error", errorMessage);
+            removeSalesTabState(session, state.getTabId());
             return String.format("redirect:/%s/sales/baskets/add", uriPrefix);
         }
 
-        EStep salesStep = processAndGetNextStep(salesBasket, model, (EStep)model.getAttribute(getModelStepName()));
-        model.addAttribute(getModelStepName(), salesStep);
+        EStep salesStep = processAndGetNextStep(salesBasket, model, state.getStep());
+        state.setStep(salesStep);
+
+        model.addAttribute(getModelBasketName(), state.getBasket());
+        model.addAttribute(getModelStepName(), state.getStep());
 
         return String.format("%s/sales/baskets/add-new-basket", uriPrefix);
     }
@@ -535,7 +722,7 @@ public abstract class AbstractSalesBasketsController {
     }
 
     @GetMapping("/{basketId}")
-    public ModelAndView findBasketById(@PathVariable("basketId") Integer basketId, Model model) {
+    public ModelAndView findBasketById(@PathVariable("basketId") Integer basketId, HttpSession session, Model model) {
         ModelAndView mav = new ModelAndView(String.format("%s/sales/baskets/add-new-basket", uriPrefix));
         SalesBasket salesBasket = findBasketById(basketId);
 
@@ -545,8 +732,12 @@ public abstract class AbstractSalesBasketsController {
             mav.addObject("previousPage", String.format("/%s/sales/baskets", uriPrefix));
         }
         else {
-            mav.addObject(getModelBasketName(), salesBasket);
-            mav.addObject(getModelStepName(), EStep.PRODUCT_SELECTION_DONE);
+            SalesTabState state = new SalesTabState(UUID.randomUUID().toString(), EStep.PRODUCT_SELECTION_DONE, salesBasket);
+            saveSalesTabState(session, state);
+
+            mav.addObject("tabId", state.getTabId());
+            mav.addObject(getModelBasketName(), state.getBasket());
+            mav.addObject(getModelStepName(), state.getStep());
         }
         return mav;
     }

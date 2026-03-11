@@ -47,7 +47,7 @@ public class PrestigeAllSalesDAO extends AbstractAllSalesDAO {
 
                         "SELECT " +
                             "pas.common_product_id, " +
-                            "COALESCE(rpt.recommended_price, 0) " +
+                            "rpt.recommended_price " +
                         "FROM prestige_all_sales pas " +
                         "LEFT JOIN recommended_price_table rpt ON rpt.id = pas.common_product_id";
 

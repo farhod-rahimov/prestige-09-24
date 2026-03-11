@@ -10,10 +10,9 @@ import lombok.Setter;
 
 import java.util.Objects;
 
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
+@AllArgsConstructor
 public class ProductFilter extends AbstractBaseFilter {
 
     protected Product product;
@@ -23,6 +22,26 @@ public class ProductFilter extends AbstractBaseFilter {
         if (productFilter != null) {
             product = new Product(productFilter.getProduct());
         }
+    }
+
+    public ProductFilter() {
+        product = new Product();
+    }
+
+    public boolean isNotEmpty() {
+
+        if (product != null) {
+            return  product.getId() != null ||
+                    !product.getProductName().getProductName().isEmpty() ||
+                    !product.getCarModel().isEmpty() ||
+                    !product.getEngineModel().isEmpty() ||
+                    !product.getOemArticleNumber().isEmpty() ||
+                    !product.getCrossArticleNumber().isEmpty() ||
+                    !product.getBrand().getBrandName().isEmpty() ||
+                    !product.getNotes().isEmpty() ||
+                    product.getEquivalentProductInfo().getGroupId() != null;
+        }
+        return true;
     }
 
     @Override

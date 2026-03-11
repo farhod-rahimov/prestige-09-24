@@ -13,11 +13,11 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import javax.servlet.http.HttpSession;
 import java.util.List;
 
 @Controller
 @RequestMapping("/prestige/sales/baskets")
-@SessionAttributes({"salesStep", "salesBasket"})
 public class PrestigeSalesBasketsController extends AbstractSalesBasketsController {
 
     @Autowired
@@ -31,13 +31,13 @@ public class PrestigeSalesBasketsController extends AbstractSalesBasketsControll
     }
 
     @PostMapping()
-    public String postMethodDispatcher(@ModelAttribute("salesBasket") SalesBasket salesBasket,
+    public String postMethodDispatcher(@ModelAttribute("salesBasket") SalesBasket salesBasketForm,
                                        @RequestParam("method") String method,
+                                       @RequestParam(value = "tabId", required = false) String tabId,
                                        @RequestParam(value = "selectedSalesIds", required = false) List<Integer> selectedSalesIds,
-                                       BindingResult bindingResult,
-                                       RedirectAttributes redirectAttributes,
-                                       Model model) {
+                                       BindingResult bindingResult, RedirectAttributes redirectAttributes,
+                                       Model model, HttpSession session) {
 
-        return postMethodDispatcherInternal(salesBasket, method, selectedSalesIds, bindingResult, redirectAttributes, model);
+        return postMethodDispatcherInternal(salesBasketForm, method, tabId, selectedSalesIds, bindingResult, redirectAttributes, model, session);
     }
 }

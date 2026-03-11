@@ -18,9 +18,9 @@ public class Sales {
 
     private Product product;
 
-    private Integer quantity;
+    private Integer quantity = 0;
 
-    private BigDecimal soldPrice;
+    private BigDecimal soldPrice = new BigDecimal(0);
 
     // private infos
 

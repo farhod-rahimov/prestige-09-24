@@ -56,12 +56,20 @@
             width: 100px;
             text-align: center;
         }
-        th:nth-child(2), td:nth-child(2), th:nth-child(8), td:nth-child(8), th:nth-child(11), td:nth-child(11), th:nth-child(12), td:nth-child(12) {
+        th:nth-child(2), td:nth-child(2), th:nth-child(8), td:nth-child(8),
+        th:nth-child(11), td:nth-child(11), th:nth-child(12), td:nth-child(12), th:nth-child(13), td:nth-child(13) {
             width: 60px;
             text-align: center;
         }
         tr:hover {
             background-color: #f1f1f1;
+        }
+        tr:target {
+            outline: 3px solid black;
+            animation: highlightRow 2s ease;
+        }
+        @keyframes highlightRow {
+            0% { background-color: #ffe066; }
         }
         .error-message {
             color: red;
@@ -104,6 +112,25 @@
         .btn-green:hover {
             background-color: #45a049;
         }
+        .btn-blue {
+            background-color: #2196F3;
+        }
+        .btn-blue:hover {
+            background-color: #1976D2;
+        }
+        thead tr:first-child th {
+            position: sticky;
+            top: 60px; /* высота шапки */
+            z-index: 2;
+        }
+        thead tr:nth-child(2) th {
+            position: sticky;
+            top: 138.5px; /* 60px шапка + 78.5px первая строка */
+            z-index: 2;
+        }
+        tbody tr {
+            scroll-margin-top: 188px; /* высота шапки + все sticky строки */
+        }
     </style>
 </head>
 <body>
@@ -126,6 +153,9 @@
                 <button type="submit" name="method" class="btn btn-green" value="applyFilter">Применить фильтр</button>
                 <button type="submit" name="method" class="btn btn-pink" value="resetFilter">Сбросить фильтр</button>
             </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" name="method" class="btn btn-blue" value="applyFilterInList">Показать отфильтрованный товар в списке</button>
+            </div>
         </div>
     </div>
 
@@ -144,45 +174,50 @@
             <th>Бренд</th>
             <th class="private-info">(INNER, SMN)</th>
             <th class="private-info">(INNER)</th>
+            <th class="private-info">(INNER RECMND, SMN)</th>
             <th class="private-info">Комментарий</th>
         </tr>
         <tr>
-            <th><input type="number" th:field="*{product.equivalentProductInfo.groupId}" style="width: 100%;"></th>
+            <th><input type="number" th:value="${prestigeProductFilter.product.equivalentProductInfo.groupId}" th:field="*{product.equivalentProductInfo.groupId}" style="width: 100%;"></th>
 
-            <th><input type="number" th:field="*{product.id}" style="width: 100%;"></th>
+            <th><input type="number" th:value="*{product.id}" th:field="*{product.id}" style="width: 100%;"></th>
 
-            <th><input type="text" th:field="*{product.productName.productName}" style="width: 100%;"></th>
+            <th><input type="text" th:value="*{product.productName.productName}" th:field="*{product.productName.productName}" style="width: 100%;"></th>
 
-            <th><input type="text" th:field="*{product.carModel}" style="width: 100%;"></th>
+            <th><input type="text" th:value="*{product.carModel}" th:field="*{product.carModel}" style="width: 100%;"></th>
 
-            <th><input type="text" th:field="*{product.engineModel}" style="width: 100%;"></th>
+            <th><input type="text" th:value="*{product.engineModel}" th:field="*{product.engineModel}" style="width: 100%;"></th>
 
-            <th><input type="text" th:field="*{product.oemArticleNumber}" style="width: 100%;"></th>
+            <th><input type="text" th:value="*{product.oemArticleNumber}" th:field="*{product.oemArticleNumber}" style="width: 100%;"></th>
 
-            <th><input type="text" th:field="*{product.crossArticleNumber}" style="width: 100%;"></th>
-
-            <th></th>
+            <th><input type="text" th:value="*{product.crossArticleNumber}" th:field="*{product.crossArticleNumber}" style="width: 100%;"></th>
 
             <th></th>
 
-            <th><input type="text" th:field="*{product.brand.brandName}" style="width: 100%;"></th>
+            <th></th>
+
+            <th><input type="text" th:value="*{product.brand.brandName}" th:field="*{product.brand.brandName}" style="width: 100%;"></th>
 
             <th class="private-info"></th>
 
             <th class="private-info"></th>
 
-            <th class="private-info"><input type="text" th:field="*{product.notes}" style="width: 100%;"></th>
+            <th class="private-info"></th>
+
+            <th class="private-info"><input type="text" th:value="*{product.notes}" th:field="*{product.notes}" style="width: 100%;"></th>
+        </tr>
+        <tr>
+            <th style="background-color: #ffffff;" colspan="14"></th>
         </tr>
         </thead>
+
         <tbody>
-
-        <tr>
-            <td colspan="13"></td>
-        </tr>
-
         <tr th:each="productView : ${allProductsInStock}"
-            th:with="link='/prestige/products/' + ${productView.getProduct().getId()} + '/supplies', product=${productView.getProduct()},
-                     groupId=${product.getEquivalentProductInfo().getGroupId()}"
+            th:id="'product-' + ${productView.getProduct().getId()}"
+            th:with="link='/prestige/products/' + ${productView.getProduct().getId()} + '/supplies',
+                     product=${productView.getProduct()},
+                     groupId=${product.getEquivalentProductInfo().getGroupId()},
+                     price=${utils.getConvertedPriceToSmn(productView.getPriceDollar(), magicValue, exchangeRate, 0)}"
             th:style="${groupId != 0} ? 'background-color: ' + ${utils.getBackgroundColorByGroupId(groupId)} : ''">
 
             <td th:if="${groupId != 0}"><a th:href="${link}" th:text="${groupId}"></a></td>
@@ -196,11 +231,18 @@
             <td><a th:href="${link}" th:text="${product.getCrossArticleNumber()}"></a></td>
 
             <td><a th:href="${link}" th:text="${productView.getStockBalance()}"></a></td>
-            <td><a th:href="${link}" th:text="${utils.getConvertedPriceToSmn(productView.getPriceDollar(), magicValue, exchangeRate, 0) + ' СМН'}"></a></td>
+            <td><a th:href="${link}" th:text="${price + ' СМН'}"></a></td>
 
             <td><a th:href="${link}" th:text="${product.getBrand().getBrandName()}"></a></td>
             <td><a th:href="${link}" th:text="${utils.getConvertedPriceToSmn(productView.getPriceDollar(), 0, exchangeRate, 2)}"></a></td>
             <td><a th:href="${link}" th:text="${productView.getPriceDollar()}"></a></td>
+
+            <td th:if="${productView.getRecommendedPrice() != null}">
+                <a th:href="${link}" th:text="${productView.getRecommendedPrice()}"></a>
+            </td>
+            <td th:unless="${productView.getRecommendedPrice() != null}">
+                <a th:href="${link}" th:text="${price}"></a>
+            </td>
 
             <td><a th:href="${link}" th:title="${product.getNotes()}" th:text="${utils.getTruncatedText(product.getNotes(), 7)}"></a></td>
         </tr>

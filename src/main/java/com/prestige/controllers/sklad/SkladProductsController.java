@@ -14,7 +14,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/sklad/products")
-@SessionAttributes({"skladProductFilter"})
 public class SkladProductsController extends AbstractProductsController {
 
     @Autowired

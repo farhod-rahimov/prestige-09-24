@@ -3,15 +3,13 @@ package com.prestige.controllers.abstracts;
 import com.prestige.dao.abstracts.AbstractAllSalesDAO;
 import com.prestige.dao.abstracts.AbstractAllSuppliesDAO;
 import com.prestige.dao.abstracts.AbstractSettingsDAO;
-import com.prestige.models.RetailProduct;
+import com.prestige.models.RetailProductView;
 import com.prestige.models.filters.ProductFilter;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
@@ -34,7 +32,10 @@ public abstract class AbstractProductsController {
     @GetMapping
     public String showAllProductsInStock(Model model) {
         model.addAttribute("allProductsInStock", allSuppliesDAO.findAllProductsInStock());
-        model.addAttribute(getModelFilterName(), new ProductFilter());
+
+        if (model.getAttribute(getModelFilterName()) == null) {
+            model.addAttribute(getModelFilterName(), new ProductFilter());
+        }
 
         if (uriPrefix.contains("prestige")) {
             model.addAttribute("magicValue", settingsDAO.findSettingsByName("magicValue").getValue());
@@ -55,7 +56,9 @@ public abstract class AbstractProductsController {
 
         switch (method) {
             case "applyFilter":
-                return applyFilter(productFilter, model);
+                return applyFilter(productFilter, model, redirectAttributes, false);
+            case "applyFilterInList":
+                return applyFilter(productFilter, model, redirectAttributes, true);
             case "resetFilter":
                 return resetFilter(productFilter);
             default:
@@ -63,17 +66,33 @@ public abstract class AbstractProductsController {
         }
     }
 
-    private String applyFilter(ProductFilter productFilter, Model model) {
+    private String applyFilter(ProductFilter productFilter, Model model, RedirectAttributes redirectAttributes, boolean showInList) {
         ProductFilter productFilterCopy = new ProductFilter(productFilter);
         productFilterCopy.prepareAllFields();
 
-        model.addAttribute("allProductsInStock", allSuppliesDAO.findAllProductsInStockWIthFilter(productFilterCopy));
+        List<RetailProductView> filteredProducts = allSuppliesDAO.findAllProductsInStockWIthFilter(productFilterCopy);
+        Integer entryProductId = null;
+
+        if (showInList) {
+            model.addAttribute("allProductsInStock", allSuppliesDAO.findAllProductsInStock());
+
+            if (productFilterCopy.isNotEmpty() && !filteredProducts.isEmpty()) {
+                entryProductId = filteredProducts.get(0).getProduct().getId();
+            }
+        }
+        else {
+            model.addAttribute("allProductsInStock", filteredProducts);
+        }
 
         if (uriPrefix.contains("prestige")) {
             model.addAttribute("magicValue", settingsDAO.findSettingsByName("magicValue").getValue());
             model.addAttribute("exchangeRate", settingsDAO.findSettingsByName("exchangeRate").getValue());
         }
 
+        if (entryProductId != null) {
+            redirectAttributes.addFlashAttribute(getModelFilterName(), productFilter);
+            return String.format("redirect:/%s/products#product-%d", uriPrefix, entryProductId);
+        }
         return String.format("%s/products/products", uriPrefix);
     }
 
@@ -84,24 +103,13 @@ public abstract class AbstractProductsController {
     }
 
     @GetMapping("/{productId}/supplies")
-    public ModelAndView findAllSuppliesByProductId(@PathVariable("productId") Integer productId, Model model) {
-        ModelAndView mav = new ModelAndView(String.format("%s/products/supply-list", uriPrefix));
+    public String findAllSuppliesByProductId(@PathVariable("productId") Integer productId, Model model) {
+        model.addAttribute("productSupplyList", allSuppliesDAO.findProductSupplyListByProductId(productId));
 
-        List<RetailProduct> productSupplyList = allSuppliesDAO.findProductSupplyListByProductId(productId);
-
-        if (productSupplyList.isEmpty()) {
-            mav.setViewName("errors/404");
-            mav.setStatus(HttpStatus.NOT_FOUND);
-            mav.addObject("previousPage", String.format("/%s/products", uriPrefix));
+        if (uriPrefix.contains("prestige")) {
+            model.addAttribute("magicValue", settingsDAO.findSettingsByName("magicValue").getValue());
+            model.addAttribute("exchangeRate", settingsDAO.findSettingsByName("exchangeRate").getValue());
         }
-        else {
-            mav.addObject("productSupplyList", productSupplyList);
-
-            if (uriPrefix.contains("prestige")) {
-                mav.addObject("magicValue", settingsDAO.findSettingsByName("magicValue").getValue());
-                mav.addObject("exchangeRate", settingsDAO.findSettingsByName("exchangeRate").getValue());
-            }
-        }
-        return mav;
+        return String.format("%s/products/supply-list", uriPrefix);
     }
 }

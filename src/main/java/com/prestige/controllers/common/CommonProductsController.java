@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping({"/prestige/product-management/products",
                  "/sklad/product-management/products"})
-@SessionAttributes({"productStep", "productList", "product", "allProducts", "productFilter"})
+@SessionAttributes({"productStep", "productList", "product", "allProducts"})
 public class CommonProductsController {
 
     private final CommonProductsDAO commonProductsDAO;

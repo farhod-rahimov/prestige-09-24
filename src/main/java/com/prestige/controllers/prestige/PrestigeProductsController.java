@@ -14,7 +14,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/prestige/products")
-@SessionAttributes({"prestigeProductFilter"})
 public class PrestigeProductsController extends AbstractProductsController {
 
     @Autowired

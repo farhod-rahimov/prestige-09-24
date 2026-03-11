@@ -532,6 +532,19 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
                             "WHERE psb.status = " + SalesBasket.EStatus.SOLD.getIntValue() + " " +
                             "GROUP BY pas.common_product_id), " +
 
+                            "recommended_price_info AS (" +
+                                "SELECT " +
+                                    "pas.common_product_id AS id, " +
+                                    "SUM(COALESCE(pas.quantity, 0) * COALESCE(pas.sold_price, 0)) / " +
+                                        "NULLIF(SUM(pas.quantity), 0) AS price " + // в случае если pas.quantity = 0, результат будет null
+                                "FROM prestige_all_sales pas " +
+                                "JOIN prestige_sales_baskets psb ON psb.id = pas.basket_id " +
+                                "WHERE " +
+                                    "psb.created_date_time >= NOW() - INTERVAL '2 years' AND " +
+                                    "psb.status = " + SalesBasket.EStatus.SOLD.getIntValue() + " " +
+                                "GROUP BY pas.common_product_id" +
+                            "), " +
+
                             "supply_info AS (" +
                                 "SELECT " +
                                     "common_product_id AS id, " +
@@ -568,6 +581,7 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
                                 "cbn.brand_name, " +
                                 "cp.notes, " +
                                 "COALESCE(supply_info.avg_price, 0) AS avg_price, " +
+                                "recommended_price_info.price AS rec_price, " +
                                 "stock_table.stock AS stock, " +
                                 "cpe.id, " +
                                 "cpe.group_id, " +
@@ -577,6 +591,7 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
 
                             "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
                             "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+                            "LEFT JOIN recommended_price_info ON cp.id = recommended_price_info.id " +
                             "LEFT JOIN supply_info ON cp.id = supply_info.id " +
                             "LEFT JOIN stock_table ON cp.id = stock_table.id " +
                             "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id " +

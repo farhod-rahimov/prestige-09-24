@@ -101,7 +101,12 @@
     </thead>
     <tbody>
 
-    <tr th:each="item : ${productSupplyList}"
+    <tr th:if="${productSupplyList.isEmpty()}">
+        <td colspan="11">Нет поступлений</td>
+    </tr>
+
+    <tr th:unless="${productSupplyList.isEmpty()}"
+        th:each="item : ${productSupplyList}"
         th:with="product=${item.getProduct()}">
 
         <td><a th:text="${product.getProductName().getProductName()}"></a></td>

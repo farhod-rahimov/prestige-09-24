@@ -2,7 +2,6 @@ package com.prestige.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Objects;
@@ -11,7 +10,6 @@ import java.util.Objects;
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor
 public class Product {
 
     private Integer id;
@@ -31,6 +29,18 @@ public class Product {
     private String notes;
 
     private EquivalentProductInfo equivalentProductInfo;
+
+    public Product() {
+        this.id = null;
+        this.productName = new ProductName();
+        this.carModel = "";
+        this.engineModel = "";
+        this.oemArticleNumber = "";
+        this.crossArticleNumber = "";
+        this.brand = new Brand();
+        this.notes = "";
+        this.equivalentProductInfo = new EquivalentProductInfo();
+    }
 
     public Product(Product product) {
 

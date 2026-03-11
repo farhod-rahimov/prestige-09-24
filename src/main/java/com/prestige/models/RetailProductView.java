@@ -18,6 +18,8 @@ public class RetailProductView {
 
     protected BigDecimal priceDollar;
 
+    protected BigDecimal recommendedPrice;
+
     protected Integer stockBalance;
 
     public RetailProductView(RetailProductView retailProductView) {
