@@ -3,6 +3,7 @@ package com.prestige.dao.abstracts;
 import com.prestige.dao.mappers.SalesMapper;
 import com.prestige.models.*;
 import com.prestige.models.filters.SalesHistoryFilter;
+import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -17,16 +18,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@AllArgsConstructor
 public abstract class AbstractAllSalesDAO {
 
     protected final JdbcTemplate jdbcTemplate;
 
     protected final String allSalesTableName;
-
-    public AbstractAllSalesDAO(JdbcTemplate jdbcTemplate, String allSalesTableName) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.allSalesTableName = allSalesTableName;
-    }
 
     public abstract Map<Integer, BigDecimal> findRecommendedPrice(Set<Integer> productIds, SalesBasket basket);
 

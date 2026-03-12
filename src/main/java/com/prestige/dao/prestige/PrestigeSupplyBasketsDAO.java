@@ -1,7 +1,7 @@
 package com.prestige.dao.prestige;
 
 import com.prestige.dao.abstracts.AbstractSupplyBasketsDAO;
-import com.prestige.service.Utils;
+import com.prestige.utils.Utils;
 import com.prestige.dao.mappers.SupplyBasketMapper;
 import com.prestige.models.SupplyBasket;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +16,6 @@ import java.util.List;
 
 @Component
 public class PrestigeSupplyBasketsDAO extends AbstractSupplyBasketsDAO<SupplyBasket> {
-
-    //TODO: общие методы с SkladSupplyBasketsDAO нужно вынести в AbstractSupplyBasketsDAO
 
     @Autowired
     public PrestigeSupplyBasketsDAO(JdbcTemplate jdbcTemplate, Utils utils) {

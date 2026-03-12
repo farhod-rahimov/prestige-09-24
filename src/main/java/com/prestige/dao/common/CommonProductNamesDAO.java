@@ -1,9 +1,9 @@
 package com.prestige.dao.common;
 
-import com.prestige.service.Utils;
 import com.prestige.dao.mappers.ProductNameMapper;
 import com.prestige.models.ProductName;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.prestige.utils.Utils;
+import lombok.AllArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -15,17 +15,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@AllArgsConstructor
 public class CommonProductNamesDAO {
 
     private final JdbcTemplate jdbcTemplate;
 
     private final Utils utils;
-
-    @Autowired
-    public CommonProductNamesDAO(JdbcTemplate jdbcTemplate, Utils utils) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.utils = utils;
-    }
 
     public List<ProductName> findAllProductNames() {
         String sql =    "SELECT cpn.id, cpn.product_name " +

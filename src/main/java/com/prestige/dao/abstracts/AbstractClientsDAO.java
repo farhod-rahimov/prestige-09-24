@@ -2,7 +2,8 @@ package com.prestige.dao.abstracts;
 
 import com.prestige.dao.mappers.ClientMapper;
 import com.prestige.models.Client;
-import com.prestige.service.Utils;
+import com.prestige.utils.Utils;
+import lombok.AllArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@AllArgsConstructor
 public abstract class AbstractClientsDAO {
 
     protected final JdbcTemplate jdbcTemplate;
@@ -20,12 +22,6 @@ public abstract class AbstractClientsDAO {
     protected final String tableName;
 
     private final Utils utils;
-
-    public AbstractClientsDAO(JdbcTemplate jdbcTemplate, String tableName, Utils utils) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.tableName = tableName;
-        this.utils = utils;
-    }
 
     public List<Client> findAllClients() {
         String sql = String.format(

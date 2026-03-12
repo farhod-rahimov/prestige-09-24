@@ -2,16 +2,12 @@ package com.prestige.initializers;
 
 import com.prestige.dao.abstracts.AbstractSettingsDAO;
 import com.prestige.models.Settings;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 
+@AllArgsConstructor
 public abstract class AbstractSettingsInitializer<S extends AbstractSettingsDAO> {
 
     private final S settingsDAO;
-
-    @Autowired
-    public AbstractSettingsInitializer(S settingsDAO) {
-        this.settingsDAO = settingsDAO;
-    }
 
     abstract protected void initializeMustHaveSettings();
 

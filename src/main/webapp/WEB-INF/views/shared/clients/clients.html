@@ -45,6 +45,10 @@
             border-bottom: 1px solid #ddd;
             border-right: 1px solid #ddd;
         }
+        th:first-child, td:first-child {
+            width: 80px; /* Устанавливаем ширину для первого столбца */
+            text-align: center;
+        }
         th {
             background-color: #4CAF50;
             color: white;
@@ -75,6 +79,11 @@
         a:focus {
             outline: none;
             box-shadow: 0 0 5px rgba(72, 168, 72, 0.6); /* Эффект при фокусе на ссылке */
+        }
+        thead tr:first-child th {
+            position: sticky;
+            top: 60px; /* высота шапки */
+            z-index: 2;
         }
     </style>
 </head>

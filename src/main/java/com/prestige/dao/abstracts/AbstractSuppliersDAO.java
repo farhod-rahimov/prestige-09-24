@@ -2,7 +2,8 @@ package com.prestige.dao.abstracts;
 
 import com.prestige.dao.mappers.SupplierMapper;
 import com.prestige.models.Supplier;
-import com.prestige.service.Utils;
+import com.prestige.utils.Utils;
+import lombok.AllArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -12,6 +13,7 @@ import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 
+@AllArgsConstructor
 public abstract class AbstractSuppliersDAO {
 
     protected final JdbcTemplate jdbcTemplate;
@@ -19,12 +21,6 @@ public abstract class AbstractSuppliersDAO {
     protected final String tableName;
 
     private final Utils utils;
-
-    public AbstractSuppliersDAO(JdbcTemplate jdbcTemplate, String tableName, Utils utils) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.tableName = tableName;
-        this.utils = utils;
-    }
 
     public List<Supplier> findAllSuppliers() {
         String sql = String.format(

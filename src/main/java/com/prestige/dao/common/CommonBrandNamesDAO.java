@@ -1,9 +1,9 @@
 package com.prestige.dao.common;
 
-import com.prestige.service.Utils;
 import com.prestige.dao.mappers.BrandMapper;
 import com.prestige.models.Brand;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.prestige.utils.Utils;
+import lombok.AllArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -15,17 +15,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@AllArgsConstructor
 public class CommonBrandNamesDAO {
 
     private final JdbcTemplate jdbcTemplate;
 
     private final Utils utils;
-
-    @Autowired
-    public CommonBrandNamesDAO(JdbcTemplate jdbcTemplate, Utils utils) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.utils = utils;
-    }
 
     public List<Brand> findAllBrands() {
         String sql =    "SELECT cbn.id, cbn.brand_name " +

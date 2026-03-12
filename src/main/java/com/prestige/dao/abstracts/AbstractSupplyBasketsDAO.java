@@ -1,11 +1,13 @@
 package com.prestige.dao.abstracts;
 
 import com.prestige.models.BaseSupplyBasket;
-import com.prestige.service.Utils;
+import com.prestige.utils.Utils;
+import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
 
+@AllArgsConstructor
 public abstract class AbstractSupplyBasketsDAO<B extends BaseSupplyBasket> {
 
     protected final JdbcTemplate jdbcTemplate;
@@ -15,13 +17,6 @@ public abstract class AbstractSupplyBasketsDAO<B extends BaseSupplyBasket> {
     protected final String allSuppliesTableName;
 
     protected final Utils utils;
-
-    public AbstractSupplyBasketsDAO(JdbcTemplate jdbcTemplate, String supplyBasketsTableName, String allSuppliesTableName, Utils utils) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.supplyBasketsTableName = supplyBasketsTableName;
-        this.allSuppliesTableName = allSuppliesTableName;
-        this.utils = utils;
-    }
 
     public abstract List<B> findAllBaskets();
 

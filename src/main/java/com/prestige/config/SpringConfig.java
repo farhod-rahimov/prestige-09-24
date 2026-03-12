@@ -1,6 +1,7 @@
 package com.prestige.config;
 
 import com.prestige.converters.StringToTimestampConverter;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -22,14 +23,10 @@ import javax.sql.DataSource;
 @Configuration
 @ComponentScan("com.prestige")
 @EnableWebMvc
+@AllArgsConstructor
 public class SpringConfig implements WebMvcConfigurer {
 
     private final ApplicationContext applicationContext;
-
-    @Autowired
-    public SpringConfig(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
-    }
 
     @Bean
     public SpringResourceTemplateResolver templateResolver() {

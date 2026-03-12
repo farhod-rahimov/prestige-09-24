@@ -4,7 +4,7 @@ import com.prestige.dao.mappers.*;
 import com.prestige.models.*;
 import com.prestige.models.filters.BasketFilter;
 import com.prestige.models.filters.ProductFilter;
-import com.prestige.service.Utils;
+import com.prestige.utils.Utils;
 import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;

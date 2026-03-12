@@ -1,5 +1,6 @@
 package com.prestige.dao.common;
 
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -14,14 +15,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
+@AllArgsConstructor
 public class CommonProductEquivalentsDAO {
 
     private final JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    public CommonProductEquivalentsDAO(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     private Integer getGroupIdByProductIds(List<Integer> equivalentProductIds) {
         String inClause = equivalentProductIds.stream().map(id -> "?").collect(Collectors.joining(", "));

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" th:href="@{/css/common-header.css}">
-    <title>Товары в магазине</title>
+    <title>Товары на складе</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -139,7 +139,7 @@
 <form th:method="POST" th:action="@{/sklad/products}" th:object="${skladProductFilter}">
 
     <div class="header">
-        <h2>Товары в магазине</h2>
+        <h2>Товары на складе</h2>
 
         <!-- Отображение сообщения об ошибке -->
         <div th:if="${error}" class="error-message" th:text="${error}"></div>

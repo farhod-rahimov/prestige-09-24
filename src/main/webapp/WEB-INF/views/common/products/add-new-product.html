@@ -96,6 +96,11 @@
             accent-color: #4CAF50;
             cursor: pointer;
         }
+        thead tr:first-child th {
+            position: sticky;
+            top: 60px; /* высота шапки */
+            z-index: 2;
+        }
     </style>
 </head>
 <body>
@@ -109,6 +114,8 @@
 <form th:method="POST" th:action="@{${'/' + URIBeginning + '/product-management/products'}}" th:object="${product}">
     <!-- Отображение сообщения об ошибке -->
     <div th:if="${error}" class="error-message" th:text="${error}"></div>
+
+    <input type="hidden" name="tabId" th:value="${tabId}">
 
     <table>
         <thead>

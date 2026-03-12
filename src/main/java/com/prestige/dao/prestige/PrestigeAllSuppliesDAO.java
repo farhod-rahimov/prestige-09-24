@@ -4,7 +4,7 @@ import com.prestige.dao.abstracts.AbstractAllSuppliesDAO;
 import com.prestige.dao.mappers.SupplyMapper;
 import com.prestige.models.Supply;
 import com.prestige.models.SupplyBasket;
-import com.prestige.service.Utils;
+import com.prestige.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;

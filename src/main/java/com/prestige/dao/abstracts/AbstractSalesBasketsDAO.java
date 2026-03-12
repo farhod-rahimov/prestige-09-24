@@ -3,7 +3,8 @@ package com.prestige.dao.abstracts;
 import com.prestige.dao.mappers.SalesBasketMapper;
 import com.prestige.models.SalesBasket;
 import com.prestige.models.filters.SalesHistoryFilter;
-import com.prestige.service.Utils;
+import com.prestige.utils.Utils;
+import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@AllArgsConstructor
 public abstract class AbstractSalesBasketsDAO {
 
     protected final JdbcTemplate jdbcTemplate;
@@ -26,16 +28,6 @@ public abstract class AbstractSalesBasketsDAO {
     protected final String clientsTableName;
 
     protected final Utils utils;
-
-    public AbstractSalesBasketsDAO(JdbcTemplate jdbcTemplate, String salesBasketsTableName,
-                                   String allSalesTableName, String clientsTableName, Utils utils) {
-
-        this.jdbcTemplate = jdbcTemplate;
-        this.salesBasketsTableName = salesBasketsTableName;
-        this.allSalesTableName = allSalesTableName;
-        this.clientsTableName = clientsTableName;
-        this.utils = utils;
-    }
 
     public Boolean checkIfClientIdExists(Integer clientId) {
         String sql = String.format(

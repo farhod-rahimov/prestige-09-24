@@ -2,27 +2,22 @@ package com.prestige.dao.abstracts;
 
 import com.prestige.dao.mappers.SettingsMap;
 import com.prestige.models.Settings;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.stereotype.Component;
 
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 
+@AllArgsConstructor
 public abstract class AbstractSettingsDAO {
 
     protected final JdbcTemplate jdbcTemplate;
 
     protected final String tableName;
-
-    public AbstractSettingsDAO(JdbcTemplate jdbcTemplate, String tableName) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.tableName = tableName;
-    }
 
     public List<Settings> findAllSettings() {
         String sql = String.format(

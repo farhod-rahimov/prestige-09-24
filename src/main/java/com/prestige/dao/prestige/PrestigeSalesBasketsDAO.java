@@ -1,7 +1,7 @@
 package com.prestige.dao.prestige;
 
 import com.prestige.dao.abstracts.AbstractSalesBasketsDAO;
-import com.prestige.service.Utils;
+import com.prestige.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;

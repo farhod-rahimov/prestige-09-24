@@ -127,6 +127,16 @@
         .btn-green:hover {
             background-color: #45a049;
         }
+        thead tr:first-child th {
+            position: sticky;
+            top: 60px; /* высота шапки */
+            z-index: 2;
+        }
+        thead tr:nth-child(2) th {
+            position: sticky;
+            top: 120.5px; /* шапка + первая строка */
+            z-index: 2;
+        }
     </style>
 </head>
 <body>

@@ -6,6 +6,8 @@ import com.prestige.dao.common.CommonProductNamesDAO;
 import com.prestige.dao.common.CommonProductsDAO;
 import com.prestige.models.*;
 import com.prestige.models.enums.EStep;
+import com.prestige.utils.AbstractTabStateManager;
+import com.prestige.utils.SalesTabState;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
@@ -19,12 +21,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
-public abstract class AbstractSalesBasketsController {
+public abstract class AbstractSalesBasketsController extends AbstractTabStateManager {
 
     protected AbstractSalesBasketsDAO salesBasketsDAO;
 
@@ -52,30 +53,9 @@ public abstract class AbstractSalesBasketsController {
         return uriPrefix.contains("prestige") ? "salesBasket" : "skladSalesBasket";
     }
 
-    private Map<String, SalesTabState> getSalesTabStateMap(HttpSession session) {
-        Map<String, SalesTabState> map = (Map<String, SalesTabState>) session.getAttribute("salesTabStateMap");
-
-        if (map == null) {
-            map = new HashMap<>();
-            session.setAttribute("salesTabStateMap", map);
-        }
-        else {
-            map.entrySet().removeIf(e ->
-                    e.getValue().getCreatedDateTime().isBefore(LocalDateTime.now().minusHours(1)));
-        }
-        return map;
-    }
-
-    protected SalesTabState getSalesTabState(HttpSession session, String tabId) {
-        return getSalesTabStateMap(session).get(tabId);
-    }
-
-    protected void saveSalesTabState(HttpSession session, SalesTabState state) {
-        getSalesTabStateMap(session).put(state.getTabId(), state);
-    }
-
-    protected void removeSalesTabState(HttpSession session, String tabId) {
-        getSalesTabStateMap(session).remove(tabId);
+    @Override
+    protected String getTabStateMapName() {
+        return "salesTabStateMap";
     }
 
     @GetMapping
@@ -89,7 +69,7 @@ public abstract class AbstractSalesBasketsController {
     @GetMapping("/add")
     public String addNewBasketGet(Model model, HttpSession session) {
         SalesTabState state = new SalesTabState(UUID.randomUUID().toString(), EStep.CLIENT_NAME_SELECTION, new SalesBasket());
-        saveSalesTabState(session, state);
+        saveTabState(session, getTabStateMapName(), state);
 
         model.addAttribute("tabId", state.getTabId());
         model.addAttribute(getModelBasketName(), state.getBasket());
@@ -199,7 +179,7 @@ public abstract class AbstractSalesBasketsController {
                                                   List<Integer> selectedSalesIds, BindingResult bindingResult,
                                                   RedirectAttributes redirectAttributes, Model model, HttpSession session) {
 
-        SalesTabState state = getSalesTabState(session, tabId);
+        SalesTabState state = (SalesTabState)getTabState(session, getTabStateMapName(), tabId);
         SalesBasket salesBasket = null;
 
         if (state != null) {
@@ -234,7 +214,7 @@ public abstract class AbstractSalesBasketsController {
             case "delete":
                 return deleteBasket(salesBasket, bindingResult, redirectAttributes, state, session);
             case "close": {
-                removeSalesTabState(session, tabId);
+                removeTabState(session, getTabStateMapName(), tabId);
                 return String.format("redirect:/%s/sales/baskets", uriPrefix);
             }
             case "patch":
@@ -555,7 +535,7 @@ public abstract class AbstractSalesBasketsController {
                                       SalesTabState state, HttpSession session) {
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("error", errorMsg);
-            removeSalesTabState(session, state.getTabId());
+            removeTabState(session, getTabStateMapName(), state.getTabId());
             return String.format("redirect:/%s/sales/baskets/%d", uriPrefix, salesBasket.getId());
         }
 
@@ -563,7 +543,7 @@ public abstract class AbstractSalesBasketsController {
         salesBasket.setStatus(newStatus);
         salesBasketsDAO.updateBasketStatus(salesBasket);
 
-        removeSalesTabState(session, state.getTabId());
+        removeTabState(session, getTabStateMapName(), state.getTabId());
         return String.format("redirect:/%s/sales/baskets", uriPrefix);
     }
 
@@ -658,7 +638,7 @@ public abstract class AbstractSalesBasketsController {
             updateBasketTotalSum(salesBasket);
         }
         salesBasketsDAO.updateBasketNotes(salesBasket);
-        removeSalesTabState(session, state.getTabId());
+        removeTabState(session, getTabStateMapName(), state.getTabId());
         return String.format("redirect:/%s/sales/baskets/%d", uriPrefix, salesBasket.getId());
     }
 
@@ -675,13 +655,13 @@ public abstract class AbstractSalesBasketsController {
         if (bindingResult.hasErrors()) {
             String errorMessage = "Возникла ошибка при сохранении корзины. Пожалуйста, попробуйте заново.";
             redirectAttributes.addFlashAttribute("error", errorMessage);
-            removeSalesTabState(session, state.getTabId());
+            removeTabState(session, getTabStateMapName(), state.getTabId());
             return String.format("redirect:/%s/sales/baskets/%d", uriPrefix, salesBasket.getId());
         }
 
         patchBasketInternal(salesBasket);
 
-        removeSalesTabState(session, state.getTabId());
+        removeTabState(session, getTabStateMapName(), state.getTabId());
 
         if (shouldClose) {
             return String.format("redirect:/%s/sales/baskets", uriPrefix);
@@ -695,7 +675,7 @@ public abstract class AbstractSalesBasketsController {
         if (bindingResult.hasErrors()) {
             String errorMessage = "Возникла ошибка при добавлении товаров в корзину. Пожалуйста, попробуйте заново.";
             redirectAttributes.addFlashAttribute("error", errorMessage);
-            removeSalesTabState(session, state.getTabId());
+            removeTabState(session, getTabStateMapName(), state.getTabId());
             return String.format("redirect:/%s/sales/baskets/add", uriPrefix);
         }
 
@@ -733,7 +713,7 @@ public abstract class AbstractSalesBasketsController {
         }
         else {
             SalesTabState state = new SalesTabState(UUID.randomUUID().toString(), EStep.PRODUCT_SELECTION_DONE, salesBasket);
-            saveSalesTabState(session, state);
+            saveTabState(session, getTabStateMapName(), state);
 
             mav.addObject("tabId", state.getTabId());
             mav.addObject(getModelBasketName(), state.getBasket());

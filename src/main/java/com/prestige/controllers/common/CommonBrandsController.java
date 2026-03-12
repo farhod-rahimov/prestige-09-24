@@ -3,7 +3,7 @@ package com.prestige.controllers.common;
 import com.prestige.dao.common.CommonBrandNamesDAO;
 import com.prestige.dao.common.CommonProductsDAO;
 import com.prestige.models.Brand;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,6 +13,7 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
+@AllArgsConstructor
 @RequestMapping({"/prestige/product-management/brands",
                  "/sklad/product-management/brands"})
 public class CommonBrandsController {
@@ -20,13 +21,6 @@ public class CommonBrandsController {
     private final CommonBrandNamesDAO commonBrandNamesDAO;
 
     private final CommonProductsDAO commonProductsDAO;
-
-    @Autowired
-    public CommonBrandsController(CommonBrandNamesDAO commonBrandNamesDAO,
-                                  CommonProductsDAO commonProductsDAO) {
-        this.commonBrandNamesDAO = commonBrandNamesDAO;
-        this.commonProductsDAO = commonProductsDAO;
-    }
 
     @GetMapping
     public String showAllBrands(Model model) {

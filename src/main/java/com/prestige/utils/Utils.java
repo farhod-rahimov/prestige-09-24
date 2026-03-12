@@ -1,4 +1,4 @@
-package com.prestige.service;
+package com.prestige.utils;
 
 import com.prestige.models.enums.EStep;
 import com.prestige.models.Product;
