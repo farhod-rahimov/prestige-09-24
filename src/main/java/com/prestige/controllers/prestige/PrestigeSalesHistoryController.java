@@ -24,7 +24,7 @@ public class PrestigeSalesHistoryController extends AbstractSalesHistoryControll
     }
 
     @PostMapping()
-    public String postMethodDispatcher(@ModelAttribute("prestigeSalesHistoryFilter") SalesHistoryFilter salesHistoryFilter,
+    public String postMethodDispatcher(@ModelAttribute("salesHistoryFilter") SalesHistoryFilter salesHistoryFilter,
                                        @RequestParam("method") String method, BindingResult bindingResult,
                                        RedirectAttributes redirectAttributes, Model model) {
 

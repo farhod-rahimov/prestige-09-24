@@ -137,7 +137,7 @@
 
 <div th:replace="fragments/common-header :: common-header"></div>
 
-<form th:method="POST" th:action="@{/prestige/products}" th:object="${prestigeProductFilter}">
+<form th:method="POST" th:action="@{/prestige/products}" th:object="${productFilter}">
 
     <div class="header">
         <h2>Товары в магазине</h2>
@@ -178,7 +178,7 @@
             <th class="private-info">Комментарий</th>
         </tr>
         <tr>
-            <th><input type="number" th:value="${prestigeProductFilter.product.equivalentProductInfo.groupId}" th:field="*{product.equivalentProductInfo.groupId}" style="width: 100%;"></th>
+            <th><input type="number" th:value="${productFilter.product.equivalentProductInfo.groupId}" th:field="*{product.equivalentProductInfo.groupId}" style="width: 100%;"></th>
 
             <th><input type="number" th:value="*{product.id}" th:field="*{product.id}" style="width: 100%;"></th>
 

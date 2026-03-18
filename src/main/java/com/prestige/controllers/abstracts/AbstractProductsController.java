@@ -26,7 +26,7 @@ public abstract class AbstractProductsController {
     protected final String uriPrefix;
 
     private String getModelFilterName() {
-        return uriPrefix.contains("prestige") ? "prestigeProductFilter" : "skladProductFilter";
+        return "productFilter";
     }
 
     @GetMapping

@@ -22,7 +22,7 @@ public class AbstractSalesHistoryController {
     protected final String uriPrefix;
 
     private String getModelFilterName() {
-        return uriPrefix.contains("prestige") ? "prestigeSalesHistoryFilter" : "skladSalesHistoryFilter";
+        return "salesHistoryFilter";
     }
 
     @GetMapping

@@ -25,7 +25,7 @@ public class SkladProductsController extends AbstractProductsController {
     }
 
     @PostMapping()
-    public String postMethodDispatcher(@ModelAttribute("skladProductFilter") ProductFilter productFilter,
+    public String postMethodDispatcher(@ModelAttribute("productFilter") ProductFilter productFilter,
                                        @RequestParam("method") String method, BindingResult bindingResult,
                                        RedirectAttributes redirectAttributes, Model model) {
 

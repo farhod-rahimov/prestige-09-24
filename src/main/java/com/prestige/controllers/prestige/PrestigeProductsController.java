@@ -25,7 +25,7 @@ public class PrestigeProductsController extends AbstractProductsController {
     }
 
     @PostMapping()
-    public String postMethodDispatcher(@ModelAttribute("prestigeProductFilter") ProductFilter productFilter,
+    public String postMethodDispatcher(@ModelAttribute("productFilter") ProductFilter productFilter,
                                        @RequestParam("method") String method, BindingResult bindingResult,
                                        RedirectAttributes redirectAttributes, Model model) {
 
