@@ -241,7 +241,7 @@
                 <a th:href="${link}" th:text="${productView.getRecommendedPrice()}"></a>
             </td>
             <td th:unless="${productView.getRecommendedPrice() != null}">
-                <a th:href="${link}" th:text="${price}"></a>
+                <a th:href="${link}" th:text="${#numbers.formatDecimal(price, 1, 2, 'POINT')}"></a>
             </td>
 
             <td><a th:href="${link}" th:title="${product.getNotes()}" th:text="${utils.getTruncatedText(product.getNotes(), 7)}"></a></td>

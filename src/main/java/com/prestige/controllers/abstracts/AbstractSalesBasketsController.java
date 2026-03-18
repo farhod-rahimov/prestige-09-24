@@ -46,11 +46,11 @@ public abstract class AbstractSalesBasketsController extends AbstractTabStateMan
     protected final String uriPrefix;
 
     private String getModelStepName() {
-        return uriPrefix.contains("prestige") ? "salesStep" : "skladSalesStep";
+        return "salesStep";
     }
 
     private String getModelBasketName() {
-        return uriPrefix.contains("prestige") ? "salesBasket" : "skladSalesBasket";
+        return "salesBasket";
     }
 
     @Override
@@ -594,7 +594,7 @@ public abstract class AbstractSalesBasketsController extends AbstractTabStateMan
         salesBasket.getSalesList().remove(salesBasket.getSalesList().size() - 1);
         state.setStep(EStep.PRODUCT_SELECTION_DONE);
 
-        model.addAttribute(getModelBasketName(), salesBasket);
+        model.addAttribute(getModelBasketName(), state.getBasket());
         model.addAttribute(getModelStepName(), state.getStep());
 
         return String.format("%s/sales/baskets/add-new-basket", uriPrefix);
@@ -630,10 +630,6 @@ public abstract class AbstractSalesBasketsController extends AbstractTabStateMan
                                   SalesTabState state, HttpSession session) {
 
         if (selectedSalesIds != null && !selectedSalesIds.isEmpty()) {
-            for (Integer salesId : selectedSalesIds) {
-                salesBasket.getSalesList().removeIf(sales -> sales.getId().equals(salesId));
-            }
-
             allSalesDAO.deleteSalesIds(selectedSalesIds);
             updateBasketTotalSum(salesBasket);
         }

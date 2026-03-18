@@ -4,6 +4,7 @@ import com.prestige.models.filters.BasketFilter;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.util.AutoPopulatingList;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -25,6 +26,17 @@ public class SupplyBasket extends BaseSupplyBasket<Supply> {
 
     public SupplyBasket(SupplyBasket supplyBasket) {
         super(supplyBasket);
+    }
+
+    public void setSuppliesList(List<Supply> suppliesList) {
+        this.suppliesList = new AutoPopulatingList<>(suppliesList, Supply.class);
+    }
+
+    public List<Supply> getSuppliesList() {
+        if (suppliesList == null) {
+            suppliesList = new AutoPopulatingList<>(Supply.class);
+        }
+        return suppliesList;
     }
 
     @Override

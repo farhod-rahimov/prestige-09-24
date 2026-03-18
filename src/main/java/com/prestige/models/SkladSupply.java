@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Objects;
 
 @Getter
@@ -64,9 +65,9 @@ public class SkladSupply extends BaseSupply {
     private void initDecimalAttributes() {
         this.orderedQuantity = new Integer(0);
         this.receivedQuantity = new Integer(0);
-        this.priceDollar = new BigDecimal(0);
-        this.priceSupplierCurrency = new BigDecimal(0);
-        this.importCostPercentage = new BigDecimal(0);
+        this.priceDollar = new BigDecimal(0).setScale(2, RoundingMode.HALF_UP);
+        this.priceSupplierCurrency = new BigDecimal(0).setScale(2, RoundingMode.HALF_UP);
+        this.importCostPercentage = null;
     }
 
     @Override

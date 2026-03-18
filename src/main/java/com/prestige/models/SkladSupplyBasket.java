@@ -4,6 +4,7 @@ import com.prestige.models.filters.BasketFilter;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.util.AutoPopulatingList;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -34,6 +35,17 @@ public class SkladSupplyBasket extends BaseSupplyBasket<SkladSupply> {
         this.totalSumSupplierCurrency = totalSumSupplierCurrency;
         this.usdSupplierCurrencyRate = usdSupplierCurrencyRate;
         this.currencyName = currencyName;
+    }
+
+    public void setSuppliesList(List<SkladSupply> suppliesList) {
+        this.suppliesList = new AutoPopulatingList<>(suppliesList, SkladSupply.class);
+    }
+
+    public List<SkladSupply> getSuppliesList() {
+        if (suppliesList == null) {
+            suppliesList = new AutoPopulatingList<>(SkladSupply.class);
+        }
+        return suppliesList;
     }
 
     @Override

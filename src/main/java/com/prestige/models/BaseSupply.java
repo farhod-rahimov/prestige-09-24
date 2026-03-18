@@ -17,7 +17,7 @@ public abstract class BaseSupply {
 
     protected Product product;
 
-    protected BigDecimal priceDollar;
+    protected BigDecimal priceDollar = new BigDecimal(0);
 
     // private infos
 

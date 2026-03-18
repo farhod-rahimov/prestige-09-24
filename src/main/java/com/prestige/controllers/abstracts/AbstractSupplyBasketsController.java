@@ -6,6 +6,8 @@ import com.prestige.dao.common.CommonProductNamesDAO;
 import com.prestige.dao.common.CommonProductsDAO;
 import com.prestige.models.*;
 import com.prestige.models.enums.EStep;
+import com.prestige.utils.AbstractTabStateManager;
+import com.prestige.utils.SupplyTabState;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
@@ -14,12 +16,14 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
-public abstract class AbstractSupplyBasketsController<S extends BaseSupply> {
+public abstract class AbstractSupplyBasketsController<S extends BaseSupply> extends AbstractTabStateManager {
 
     private final Class<S> supplyClass;
 
@@ -41,14 +45,6 @@ public abstract class AbstractSupplyBasketsController<S extends BaseSupply> {
 
     protected final String uriPrefix;
 
-    private String getModelStepName() {
-        return Supply.class.equals(supplyClass) ? "supplyStep" : "skladSupplyStep";
-    }
-
-    private String getModelBasketName() {
-        return Supply.class.equals(supplyClass) ? "supplyBasket" : "skladSupplyBasket";
-    }
-
     protected abstract void updateBasketTotalSum(BaseSupplyBasket supplyBasket);
 
     protected abstract EStep processSupplierPhoneNumberSelection(BaseSupplyBasket supplyBasket, EStep supplyStep);
@@ -59,32 +55,156 @@ public abstract class AbstractSupplyBasketsController<S extends BaseSupply> {
 
     protected abstract void prepareDataForPatching(BaseSupplyBasket supplyBasket);
 
-    protected String basePostMethodDispatcher(BaseSupplyBasket<S> supplyBasket, String method, List<Integer> selectedSuppliesIds,
-                                              BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
+    protected abstract void patchProductQuantityAndPriceSelection(BaseSupplyBasket supplyBasket, BaseSupplyBasket supplyBasketForm);
+
+    protected abstract void patchDefault(BaseSupplyBasket supplyBasket, BaseSupplyBasket supplyBasketForm);
+
+    protected abstract void patchBasket(BaseSupplyBasket<S> supplyBasket);
+
+    protected String getModelStepName() {
+        return "supplyStep";
+    }
+
+    protected String getModelBasketName() {
+        return "supplyBasket";
+    }
+
+    @Override
+    protected String getTabStateMapName() {
+        return "supplyTabStateMap";
+    }
+
+    private void patchSupplierStoreNameSelection(BaseSupplyBasket supplyBasket, BaseSupplyBasket supplyBasketForm) {
+        supplyBasket.getSupplier().setStoreName(supplyBasketForm.getSupplier().getStoreName());
+    }
+
+    private void patchProductNameSelection(BaseSupplyBasket supplyBasket, BaseSupplyBasket supplyBasketForm) {
+        int lastIndex = supplyBasket.getSuppliesList().size() - 1;
+        ProductName productNameForm = ((BaseSupply)supplyBasketForm.getSuppliesList().get(lastIndex)).getProduct().getProductName();
+        ProductName productName = ((BaseSupply)supplyBasket.getSuppliesList().get(lastIndex)).getProduct().getProductName();
+
+        productName.setId(productNameForm.getId());
+    }
+
+    private void patchProductCarModelSelection(BaseSupplyBasket supplyBasket, BaseSupplyBasket supplyBasketForm) {
+        int lastIndex = supplyBasket.getSuppliesList().size() - 1;
+        ((BaseSupply)supplyBasket.getSuppliesList().get(lastIndex)).getProduct().setCarModel(
+                ((BaseSupply)supplyBasketForm.getSuppliesList().get(lastIndex)).getProduct().getCarModel());
+    }
+
+    private void patchProductEngineModelSelection(BaseSupplyBasket supplyBasket, BaseSupplyBasket supplyBasketForm) {
+        int lastIndex = supplyBasket.getSuppliesList().size() - 1;
+        ((BaseSupply)supplyBasket.getSuppliesList().get(lastIndex)).getProduct().setEngineModel(
+                ((BaseSupply)supplyBasketForm.getSuppliesList().get(lastIndex)).getProduct().getEngineModel());
+    }
+
+    private void patchProductOemArticleNumberSelection(BaseSupplyBasket supplyBasket, BaseSupplyBasket supplyBasketForm) {
+        int lastIndex = supplyBasket.getSuppliesList().size() - 1;
+        ((BaseSupply)supplyBasket.getSuppliesList().get(lastIndex)).getProduct().setOemArticleNumber(
+                ((BaseSupply)supplyBasketForm.getSuppliesList().get(lastIndex)).getProduct().getOemArticleNumber());
+    }
+
+    private void patchProductCrossArticleNumberSelection(BaseSupplyBasket supplyBasket, BaseSupplyBasket supplyBasketForm) {
+        int lastIndex = supplyBasket.getSuppliesList().size() - 1;
+        ((BaseSupply)supplyBasket.getSuppliesList().get(lastIndex)).getProduct().setCrossArticleNumber(
+                ((BaseSupply)supplyBasketForm.getSuppliesList().get(lastIndex)).getProduct().getCrossArticleNumber());
+    }
+
+    private void patchProductBrandSelection(BaseSupplyBasket supplyBasket, BaseSupplyBasket supplyBasketForm) {
+        int lastIndex = supplyBasket.getSuppliesList().size() - 1;
+        ((BaseSupply)supplyBasket.getSuppliesList().get(lastIndex)).getProduct().getBrand().setId(
+                ((BaseSupply)supplyBasketForm.getSuppliesList().get(lastIndex)).getProduct().getBrand().getId());
+    }
+
+    private void patchProductSelectionWithFilter(BaseSupplyBasket supplyBasket, BaseSupplyBasket supplyBasketForm) {
+        supplyBasket.setFilter(supplyBasketForm.getFilter());
+    }
+
+    private void patchVariableFields(BaseSupplyBasket supplyBasket, BaseSupplyBasket supplyBasketForm) {
+        supplyBasket.setNotes(supplyBasketForm.getNotes());
+
+        if (supplyBasket instanceof SkladSupplyBasket) {
+            SkladSupplyBasket skladSupplyBasket = (SkladSupplyBasket)supplyBasket;
+            SkladSupplyBasket skladSupplyBasketForm = (SkladSupplyBasket)supplyBasketForm;
+
+            skladSupplyBasket.setUsdSupplierCurrencyRate(skladSupplyBasketForm.getUsdSupplierCurrencyRate());
+            skladSupplyBasket.setBasketName(skladSupplyBasketForm.getBasketName());
+        }
+    }
+
+    private void patchSalesBasketFromForm(BaseSupplyBasket supplyBasket, BaseSupplyBasket supplyBasketForm, EStep step) {
+
+        switch (step) {
+            case SUPPLIER_STORE_NAME_SELECTION:
+                patchSupplierStoreNameSelection(supplyBasket, supplyBasketForm); break;
+            case PRODUCT_NAME_SELECTION:
+                patchProductNameSelection(supplyBasket, supplyBasketForm); break;
+            case PRODUCT_CAR_MODEL_SELECTION:
+                patchProductCarModelSelection(supplyBasket, supplyBasketForm); break;
+            case PRODUCT_ENGINE_MODEL_SELECTION:
+                patchProductEngineModelSelection(supplyBasket, supplyBasketForm); break;
+            case PRODUCT_OEM_ARTICLE_NUMBER_SELECTION:
+                patchProductOemArticleNumberSelection(supplyBasket, supplyBasketForm); break;
+            case PRODUCT_CROSS_ARTICLE_NUMBER_SELECTION:
+                patchProductCrossArticleNumberSelection(supplyBasket, supplyBasketForm); break;
+            case PRODUCT_BRAND_SELECTION:
+                patchProductBrandSelection(supplyBasket, supplyBasketForm); break;
+            case PRODUCT_QUANTITY_AND_PRICE_SELECTION:
+                patchProductQuantityAndPriceSelection(supplyBasket, supplyBasketForm); break;
+            case PRODUCT_SELECTION_WITH_FILTER:
+                patchProductSelectionWithFilter(supplyBasket, supplyBasketForm); break;
+            default:
+                patchDefault(supplyBasket, supplyBasketForm); break;
+        }
+    }
+
+    protected String basePostMethodDispatcher(BaseSupplyBasket<S> supplyBasketForm, String method, String tabId, List<Integer> selectedSuppliesIds,
+                                              BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model, HttpSession session) {
+
+        SupplyTabState state = (SupplyTabState)getTabState(session, getTabStateMapName(), tabId);
+        BaseSupplyBasket supplyBasket = null;
+
+        if (state != null) {
+
+            if (!method.equals("close")) {
+                supplyBasket = state.getBasket();
+
+                if (!method.equals("changeSearchType") && !method.equals("changeBasketType")) {
+                    patchSalesBasketFromForm(supplyBasket, supplyBasketForm, state.getStep());
+                }
+                patchVariableFields(supplyBasket, supplyBasketForm);
+                model.addAttribute("tabId", tabId);
+            }
+        }
+        else if (!method.equals("deleteAllEmptyBaskets")) { // state timed out
+            return String.format("redirect:/%s/supplies/baskets/", uriPrefix);
+        }
 
         switch (method) {
             case "deleteAllEmptyBaskets":
                 return deleteAllEmptyBaskets();
             case "changeBasketType":
-                return changeBasketType(supplyBasket, model);
+                return changeBasketType(supplyBasket, state, model);
             case "resetAddingNewProduct":
-                return resetAddingNewProduct(supplyBasket, model);
+                return resetAddingNewProduct(supplyBasket, state, model);
             case "changeSearchType":
-                return changeSearchType(supplyBasket, model);
+                return changeSearchType(supplyBasket, state, model);
             case "markAsReceived":
-                return markAsReceivedBasket(supplyBasket, bindingResult, redirectAttributes);
+                return markAsReceivedBasket(supplyBasket, bindingResult, redirectAttributes, state, session);
             case "deleteSelected":
-                return deleteSelected(supplyBasket, selectedSuppliesIds);
+                return deleteSelected(supplyBasket, selectedSuppliesIds, state, session);
             case "delete":
-                return deleteBasket(supplyBasket, bindingResult, redirectAttributes);
-            case "close":
+                return deleteBasket(supplyBasket, bindingResult, redirectAttributes, state, session);
+            case "close": {
+                removeTabState(session, getTabStateMapName(), tabId);
                 return String.format("redirect:/%s/supplies/baskets", uriPrefix);
+            }
             case "patch":
-                return patchBasket(supplyBasket, bindingResult, redirectAttributes, model, false);
+                return patchBasket(supplyBasket, state, bindingResult, redirectAttributes, session, false);
             case "patchAndClose":
-                return patchBasket(supplyBasket, bindingResult, redirectAttributes, model, true);
+                return patchBasket(supplyBasket, state, bindingResult, redirectAttributes, session, true);
             default:
-                return saveNewBasket(supplyBasket, bindingResult, redirectAttributes, model);
+                return saveNewBasket(supplyBasket, state, bindingResult, redirectAttributes, session, model);
         }
     }
 
@@ -94,12 +214,8 @@ public abstract class AbstractSupplyBasketsController<S extends BaseSupply> {
         return String.format("redirect:/%s/supplies/baskets", uriPrefix);
     }
 
-    private String changeBasketType(BaseSupplyBasket<S> supplyBasket, Model model) {
-
-        //TODO: step обернуть в отдельный объект сессии CHAT GPT чтобы не было конфликтов
-        String stepName = getModelStepName();
-
-        EStep supplyStep = (EStep)model.getAttribute(stepName);
+    private String changeBasketType(BaseSupplyBasket<S> supplyBasket, SupplyTabState state, Model model) {
+        EStep supplyStep = state.getStep();
         List<S> suppliesList = supplyBasket.getSuppliesList();
 
         if (supplyStep == EStep.PRODUCT_SELECTION_DONE) {
@@ -122,42 +238,57 @@ public abstract class AbstractSupplyBasketsController<S extends BaseSupply> {
             supplyBasket.setSuppliesList(supplyBasket.getSuppliesListForUpdate()); // delete all unsaved supplies
         }
 
-        model.addAttribute(stepName, supplyStep);
+        state.setStep(supplyStep);
+
+        model.addAttribute(getModelStepName(), state.getStep());
+        model.addAttribute(getModelBasketName(), state.getBasket());
+
         return String.format("%s/supplies/baskets/add-new-basket", uriPrefix);
     }
 
     private void setPrivateInfos(BaseSupplyBasket<S> supplyBasket, List<S> suppliesList, boolean onlyForLastSupplies) {
-        Set<Integer> productIds;
-        BigDecimal defaultImportCostPercentage = null;
 
-        if (suppliesList.isEmpty()) {
-            return;
-        }
+        if (!suppliesList.isEmpty()) {
+            Set<Integer> productIds;
+            BigDecimal defaultImportCostPercentage = null;
 
-        if (onlyForLastSupplies) {
-            productIds = new HashSet<>();
-            productIds.add(suppliesList.get(suppliesList.size() - 1).getProduct().getId());
-        }
-        else {
-            productIds = suppliesList.stream().map(s -> s.getProduct().getId()).collect(Collectors.toCollection(HashSet::new));
-        }
+            if (onlyForLastSupplies) {
+                productIds = new HashSet<>();
+                productIds.add(suppliesList.get(suppliesList.size() - 1).getProduct().getId());
+            }
+            else {
+                productIds = suppliesList.stream().map(s -> s.getProduct().getId()).collect(Collectors.toCollection(HashSet::new));
+            }
 
-        Map<Integer, Integer> stockBeforeSaleMap = allSuppliesDAO.findStockBeforeSale(productIds, supplyBasket);
+            if (suppliesList.get(0) instanceof SkladSupply) {
+                defaultImportCostPercentage = new BigDecimal(settingsDAO.findSettingsByName("skladDefaultImportCostPercentage").getValue())
+                        .setScale(2, RoundingMode.HALF_UP);
+            }
 
-        for (int i = onlyForLastSupplies ? suppliesList.size() - 1 : 0; i < suppliesList.size(); i++) {
-            suppliesList.get(i).setStockBeforeSale(stockBeforeSaleMap.get(suppliesList.get(i).getProduct().getId()));
+            Map<Integer, Integer> stockBeforeSaleMap = allSuppliesDAO.findStockBeforeSale(productIds, supplyBasket);
+
+            for (int i = onlyForLastSupplies ? suppliesList.size() - 1 : 0; i < suppliesList.size(); i++) {
+                suppliesList.get(i).setStockBeforeSale(stockBeforeSaleMap.get(suppliesList.get(i).getProduct().getId()));
+
+                if (suppliesList.get(i) instanceof SkladSupply && ((SkladSupply)suppliesList.get(i)).getImportCostPercentage() == null) {
+                    ((SkladSupply)suppliesList.get(i)).setImportCostPercentage(defaultImportCostPercentage);
+                }
+            }
         }
     }
 
-    private String resetAddingNewProduct(BaseSupplyBasket<S> supplyBasket, Model model) {
+    private String resetAddingNewProduct(BaseSupplyBasket<S> supplyBasket, SupplyTabState state, Model model) {
         supplyBasket.getSuppliesList().remove(supplyBasket.getSuppliesList().size() - 1);
-        model.addAttribute(getModelStepName(), EStep.PRODUCT_SELECTION_DONE);
+        state.setStep(EStep.PRODUCT_SELECTION_DONE);
+
+        model.addAttribute(getModelBasketName(), state.getBasket());
+        model.addAttribute(getModelStepName(), state.getStep());
 
         return String.format("%s/supplies/baskets/add-new-basket", uriPrefix);
     }
 
-    private String changeSearchType(BaseSupplyBasket<S> supplyBasket, Model model) {
-        EStep supplyStep = (EStep)model.getAttribute(getModelStepName());
+    private String changeSearchType(BaseSupplyBasket<S> supplyBasket, SupplyTabState state, Model model) {
+        EStep supplyStep = state.getStep();
 
         if (supplyStep != EStep.PRODUCT_SELECTION_WITH_FILTER) {
             supplyStep = EStep.PRODUCT_SELECTION_WITH_FILTER;
@@ -170,24 +301,30 @@ public abstract class AbstractSupplyBasketsController<S extends BaseSupply> {
             supplyStep = EStep.PRODUCT_NAME_SELECTION;
             model.addAttribute("allProductNames", commonProductsDAO.findAllProductNames(supplyBasket.getFilter()));
         }
-        model.addAttribute(getModelStepName(), supplyStep);
+        state.setStep(supplyStep);
+
+        model.addAttribute(getModelBasketName(), state.getBasket());
+        model.addAttribute(getModelStepName(), state.getStep());
+
         return String.format("%s/supplies/baskets/add-new-basket", uriPrefix);
     }
 
     private String markAsReceivedBasket(BaseSupplyBasket<S> supplyBasket, BindingResult bindingResult,
-                                        RedirectAttributes redirectAttributes) {
+                                        RedirectAttributes redirectAttributes, SupplyTabState state, HttpSession session) {
 
         String errorMsg = String.format("Возникла ошибка при %s корзины. Пожалуйста, попробуйте заново.",
                 supplyBasket.getStatus() == BaseSupplyBasket.EStatus.DELETED ? "восстановлении" : "оприходовании");
 
-        return changeBasketStatus(supplyBasket, bindingResult, redirectAttributes, errorMsg, SupplyBasket.EStatus.RECEIVED);
+        return changeBasketStatus(supplyBasket, bindingResult, redirectAttributes, errorMsg, SupplyBasket.EStatus.RECEIVED, state, session);
     }
 
     private String changeBasketStatus(BaseSupplyBasket<S> supplyBasket, BindingResult bindingResult,
-                                      RedirectAttributes redirectAttributes, String errorMsg, BaseSupplyBasket.EStatus newStatus) {
+                                      RedirectAttributes redirectAttributes, String errorMsg, BaseSupplyBasket.EStatus newStatus,
+                                      SupplyTabState state, HttpSession session) {
 
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("error", errorMsg);
+            removeTabState(session, getTabStateMapName(), state.getTabId());
             return String.format("redirect:/%s/supplies/baskets/%d", uriPrefix, supplyBasket.getId());
         }
 
@@ -195,6 +332,7 @@ public abstract class AbstractSupplyBasketsController<S extends BaseSupply> {
         supplyBasket.setStatus(newStatus);
         supplyBasketsDAO.updateBasketStatus(supplyBasket);
 
+        removeTabState(session, getTabStateMapName(), state.getTabId());
         return String.format("redirect:/%s/supplies/baskets", uriPrefix);
     }
 
@@ -210,35 +348,38 @@ public abstract class AbstractSupplyBasketsController<S extends BaseSupply> {
         allSuppliesDAO.updateQuantityAndPrices(supplyBasket.getSuppliesListForUpdate());
     }
 
-    private void patchBasket(BaseSupplyBasket<S> supplyBasket) {
-        supplyBasketsDAO.updateBasketNotes(supplyBasket);
-        updateBasketTotalSum(supplyBasket);
-    }
+    private String deleteSelected(BaseSupplyBasket<S> supplyBasket, List<Integer> selectedSuppliesIds,
+                                  SupplyTabState state, HttpSession session) {
 
-    private String deleteSelected(BaseSupplyBasket<S> supplyBasket, List<Integer> selectedSuppliesIds) {
         if (selectedSuppliesIds != null && !selectedSuppliesIds.isEmpty()) {
             allSuppliesDAO.deleteSuppliesIds(selectedSuppliesIds);
             updateBasketTotalSum(supplyBasket);
         }
+        supplyBasketsDAO.updateBasketNotes(supplyBasket);
+        removeTabState(session, getTabStateMapName(), state.getTabId());
         return String.format("redirect:/%s/supplies/baskets/%d", uriPrefix, supplyBasket.getId());
     }
 
-    private String deleteBasket(BaseSupplyBasket<S> supplyBasket, BindingResult bindingResult, RedirectAttributes redirectAttributes) {
+    private String deleteBasket(BaseSupplyBasket<S> supplyBasket, BindingResult bindingResult, RedirectAttributes redirectAttributes,
+                                SupplyTabState state, HttpSession session) {
         String errorMsg = "Возникла ошибка при удалении корзины. Пожалуйста, попробуйте заново.";
 
-        return changeBasketStatus(supplyBasket, bindingResult, redirectAttributes, errorMsg, SupplyBasket.EStatus.DELETED);
+        return changeBasketStatus(supplyBasket, bindingResult, redirectAttributes, errorMsg, SupplyBasket.EStatus.DELETED, state, session);
     }
 
-    private String patchBasket(BaseSupplyBasket<S> supplyBasket, BindingResult bindingResult,
-                               RedirectAttributes redirectAttributes, Model model, boolean shouldClose) {
+    private String patchBasket(BaseSupplyBasket<S> supplyBasket, SupplyTabState state, BindingResult bindingResult,
+                               RedirectAttributes redirectAttributes, HttpSession session, boolean shouldClose) {
 
         if (bindingResult.hasErrors()) {
             String errorMessage = "Возникла ошибка при сохранении корзины. Пожалуйста, попробуйте заново.";
             redirectAttributes.addFlashAttribute("error", errorMessage);
+            removeTabState(session, getTabStateMapName(), state.getTabId());
             return String.format("redirect:/%s/supplies/baskets/%d", uriPrefix, supplyBasket.getId());
         }
 
         patchBasketInternal(supplyBasket);
+
+        removeTabState(session, getTabStateMapName(), state.getTabId());
 
         if (shouldClose) {
             return String.format("redirect:/%s/supplies/baskets", uriPrefix);
@@ -246,17 +387,21 @@ public abstract class AbstractSupplyBasketsController<S extends BaseSupply> {
         return String.format("redirect:/%s/supplies/baskets/%d", uriPrefix, supplyBasket.getId());
     }
 
-    private String saveNewBasket(BaseSupplyBasket<S> supplyBasket, BindingResult bindingResult,
-                                 RedirectAttributes redirectAttributes, Model model) {
+    private String saveNewBasket(BaseSupplyBasket<S> supplyBasket, SupplyTabState state, BindingResult bindingResult,
+                                 RedirectAttributes redirectAttributes, HttpSession session, Model model) {
 
         if (bindingResult.hasErrors()) {
             String errorMessage = "Возникла ошибка при добавлении товаров в корзину. Пожалуйста, попробуйте заново.";
             redirectAttributes.addFlashAttribute("error", errorMessage);
+            removeTabState(session, getTabStateMapName(), state.getTabId());
             return String.format("redirect:/%s/supplies/baskets/add", uriPrefix);
         }
 
-        EStep supplyStep = processAndGetNextStep(supplyBasket, model, (EStep)model.getAttribute(getModelStepName()));
-        model.addAttribute(getModelStepName(), supplyStep);
+        EStep supplyStep = processAndGetNextStep(supplyBasket, model, state.getStep());
+        state.setStep(supplyStep);
+
+        model.addAttribute(getModelBasketName(), state.getBasket());
+        model.addAttribute(getModelStepName(), state.getStep());
 
         return String.format("%s/supplies/baskets/add-new-basket", uriPrefix);
     }
@@ -358,6 +503,7 @@ public abstract class AbstractSupplyBasketsController<S extends BaseSupply> {
     }
 
     private EStep processProductSelectionWithFilter(BaseSupplyBasket<S> supplyBasket, Model model, EStep supplyStep) {
+        S supply = supplyBasket.getSuppliesList().get(supplyBasket.getSuppliesList().size() - 1);
         supplyBasket.getFilter().prepareAllFields();
 
         List<ProductName> allProductNames = commonProductsDAO.findAllProductNames(supplyBasket.getFilter());
@@ -366,12 +512,19 @@ public abstract class AbstractSupplyBasketsController<S extends BaseSupply> {
         if (allProductNames.isEmpty()) {
             supplyBasket.getFilter().clear();
         }
+        else if (allProductNames.size() == 1) {
+            supply.getProduct().setProductName(allProductNames.get(0));
+            return processProductNameSelection(supplyBasket, model, getNextStep(supplyStep));
+        }
         return getNextStep(supplyStep);
     }
 
     private EStep processProductNameSelection(BaseSupplyBasket<S> supplyBasket, Model model, EStep supplyStep) {
         S supply = supplyBasket.getSuppliesList().get(supplyBasket.getSuppliesList().size() - 1);
-        supply.getProduct().setProductName(commonProductNamesDAO.findProductNameById(supply.getProduct().getProductName().getId()));
+
+        if (supply.getProduct().getProductName().getProductName() == null) {
+            supply.getProduct().setProductName(commonProductNamesDAO.findProductNameById(supply.getProduct().getProductName().getId()));
+        }
         List<String> allCarModelsList = commonProductsDAO.findCarModelsByProductNameId(supply.getProduct().getProductName().getId(), supplyBasket.getFilter());
 
         if (allCarModelsList.size() == 1) {
@@ -495,7 +648,7 @@ public abstract class AbstractSupplyBasketsController<S extends BaseSupply> {
         }
     }
 
-    public ModelAndView baseFindBasketById(Integer basketId, Model model) {
+    public ModelAndView baseFindBasketById(Integer basketId, HttpSession session, Model model) {
         ModelAndView mav = new ModelAndView(String.format("%s/supplies/baskets/add-new-basket", uriPrefix));
         BaseSupplyBasket supplyBasket = findBasketById(basketId);
 
@@ -505,8 +658,12 @@ public abstract class AbstractSupplyBasketsController<S extends BaseSupply> {
             mav.addObject("previousPage", String.format("/%s/supplies/baskets", uriPrefix));
         }
         else {
-            mav.addObject(getModelBasketName(), supplyBasket);
-            mav.addObject(getModelStepName(), EStep.PRODUCT_SELECTION_DONE);
+            SupplyTabState state = new SupplyTabState(UUID.randomUUID().toString(), EStep.PRODUCT_SELECTION_DONE, supplyBasket);
+            saveTabState(session, getTabStateMapName(), state);
+
+            mav.addObject("tabId", state.getTabId());
+            mav.addObject(getModelBasketName(), state.getBasket());
+            mav.addObject(getModelStepName(), state.getStep());
         }
         return mav;
     }

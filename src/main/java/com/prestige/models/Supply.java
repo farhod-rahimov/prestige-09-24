@@ -14,7 +14,7 @@ import java.util.Objects;
 @NoArgsConstructor
 public class Supply extends BaseSupply {
 
-    private Integer quantity;
+    private Integer quantity = 0;
 
     public Supply(Product product) {
         this.product = product;

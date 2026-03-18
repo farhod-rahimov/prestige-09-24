@@ -158,6 +158,8 @@
     <!-- Отображение сообщения об ошибке -->
     <div th:if="${error}" class="error-message" th:text="${error}"></div>
 
+    <input type="hidden" name="tabId" th:value="${tabId}">
+
     <h3>Поставщик</h3>
 
     <table class="client-table">
