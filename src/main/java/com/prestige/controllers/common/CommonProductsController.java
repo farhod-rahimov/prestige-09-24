@@ -67,9 +67,8 @@ public class CommonProductsController extends AbstractTabStateManager {
     private String checkBindingResult(RedirectAttributes redirectAttributes, BindingResult bindingResult,
                                       Model model, String method) {
 
-        String errorMessage = null;
-
         if (bindingResult.hasErrors()) {
+            String errorMessage = null;
 
             switch (method) {
                 case "applyFilter":
@@ -122,9 +121,8 @@ public class CommonProductsController extends AbstractTabStateManager {
                 return resetAddingNewProduct(model, session, redirectAttributes, tabId);
             case "deleteSelected":
                 return deleteSelected(selectedProductIds, model, session, redirectAttributes, tabId);
-            case "saveAndClose": {
+            case "saveAndClose":
                 return saveNewAndClose(model, session, redirectAttributes, product, tabId);
-            }
             default:
                 return saveNewProduct(model, session, redirectAttributes, product, tabId, false);
         }

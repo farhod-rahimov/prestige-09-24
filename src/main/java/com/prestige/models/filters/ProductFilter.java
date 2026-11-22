@@ -5,7 +5,6 @@ import com.prestige.models.Product;
 import com.prestige.models.ProductName;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Objects;
@@ -81,5 +80,4 @@ public class ProductFilter extends AbstractBaseFilter {
         ProductFilter other = (ProductFilter)obj;
         return  Objects.equals(product, other.product);
     }
-
 }

@@ -3,7 +3,8 @@ package com.prestige.dao.abstracts;
 import com.prestige.dao.mappers.*;
 import com.prestige.models.*;
 import com.prestige.models.filters.BasketFilter;
-import com.prestige.models.filters.ProductFilter;
+import com.prestige.models.filters.ProductMarginFilter;
+import com.prestige.models.filters.ProductStockFilter;
 import com.prestige.utils.Utils;
 import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -30,6 +31,10 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
     protected final String allSalesTableName;
 
     protected final String salesBasketTableName;
+
+    protected final String marginTableName;
+
+    protected final String settingsTableName;
 
     protected Utils utils;
 
@@ -159,13 +164,10 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
         sql +=          "GROUP BY (cpn.id) " +
                         "ORDER BY (cpn.product_name)";
 
-        if (bindings.isEmpty()) {
-            return jdbcTemplate.query(sql, new ProductNameMapper());
-        }
         return jdbcTemplate.query(sql, bindings.toArray(), new ProductNameMapper());
     }
 
-    public List<Sales> findAllPrestigeProductsWrappedInSales(List<Integer> excludeProductIds) {
+    public List<Sales> findAllProductsWrappedInSales(List<Integer> excludeProductIds) {
         String sql =    "SELECT " +
 
                             "cp.id, " +
@@ -182,11 +184,11 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
                             "cpe.group_id, " +
                             "cpe.product_id " +
 
-                        "FROM " + allSuppliesTableName + " pas " +
-                        "JOIN common_products cp ON cp.id = pas.common_product_id " +
+                        "FROM common_products cp " +
                         "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
                         "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
-                        "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id ";
+                        "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id " +
+                        "LEFT JOIN " + allSuppliesTableName + " pas ON cp.id = pas.common_product_id ";
 
         if (!excludeProductIds.isEmpty()) {
             String inClause = excludeProductIds.stream().map(id -> "?").collect(Collectors.joining(", "));
@@ -210,7 +212,16 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
     public Map<Integer, BigDecimal> findWholesalePrice(Set<Integer> productIds) {
         String jointProductIds = productIds.stream().map(String::valueOf).collect(Collectors.joining(","));
 
+        String quantity = allSalesTableName.contains("sklad") ? "received_quantity" : "quantity";
+        String importCostPercentage = allSalesTableName.contains("sklad") ? "pas.import_cost_percentage" : "NULL";
+
         String sql = "WITH " +
+                        "settings AS (" +
+                            "SELECT " +
+                                "COALESCE(MAX(NULLIF(REPLACE(TRIM(s.value), ',', '.'), '')::numeric), 0) as magic_value " +
+                            "FROM " + settingsTableName + " s " +
+                            "WHERE s.key = 'magicValue'), " +
+
                         "base_table AS (" +
                             "SELECT id FROM unnest(ARRAY[" + jointProductIds + "]::int4[]) AS base_table(id)), " +
 
@@ -222,7 +233,9 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
                             "FROM   (" +
                                         "SELECT " +
                                             "pas.common_product_id AS id, " +
-                                            "pas.price_dollar AS price_dollar, " +
+                                            "pas.price_dollar " +
+                                                "* ((100 + COALESCE(" + importCostPercentage + ", 0)) / 100) " +
+                                                    "AS price_dollar, " +
                                             "row_number() over (" +
                                                 "PARTITION BY pas.common_product_id " +
                                                 "ORDER BY psb.created_date_time DESC) rn " +
@@ -230,6 +243,7 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
                                             "FROM " + allSuppliesTableName + " pas " +
                                             "JOIN " + supplyBasketTableName + " psb ON psb.id = pas.basket_id " +
                                             "JOIN base_table bt ON bt.id = pas.common_product_id " +
+                                            "CROSS JOIN settings st " +
 
                                             "WHERE psb.status = " + SupplyBasket.EStatus.RECEIVED.getIntValue() + " " +
                                     ") tmp_table " +
@@ -238,19 +252,17 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
 
                         "stock_data AS (" +
                             "SELECT " +
-                                "pas.common_product_id AS id, ";
+                                "pas.common_product_id AS id, " +
 
-        if (allSuppliesTableName.contains("sklad")) {
-            sql +=              "SUM(pas.received_quantity) AS total_stock, " +
-                                "SUM(pas.received_quantity * pas.price_dollar) AS total_stock_value ";
-        }
-        else {
-            sql +=              "SUM(pas.quantity) AS total_stock, " +
-                                "SUM(pas.quantity * pas.price_dollar) AS total_stock_value ";
-        }
-        sql +=              "FROM " + allSuppliesTableName + " pas " +
+                                "SUM(pas." + quantity + ") AS total_stock, " +
+                                "SUM(pas." + quantity + " * pas.price_dollar " +
+                                    "* ((100 + COALESCE(" + importCostPercentage + ", 0)) / 100)" +
+                                        ") AS total_stock_value " +
+
+                            "FROM " + allSuppliesTableName + " pas " +
                             "JOIN " + supplyBasketTableName + " psb ON psb.id = pas.basket_id " +
                             "JOIN base_table bt ON bt.id = pas.common_product_id " +
+                            "CROSS JOIN settings st " +
 
                             "WHERE psb.status = " + SupplyBasket.EStatus.RECEIVED.getIntValue() + " " +
                             "GROUP BY pas.common_product_id), " +
@@ -514,31 +526,39 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
         return findAllProductsInStockInternal(null);
     }
 
-    public List<RetailProductView> findAllProductsInStockWIthFilter(ProductFilter productFilter) {
-        return findAllProductsInStockInternal(productFilter);
+    public List<RetailProductView> findAllProductsInStockWIthFilter(ProductStockFilter productStockFilter) {
+        return findAllProductsInStockInternal(productStockFilter);
     }
 
-    private List<RetailProductView> findAllProductsInStockInternal(ProductFilter productFilter) {
+    private List<RetailProductView> findAllProductsInStockInternal(ProductStockFilter productStockFilter) {
         List<Object> bindings = new ArrayList();
 
         String quantity = allSalesTableName.contains("sklad") ? "received_quantity" : "quantity";
+        String importCostPercentage = allSalesTableName.contains("sklad") ? "pas.import_cost_percentage" : "NULL";
 
-        String sql =    "WITH sales_info AS (" +
-                            "SELECT " +
-                                "common_product_id AS id, " +
-                                "SUM(quantity) AS total_quantity " +
-                            "FROM " + allSalesTableName + " pas " +
-                            "JOIN " + salesBasketTableName + " psb ON pas.basket_id = psb.id " +
-                            "WHERE psb.status = " + SalesBasket.EStatus.SOLD.getIntValue() + " " +
-                            "GROUP BY pas.common_product_id), " +
+        String sql =    "WITH " +
+                            "settings AS (" +
+                                "SELECT " +
+                                    "COALESCE(MAX(NULLIF(REPLACE(TRIM(s.value), ',', '.'), '')::numeric), 0) as magic_value " +
+                                "FROM " + settingsTableName + " s " +
+                                "WHERE s.key = 'magicValue'), " +
+
+                            "sales_info AS (" +
+                                "SELECT " +
+                                    "common_product_id AS id, " +
+                                    "SUM(quantity) AS total_quantity " +
+                                "FROM " + allSalesTableName + " pas " +
+                                "JOIN " + salesBasketTableName + " psb ON pas.basket_id = psb.id " +
+                                "WHERE psb.status = " + SalesBasket.EStatus.SOLD.getIntValue() + " " +
+                                "GROUP BY pas.common_product_id), " +
 
                             "recommended_price_info AS (" +
                                 "SELECT " +
                                     "pas.common_product_id AS id, " +
                                     "SUM(COALESCE(pas.quantity, 0) * COALESCE(pas.sold_price, 0)) / " +
                                         "NULLIF(SUM(pas.quantity), 0) AS price " + // в случае если pas.quantity = 0, результат будет null
-                                "FROM prestige_all_sales pas " +
-                                "JOIN prestige_sales_baskets psb ON psb.id = pas.basket_id " +
+                                "FROM " + allSalesTableName + " pas " +
+                                "JOIN " + salesBasketTableName + " psb ON psb.id = pas.basket_id " +
                                 "WHERE " +
                                     "psb.created_date_time >= NOW() - INTERVAL '2 years' AND " +
                                     "psb.status = " + SalesBasket.EStatus.SOLD.getIntValue() + " " +
@@ -547,15 +567,17 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
 
                             "supply_info AS (" +
                                 "SELECT " +
-                                    "common_product_id AS id, " +
+                                    "pas.common_product_id AS id, " +
                                     "SUM(" + quantity + ") as total_quantity, " +
                                     "CASE " +
                                         "WHEN SUM(pas." + quantity + ") = 0 " +
                                         "THEN 0 " +
-                                        "ELSE ROUND(SUM(pas.price_dollar * pas." + quantity + ") / SUM(pas." + quantity + "), 2) " +
+                                        "ELSE ROUND(SUM(pas.price_dollar " +
+                                                            "* ((100 + COALESCE(" + importCostPercentage + ", 0)) / 100) " +
+                                                            "* pas." + quantity + ") / SUM(pas." + quantity + "), 2) " +
                                     "END AS avg_price " +
                                 "FROM " + allSuppliesTableName + " pas " +
-                                "JOIN " + supplyBasketTableName + " psb ON pas.basket_id = psb.id " +
+                                "LEFT JOIN " + supplyBasketTableName + " psb ON pas.basket_id = psb.id " +
                                 "WHERE psb.status = " + SupplyBasket.EStatus.RECEIVED.getIntValue() + " " +
                                 "GROUP BY pas.common_product_id " +
                             "), " +
@@ -569,47 +591,51 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
                                 "LEFT JOIN supply_info ON supply_info.id = cp.id" +
                             ") " +
 
-                            "SELECT " +
-                                "cp.id as cp_id, " +
-                                "cpn.id as cpn_id, " +
-                                "cpn.product_name, " +
-                                "cp.car_model, " +
-                                "cp.engine_model, " +
-                                "cp.oem_article_number, " +
-                                "cp.cross_article_number, " +
-                                "cbn.id, " +
-                                "cbn.brand_name, " +
-                                "cp.notes, " +
-                                "COALESCE(supply_info.avg_price, 0) AS avg_price, " +
-                                "recommended_price_info.price AS rec_price, " +
-                                "stock_table.stock AS stock, " +
-                                "cpe.id, " +
-                                "cpe.group_id, " +
-                                "cpe.product_id " +
+                            "SELECT * FROM (" +
+                                "SELECT " +
+                                    "cp.id AS cp_id, " +
+                                    "cpn.id AS cpn_id, " +
+                                    "cpn.product_name, " +
+                                    "cp.car_model, " +
+                                    "cp.engine_model, " +
+                                    "cp.oem_article_number, " +
+                                    "cp.cross_article_number, " +
+                                    "cbn.id AS cbn_id, " +
+                                    "cbn.brand_name, " +
+                                    "cp.notes, " +
+                                    "COALESCE(supply_info.avg_price, 0) AS avg_price, " +
+                                    "recommended_price_info.price AS rec_price, " +
+                                    "stock_table.stock AS stock, " +
+                                    "cpe.id AS cpe_id, " +
+                                    "cpe.group_id, " +
+                                    "cpe.product_id, " +
+                                    "COALESCE(pm.margin_percentage, st.magic_value) AS magic_value " +
 
-                            "FROM common_products cp " +
+                                "FROM common_products cp " +
 
-                            "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
-                            "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
-                            "LEFT JOIN recommended_price_info ON cp.id = recommended_price_info.id " +
-                            "LEFT JOIN supply_info ON cp.id = supply_info.id " +
-                            "LEFT JOIN stock_table ON cp.id = stock_table.id " +
-                            "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id " +
+                                "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
+                                "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
+                                "LEFT JOIN recommended_price_info ON cp.id = recommended_price_info.id " +
+                                "LEFT JOIN supply_info ON cp.id = supply_info.id " +
+                                "LEFT JOIN stock_table ON cp.id = stock_table.id " +
+                                "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id " +
+                                "LEFT JOIN " + marginTableName + " pm ON cp.id = pm.common_product_id " +
+                                "CROSS JOIN settings st) t " +
 
                             "WHERE 1 = 1 ";
 
-        if (productFilter != null && productFilter.getProduct() != null) {
-            Product product = productFilter.getProduct();
+        if (productStockFilter != null && productStockFilter.getProduct() != null) {
+            Product product = productStockFilter.getProduct();
 
             Integer groupId = product.getEquivalentProductInfo().getGroupId();
             if (groupId != null && groupId != 0) {
-                sql +=  "AND cpe.group_id = ? ";
+                sql +=  "AND t.group_id = ? ";
                 bindings.add(groupId);
             }
 
             Integer productId = product.getId();
             if (productId != null && productId != 0) {
-                sql +=  "AND cp.id  = ? ";
+                sql +=  "AND t.cp_id  = ? ";
                 bindings.add(productId);
             }
 
@@ -617,54 +643,68 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
             if (productName != null && productName.getProductName() != null &&
                     !productName.getProductName().isEmpty()) {
 
-                sql +=  "AND cpn.product_name ILIKE ? ESCAPE '\\' ";
+                sql +=  "AND t.product_name ILIKE ? ESCAPE '\\' ";
                 bindings.add(productName.getProductName());
             }
 
             if (product.getCarModel() != null && !product.getCarModel().isEmpty()) {
-                sql +=  "AND cp.car_model ILIKE ? ESCAPE '\\' ";
+                sql +=  "AND t.car_model ILIKE ? ESCAPE '\\' ";
                 bindings.add(product.getCarModel());
             }
 
             if (product.getEngineModel() != null && !product.getEngineModel().isEmpty()) {
-                sql +=  "AND cp.engine_model ILIKE ? ESCAPE '\\' ";
+                sql +=  "AND t.engine_model ILIKE ? ESCAPE '\\' ";
                 bindings.add(product.getEngineModel());
             }
 
             if (product.getOemArticleNumber() != null && !product.getOemArticleNumber().isEmpty()) {
-                sql +=  "AND cp.oem_article_number ILIKE ? ESCAPE '\\' ";
+                sql +=  "AND t.oem_article_number ILIKE ? ESCAPE '\\' ";
                 bindings.add(product.getOemArticleNumber());
             }
 
             if (product.getCrossArticleNumber() != null && !product.getCrossArticleNumber().isEmpty()) {
-                sql +=  "AND cp.cross_article_number ILIKE ? ESCAPE '\\' ";
+                sql +=  "AND t.cross_article_number ILIKE ? ESCAPE '\\' ";
                 bindings.add(product.getCrossArticleNumber());
+            }
+
+            if (productStockFilter.getStockBalance() != null) {
+                sql += productStockFilter.getComparisonExpr("t.stock", productStockFilter.getStockBalanceComparison(),
+                        bindings, productStockFilter.getStockBalance());
+            }
+
+            if (productStockFilter.getInnerPrice() != null) {
+                sql += productStockFilter.getComparisonExpr("t.avg_price", productStockFilter.getInnerPriceComparison(),
+                        bindings, productStockFilter.getInnerPrice());
+            }
+
+            if (productStockFilter.getMarginComparison() != null &&
+                    (productStockFilter.getMarginComparison().equals(ProductMarginFilter.EComparison.NOT_SET) || productStockFilter.getMargin() != null)) {
+                sql += productStockFilter.getComparisonExpr("t.magic_value", productStockFilter.getMarginComparison(),
+                        bindings, productStockFilter.getMargin());
             }
 
             Brand brand = product.getBrand();
             if (brand != null && brand.getBrandName() != null && !brand.getBrandName().isEmpty()) {
-                sql +=  "AND cbn.brand_name ILIKE ? ESCAPE '\\' ";
+                sql +=  "AND t.brand_name ILIKE ? ESCAPE '\\' ";
                 bindings.add(brand.getBrandName());
             }
 
             if (product.getNotes() != null && !product.getNotes().isEmpty()) {
-                sql +=  "AND cp.notes ILIKE ? ESCAPE '\\' ";
+                sql +=  "AND t.notes ILIKE ? ESCAPE '\\' ";
                 bindings.add(product.getNotes());
             }
         }
 
-        sql +=          "ORDER BY   (cpn.product_name, cp.car_model, cp.engine_model, " +
-                                    "cp.oem_article_number, cp.cross_article_number, cbn.brand_name, cpe.group_id) ";
+        sql +=  "ORDER BY   (t.product_name, t.car_model, t.engine_model, " +
+                            "t.oem_article_number, t.cross_article_number, " +
+                            "t.brand_name, t.group_id)";
 
-
-        if (bindings.isEmpty()) {
-            return jdbcTemplate.query(sql, new RetailProductViewMapper());
-        }
         return jdbcTemplate.query(sql, bindings.toArray(), new RetailProductViewMapper());
     }
 
     public List<RetailProduct> findProductSupplyListByProductId(Integer productId) {
         String quantity = allSalesTableName.contains("sklad") ? "received_quantity" : "quantity";
+        String importCostPercentage = allSalesTableName.contains("sklad") ? "pas.import_cost_percentage" : "NULL";
 
         String sql =    "SELECT " +
                             "pas.id as pas_id, " +
@@ -678,7 +718,7 @@ public abstract class AbstractAllSuppliesDAO<S extends BaseSupply, B extends Bas
                             "cp.oem_article_number, " +
                             "cp.cross_article_number, " +
                             "cp.notes, " +
-                            "pas.price_dollar, " +
+                            "ROUND(pas.price_dollar * ((100 + COALESCE(" + importCostPercentage + ", 0)) / 100), 2) AS price_dollar, " +
                             "pas." + quantity + ", " +
                             "ps.id as psn_id, " +
                             "ps.name, " +

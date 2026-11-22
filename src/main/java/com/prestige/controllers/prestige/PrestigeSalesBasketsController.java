@@ -23,11 +23,12 @@ public class PrestigeSalesBasketsController extends AbstractSalesBasketsControll
     @Autowired
     public PrestigeSalesBasketsController(PrestigeSalesBasketsDAO salesBasketsDAO, PrestigeAllSalesDAO allSalesDAO,
                                           PrestigeClientsDAO clientsDAO, PrestigeAllSuppliesDAO allSuppliesDAO,
-                                          PrestigeSettingsDAO settingsDAO, CommonProductsDAO commonProductsDAO,
-                                          CommonProductNamesDAO commonProductNamesDAO, CommonBrandNamesDAO commonBrandNamesDAO) {
+                                          PrestigeSettingsDAO settingsDAO, PrestigeProductsMarginDAO marginDAO,
+                                          CommonProductsDAO commonProductsDAO, CommonProductNamesDAO commonProductNamesDAO,
+                                          CommonBrandNamesDAO commonBrandNamesDAO) {
 
-        super(salesBasketsDAO, allSalesDAO, clientsDAO, allSuppliesDAO, settingsDAO,
-                commonProductsDAO, commonProductNamesDAO, commonBrandNamesDAO, "prestige");
+        super(salesBasketsDAO, allSalesDAO, clientsDAO, allSuppliesDAO, settingsDAO, marginDAO,
+              commonProductsDAO, commonProductNamesDAO, commonBrandNamesDAO, "prestige");
     }
 
     @PostMapping()

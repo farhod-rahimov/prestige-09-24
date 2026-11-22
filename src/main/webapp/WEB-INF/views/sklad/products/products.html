@@ -60,6 +60,14 @@
             width: 60px;
             text-align: center;
         }
+        th input,
+        th select {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        th select {
+            margin-bottom: 6px;
+        }
         tr:hover {
             background-color: #f1f1f1;
         }
@@ -136,7 +144,7 @@
 
 <div th:replace="fragments/common-header :: common-header"></div>
 
-<form th:method="POST" th:action="@{/sklad/products}" th:object="${productFilter}">
+<form th:method="POST" th:action="@{/sklad/products}" th:object="${productStockFilter}">
 
     <div class="header">
         <h2>Товары на складе</h2>
@@ -169,8 +177,10 @@
             <th>Артикул, OEM</th>
             <th>Артикул, КРОСС</th>
             <th>Остаток</th>
+            <th>Цена, Доллар</th>
             <th>Бренд</th>
             <th class="private-info">(INNER)</th>
+            <th class="private-info">(MAGIC VALUE)</th>
             <th class="private-info">Комментарий</th>
         </tr>
         <tr>
@@ -188,11 +198,42 @@
 
             <th><input type="text" th:value="*{product.crossArticleNumber}" th:field="*{product.crossArticleNumber}" style="width: 100%;"></th>
 
+            <th>
+                <select th:field="*{stockBalanceComparison}">
+                    <option value="GREATER_THAN">Больше (>)</option>
+                    <option value="GREATER_OR_EQUALS_THAN">Больше или равно (>=)</option>
+                    <option value="LESS_THAN">Меньше (<)</option>
+                    <option value="LESS_OR_EQUALS_THAN">Меньше или равно (<=)</option>
+                    <option value="EQUALS">Равно (=)</option>
+                </select>
+                <input type="number" step="1" th:value="*{stockBalance}" th:field="*{stockBalance}" style="width: 100%;">
+            </th>
+
             <th></th>
 
             <th><input type="text" th:value="*{product.brand.brandName}" th:field="*{product.brand.brandName}" style="width: 100%;"></th>
 
-            <th class="private-info"></th>
+            <th class="private-info">
+                <select th:field="*{innerPriceComparison}">
+                    <option value="GREATER_THAN">Больше (>)</option>
+                    <option value="GREATER_OR_EQUALS_THAN">Больше или равно (>=)</option>
+                    <option value="LESS_THAN">Меньше (<)</option>
+                    <option value="LESS_OR_EQUALS_THAN">Меньше или равно (<=)</option>
+                    <option value="EQUALS">Равно (=)</option>
+                </select>
+                <input type="number" step="0.01" th:value="*{innerPrice}" th:field="*{innerPrice}" style="width: 100%;">
+            </th>
+
+            <th class="private-info">
+                <select th:field="*{marginComparison}">
+                    <option value="GREATER_THAN">Больше (>)</option>
+                    <option value="GREATER_OR_EQUALS_THAN">Больше или равно (>=)</option>
+                    <option value="LESS_THAN">Меньше (<)</option>
+                    <option value="LESS_OR_EQUALS_THAN">Меньше или равно (<=)</option>
+                    <option value="EQUALS">Равно (=)</option>
+                </select>
+                <input type="number" step="0.01" th:value="*{margin}" th:field="*{margin}" style="width: 100%;">
+            </th>
 
             <th class="private-info"><input type="text" th:value="*{product.notes}" th:field="*{product.notes}" style="width: 100%;"></th>
         </tr>
@@ -220,8 +261,12 @@
 
             <td><a th:href="${link}" th:text="${productView.getStockBalance()}"></a></td>
 
+            <td><a th:href="${link}" th:text="${utils.getConvertedPriceToSmn(productView.getPriceDollar(), productView.getMagicValue(), 1, 2)}"></a></td>
+
             <td><a th:href="${link}" th:text="${product.getBrand().getBrandName()}"></a></td>
             <td><a th:href="${link}" th:text="${productView.getPriceDollar()}"></a></td>
+
+            <td><a th:href="${link}" th:text="${productView.getMagicValue()}"></a></td>
 
             <td><a th:href="${link}" th:title="${product.getNotes()}" th:text="${utils.getTruncatedText(product.getNotes(), 7)}"></a></td>
         </tr>

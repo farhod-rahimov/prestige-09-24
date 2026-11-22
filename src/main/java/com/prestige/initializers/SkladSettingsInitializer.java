@@ -14,7 +14,7 @@ public class SkladSettingsInitializer extends AbstractSettingsInitializer<SkladS
 
     @Override
     protected void initializeMustHaveSettings() {
-        createIfNotExists("skladMagicValue", "20");
+        createIfNotExists("magicValue", "20");
         createIfNotExists("skladDefaultImportCostPercentage", "10");
         createIfNotExists("skladDefaultUsdSupplierCurrencyRate", "1475");
     }

@@ -4,7 +4,7 @@ import com.prestige.dao.abstracts.AbstractAllSalesDAO;
 import com.prestige.dao.abstracts.AbstractAllSuppliesDAO;
 import com.prestige.dao.abstracts.AbstractSettingsDAO;
 import com.prestige.models.RetailProductView;
-import com.prestige.models.filters.ProductFilter;
+import com.prestige.models.filters.ProductStockFilter;
 import lombok.AllArgsConstructor;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -26,7 +26,7 @@ public abstract class AbstractProductsController {
     protected final String uriPrefix;
 
     private String getModelFilterName() {
-        return "productFilter";
+        return "productStockFilter";
     }
 
     @GetMapping
@@ -34,18 +34,17 @@ public abstract class AbstractProductsController {
         model.addAttribute("allProductsInStock", allSuppliesDAO.findAllProductsInStock());
 
         if (model.getAttribute(getModelFilterName()) == null) {
-            model.addAttribute(getModelFilterName(), new ProductFilter());
+            model.addAttribute(getModelFilterName(), new ProductStockFilter());
         }
 
         if (uriPrefix.contains("prestige")) {
-            model.addAttribute("magicValue", settingsDAO.findSettingsByName("magicValue").getValue());
             model.addAttribute("exchangeRate", settingsDAO.findSettingsByName("exchangeRate").getValue());
         }
 
         return String.format("%s/products/products", uriPrefix);
     }
 
-    protected String postMethodDispatcherInternal(ProductFilter productFilter, String method, BindingResult bindingResult,
+    protected String postMethodDispatcherInternal(ProductStockFilter productStockFilter, String method, BindingResult bindingResult,
                                                   RedirectAttributes redirectAttributes, Model model) {
 
         if (bindingResult.hasErrors()) {
@@ -56,27 +55,27 @@ public abstract class AbstractProductsController {
 
         switch (method) {
             case "applyFilter":
-                return applyFilter(productFilter, model, redirectAttributes, false);
+                return applyFilter(productStockFilter, model, redirectAttributes, false);
             case "applyFilterInList":
-                return applyFilter(productFilter, model, redirectAttributes, true);
+                return applyFilter(productStockFilter, model, redirectAttributes, true);
             case "resetFilter":
-                return resetFilter(productFilter);
+                return resetFilter(productStockFilter);
             default:
                 throw new RuntimeException(String.format("POST method is undefined: '%s'", method));
         }
     }
 
-    private String applyFilter(ProductFilter productFilter, Model model, RedirectAttributes redirectAttributes, boolean showInList) {
-        ProductFilter productFilterCopy = new ProductFilter(productFilter);
-        productFilterCopy.prepareAllFields();
+    private String applyFilter(ProductStockFilter productStockFilter, Model model, RedirectAttributes redirectAttributes, boolean showInList) {
+        ProductStockFilter productStockFilterCopy = new ProductStockFilter(productStockFilter);
+        productStockFilterCopy.prepareAllFields();
 
-        List<RetailProductView> filteredProducts = allSuppliesDAO.findAllProductsInStockWIthFilter(productFilterCopy);
+        List<RetailProductView> filteredProducts = allSuppliesDAO.findAllProductsInStockWIthFilter(productStockFilterCopy);
         Integer entryProductId = null;
 
         if (showInList) {
             model.addAttribute("allProductsInStock", allSuppliesDAO.findAllProductsInStock());
 
-            if (productFilterCopy.isNotEmpty() && !filteredProducts.isEmpty()) {
+            if (productStockFilterCopy.isNotEmpty() && !filteredProducts.isEmpty()) {
                 entryProductId = filteredProducts.get(0).getProduct().getId();
             }
         }
@@ -90,14 +89,14 @@ public abstract class AbstractProductsController {
         }
 
         if (entryProductId != null) {
-            redirectAttributes.addFlashAttribute(getModelFilterName(), productFilter);
+            redirectAttributes.addFlashAttribute(getModelFilterName(), productStockFilter);
             return String.format("redirect:/%s/products#product-%d", uriPrefix, entryProductId);
         }
         return String.format("%s/products/products", uriPrefix);
     }
 
-    private String resetFilter(ProductFilter productFilter) {
-        productFilter.clear();
+    private String resetFilter(ProductStockFilter productStockFilter) {
+        productStockFilter.clear();
 
         return String.format("redirect:/%s/products", uriPrefix);
     }

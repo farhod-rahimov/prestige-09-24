@@ -22,7 +22,8 @@ public class PrestigeAllSuppliesDAO extends AbstractAllSuppliesDAO<Supply, Suppl
     @Autowired
     public PrestigeAllSuppliesDAO(JdbcTemplate jdbcTemplate, Utils utils) {
         super(jdbcTemplate, "prestige_all_supplies", "prestige_supply_baskets",
-                "prestige_suppliers", "prestige_all_sales", "prestige_sales_baskets", utils);
+                "prestige_suppliers", "prestige_all_sales",
+                "prestige_sales_baskets", "prestige_products_margin", "prestige_settings", utils);
     }
 
     @Override

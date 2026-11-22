@@ -22,7 +22,8 @@ public class SkladAllSuppliesDAO extends AbstractAllSuppliesDAO<SkladSupply, Skl
     @Autowired
     public SkladAllSuppliesDAO(JdbcTemplate jdbcTemplate, Utils utils) {
         super(jdbcTemplate, "sklad_all_supplies", "sklad_supply_baskets",
-                "sklad_suppliers", "sklad_all_sales", "sklad_sales_baskets", utils);
+                "sklad_suppliers", "sklad_all_sales",
+                "sklad_sales_baskets", "sklad_products_margin", "sklad_settings", utils);
     }
 
     @Override

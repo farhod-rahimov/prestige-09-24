@@ -20,7 +20,7 @@ public class Sales {
 
     private Integer quantity = 0;
 
-    private BigDecimal soldPrice = new BigDecimal(0);
+    private BigDecimal soldPrice;
 
     // private infos
 
@@ -32,10 +32,11 @@ public class Sales {
 
     private BigDecimal wholesalePrice;
 
+    private BigDecimal magicValue;
+
     public Sales(Product product) {
         this.product = product;
         this.quantity = new Integer(0);
-        this.soldPrice = new BigDecimal(0);
     }
 
     public Sales(Sales sales) {
@@ -49,6 +50,7 @@ public class Sales {
             this.calculatedPrice = sales.getCalculatedPrice();
             this.recommendedPrice = sales.getRecommendedPrice();
             this.wholesalePrice = sales.getWholesalePrice();
+            this.magicValue = sales.getMagicValue();
         }
     }
 
@@ -65,7 +67,8 @@ public class Sales {
                 Objects.equals(stockBeforeSale, other.stockBeforeSale) &&
                 Objects.equals(calculatedPrice, other.calculatedPrice) &&
                 Objects.equals(recommendedPrice, other.recommendedPrice) &&
-                Objects.equals(wholesalePrice, other.wholesalePrice);
+                Objects.equals(wholesalePrice, other.wholesalePrice) &&
+                Objects.equals(magicValue, other.magicValue);
     }
 
     public boolean equalsOnlyProductWithoutNotesAndEquivalentProductInfo(Sales other) {

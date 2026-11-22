@@ -94,10 +94,7 @@ public abstract class AbstractSalesBasketsDAO {
 
         sql +=          "ORDER BY (psb.id)";
 
-        if (!bindings.isEmpty()) {
-            return jdbcTemplate.query(sql, bindings.toArray() , new SalesBasketMapper());
-        }
-        return jdbcTemplate.query(sql, new SalesBasketMapper());
+        return jdbcTemplate.query(sql, bindings.toArray() , new SalesBasketMapper());
     }
 
     public SalesBasket findBasketById(Integer basketId) {

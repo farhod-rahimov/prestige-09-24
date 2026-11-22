@@ -22,6 +22,8 @@ public class RetailProductView {
 
     protected Integer stockBalance;
 
+    protected BigDecimal magicValue;
+
     public RetailProductView(RetailProductView retailProductView) {
 
         if (retailProductView != null) {

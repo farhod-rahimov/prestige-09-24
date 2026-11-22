@@ -53,7 +53,7 @@ create table if not exists sklad_supply_baskets (
 create table if not exists sklad_products_margin (
 	id serial primary key,
     common_product_id int references common_products(id) unique not null,
-    margin_percentage int not null
+    margin_percentage numeric(7, 2) null
 );
 
 create table if not exists sklad_all_supplies (
@@ -83,6 +83,12 @@ create table if not exists prestige_supply_baskets (
 	total_sum numeric(15, 4) not null,
     notes TEXT,
     status int not null
+);
+
+create table if not exists prestige_products_margin (
+	id serial primary key,
+	common_product_id int references common_products(id) unique not null,
+	margin_percentage numeric(7, 2) null
 );
 
 create table if not exists prestige_all_supplies (

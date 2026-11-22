@@ -1,12 +1,10 @@
 package com.prestige.dao.common;
 
-import com.prestige.dao.mappers.BrandMapper;
-import com.prestige.dao.mappers.ProductMapper;
-import com.prestige.dao.mappers.ProductMapperWrappedInSupply;
-import com.prestige.dao.mappers.ProductNameMapper;
+import com.prestige.dao.mappers.*;
 import com.prestige.models.*;
 import com.prestige.models.filters.BasketFilter;
 import com.prestige.models.filters.ProductFilter;
+import com.prestige.models.filters.ProductMarginFilter;
 import com.prestige.utils.Utils;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataAccessException;
@@ -33,15 +31,18 @@ public class CommonProductsDAO {
     private final Utils utils;
 
     public List<Product> findAllProducts() {
-        return findAllProductsInternal(null);
+        return findAllProductsInternal(null, null);
     }
 
     public List<Product> findAllProductsWIthFilter(ProductFilter productFilter) {
-        return findAllProductsInternal(productFilter);
+        return findAllProductsInternal(productFilter, null);
     }
 
-    private List<Product> findAllProductsInternal(ProductFilter productFilter) {
+    public List<? extends Product> findAllProductsWIthMarginFilter(ProductMarginFilter productMarginFilter, String productMarginTableName) {
+        return findAllProductsInternal(productMarginFilter, productMarginTableName);
+    }
 
+    private List<Product> findAllProductsInternal(ProductFilter productFilter, String productMarginTableName) {
         List<Object> bindings = new ArrayList();
 
         String sql =    "SELECT " +
@@ -58,76 +59,96 @@ public class CommonProductsDAO {
                             "cp.notes, " +
                             "cpe.id, " +
                             "cpe.group_id, " +
-                            "cpe.product_id " +
+                            "cpe.product_id ";
 
-                        "FROM common_products cp " +
+        if (productMarginTableName != null) {
+            sql +=          ", mt.margin_percentage ";
+        }
+
+        sql +=          "FROM common_products cp " +
 
                         "JOIN common_product_names cpn ON cp.product_name_id = cpn.id " +
                         "JOIN common_brand_names cbn ON cp.brand_name_id = cbn.id " +
-                        "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id " +
+                        "LEFT JOIN common_product_equivalents cpe ON cp.id = cpe.product_id ";
 
-                        "WHERE 1 = 1 ";
+        if (productMarginTableName != null) {
+            sql += "LEFT JOIN " + productMarginTableName + " mt ON mt.common_product_id = cp.id ";
+        }
 
-        if (productFilter != null && productFilter.getProduct() != null) {
-            Product product = productFilter.getProduct();
+        sql +=          "WHERE 1 = 1 ";
 
-            Integer groupId = product.getEquivalentProductInfo().getGroupId();
-            if (groupId != null && groupId != 0) {
-                sql +=  "AND cpe.group_id = ? ";
-                bindings.add(groupId);
+        if (productFilter != null) {
+
+            if (productFilter.getProduct() != null) {
+                Product product = productFilter.getProduct();
+
+                Integer groupId = product.getEquivalentProductInfo().getGroupId();
+                if (groupId != null && groupId != 0) {
+                    sql +=  "AND cpe.group_id = ? ";
+                    bindings.add(groupId);
+                }
+
+                Integer productId = product.getId();
+                if (productId != null && productId != 0) {
+                    sql +=  "AND cp.id  = ? ";
+                    bindings.add(productId);
+                }
+
+                ProductName productName = product.getProductName();
+                if (productName != null && productName.getProductName() != null &&
+                        !productName.getProductName().isEmpty()) {
+
+                    sql +=  "AND cpn.product_name ILIKE ? ESCAPE '\\' ";
+                    bindings.add(productName.getProductName());
+                }
+
+                if (product.getCarModel() != null && !product.getCarModel().isEmpty()) {
+                    sql +=  "AND cp.car_model ILIKE ? ESCAPE '\\' ";
+                    bindings.add(product.getCarModel());
+                }
+
+                if (product.getEngineModel() != null && !product.getEngineModel().isEmpty()) {
+                    sql +=  "AND cp.engine_model ILIKE ? ESCAPE '\\' ";
+                    bindings.add(product.getEngineModel());
+                }
+
+                if (product.getOemArticleNumber() != null && !product.getOemArticleNumber().isEmpty()) {
+                    sql +=  "AND cp.oem_article_number ILIKE ? ESCAPE '\\' ";
+                    bindings.add(product.getOemArticleNumber());
+                }
+
+                if (product.getCrossArticleNumber() != null && !product.getCrossArticleNumber().isEmpty()) {
+                    sql +=  "AND cp.cross_article_number ILIKE ? ESCAPE '\\' ";
+                    bindings.add(product.getCrossArticleNumber());
+                }
+
+                Brand brand = product.getBrand();
+                if (brand != null && brand.getBrandName() != null && !brand.getBrandName().isEmpty()) {
+                    sql +=  "AND cbn.brand_name ILIKE ? ESCAPE '\\' ";
+                    bindings.add(brand.getBrandName());
+                }
+
+                if (product.getNotes() != null && !product.getNotes().isEmpty()) {
+                    sql +=  "AND cp.notes ILIKE ? ESCAPE '\\' ";
+                    bindings.add(product.getNotes());
+                }
             }
 
-            Integer productId = product.getId();
-            if (productId != null && productId != 0) {
-                sql +=  "AND cp.id  = ? ";
-                bindings.add(productId);
-            }
+            if (productMarginTableName != null) {
+                ProductMarginFilter productMarginFilter = (ProductMarginFilter)productFilter;
 
-            ProductName productName = product.getProductName();
-            if (productName != null && productName.getProductName() != null &&
-                    !productName.getProductName().isEmpty()) {
-
-                sql +=  "AND cpn.product_name ILIKE ? ESCAPE '\\' ";
-                bindings.add(productName.getProductName());
-            }
-
-            if (product.getCarModel() != null && !product.getCarModel().isEmpty()) {
-                sql +=  "AND cp.car_model ILIKE ? ESCAPE '\\' ";
-                bindings.add(product.getCarModel());
-            }
-
-            if (product.getEngineModel() != null && !product.getEngineModel().isEmpty()) {
-                sql +=  "AND cp.engine_model ILIKE ? ESCAPE '\\' ";
-                bindings.add(product.getEngineModel());
-            }
-
-            if (product.getOemArticleNumber() != null && !product.getOemArticleNumber().isEmpty()) {
-                sql +=  "AND cp.oem_article_number ILIKE ? ESCAPE '\\' ";
-                bindings.add(product.getOemArticleNumber());
-            }
-
-            if (product.getCrossArticleNumber() != null && !product.getCrossArticleNumber().isEmpty()) {
-                sql +=  "AND cp.cross_article_number ILIKE ? ESCAPE '\\' ";
-                bindings.add(product.getCrossArticleNumber());
-            }
-
-            Brand brand = product.getBrand();
-            if (brand != null && brand.getBrandName() != null && !brand.getBrandName().isEmpty()) {
-                sql +=  "AND cbn.brand_name ILIKE ? ESCAPE '\\' ";
-                bindings.add(brand.getBrandName());
-            }
-
-            if (product.getNotes() != null && !product.getNotes().isEmpty()) {
-                sql +=  "AND cp.notes ILIKE ? ESCAPE '\\' ";
-                bindings.add(product.getNotes());
+                if (productMarginFilter != null) {
+                    sql += productMarginFilter.getComparisonExpr("mt.margin_percentage", productMarginFilter.getMarginComparison(),
+                            bindings, productMarginFilter.getMargin());
+                }
             }
         }
 
         sql +=          "ORDER BY   (cpn.product_name, cp.car_model, cp.engine_model, " +
                                     "cp.oem_article_number, cp.cross_article_number, cbn.brand_name, cpe.group_id)";
 
-        if (bindings.isEmpty()) {
-            return jdbcTemplate.query(sql, new ProductMapper());
+        if (productMarginTableName != null) {
+            return jdbcTemplate.query(sql, bindings.toArray(), new ProductMarginMapper());
         }
         return jdbcTemplate.query(sql, bindings.toArray(), new ProductMapper());
     }
@@ -410,9 +431,6 @@ public class CommonProductsDAO {
         sql +=          "GROUP BY (cpn.id) " +
                         "ORDER BY (cpn.product_name)";
 
-        if (bindings.isEmpty()) {
-            return jdbcTemplate.query(sql, new ProductNameMapper());
-        }
         return jdbcTemplate.query(sql, bindings.toArray(), new ProductNameMapper());
     }
 

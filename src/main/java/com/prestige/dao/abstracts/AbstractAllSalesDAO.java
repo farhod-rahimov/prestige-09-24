@@ -230,6 +230,12 @@ public abstract class AbstractAllSalesDAO {
         });
     }
 
+    public void deleteAllZeroQuantityItemsFromBasket(Integer basketId) {
+        String sql =    "DELETE FROM " + allSalesTableName + " WHERE quantity = 0 AND basket_id = ?";
+
+        jdbcTemplate.update(sql, basketId);
+    }
+
     public void saveNewSale(SalesBasket basket, Sales sales) {
         String sql =    "INSERT INTO " + allSalesTableName + " (" +
 

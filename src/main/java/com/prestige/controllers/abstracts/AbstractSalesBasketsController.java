@@ -37,6 +37,8 @@ public abstract class AbstractSalesBasketsController extends AbstractTabStateMan
 
     protected AbstractSettingsDAO settingsDAO;
 
+    protected AbstractProductsMarginDAO marginDAO;
+
     protected CommonProductsDAO commonProductsDAO;
 
     protected CommonProductNamesDAO commonProductNamesDAO;
@@ -199,6 +201,12 @@ public abstract class AbstractSalesBasketsController extends AbstractTabStateMan
         }
 
         switch (method) {
+            case "selectAllCheckBoxes":
+                return markAllCheckBoxes(model, state, true);
+            case "removeAllCheckBoxes":
+                return markAllCheckBoxes(model, state, false);
+            case "removeAllZeroQuantity":
+                return removeAllZeroQuantity(session, state);
             case "deleteAllEmptyBaskets":
                 return deleteAllEmptyBaskets();
             case "changeBasketType":
@@ -224,6 +232,25 @@ public abstract class AbstractSalesBasketsController extends AbstractTabStateMan
             default:
                 return saveNewBasket(salesBasket, state, bindingResult, redirectAttributes, session, model);
         }
+    }
+
+    private String markAllCheckBoxes(Model model, SalesTabState state, boolean markAllAsSelected) {
+
+        if (markAllAsSelected) {
+            model.addAttribute("selectAllCheckBoxes", true);
+        }
+
+        model.addAttribute(getModelBasketName(), state.getBasket());
+        model.addAttribute(getModelStepName(), state.getStep());
+
+        return String.format("%s/sales/baskets/add-new-basket", uriPrefix);
+    }
+
+    private String removeAllZeroQuantity(HttpSession session, SalesTabState state) {
+        allSalesDAO.deleteAllZeroQuantityItemsFromBasket(state.getBasket().getId());
+
+        removeTabState(session, getTabStateMapName(), state.getTabId());
+        return String.format("redirect:/%s/sales/baskets/%d", uriPrefix, state.getBasket().getId());
     }
 
     private EStep getNextStep(EStep salesStep) {
@@ -459,13 +486,14 @@ public abstract class AbstractSalesBasketsController extends AbstractTabStateMan
 
         Map<Integer, Integer> stockBeforeSaleMap = allSuppliesDAO.findStockBeforeSale(productIds, salesBasket);
         Map<Integer, BigDecimal> wholeSalePriceMap = allSuppliesDAO.findWholesalePrice(productIds);
+        Map<Integer, BigDecimal> productMarginMap = marginDAO.findAllMarginsByProductIds(productIds);
+
         Settings exchangeRateSettings = null;
-        Settings magicValueSettings = null;
-        Map<Integer, BigDecimal> recommendedPriceMap = null;
+        Settings magicValueSettings = settingsDAO.findSettingsByName("magicValue");
+        Map<Integer, BigDecimal> recommendedPriceMap = new HashMap<>();
 
         if (uriPrefix.contains("prestige")) {
             exchangeRateSettings = settingsDAO.findSettingsByName("exchangeRate");
-            magicValueSettings = settingsDAO.findSettingsByName("magicValue");
             recommendedPriceMap = allSalesDAO.findRecommendedPrice(productIds, salesBasket);
         }
 
@@ -477,29 +505,38 @@ public abstract class AbstractSalesBasketsController extends AbstractTabStateMan
             sales.setStockBeforeSale(stockBeforeSaleMap.get(sales.getProduct().getId()));
             sales.setWholesalePrice(wholeSalePriceMap.get(sales.getProduct().getId()));
 
-            if (uriPrefix.contains("prestige")) {
-                sales.setCalculatedPrice(getCalculatedPrice(sales.getWholesalePrice(), exchangeRateSettings, magicValueSettings));
+            if (productMarginMap.get(sales.getProduct().getId()) == null) {
+                sales.setMagicValue(new BigDecimal(magicValueSettings.getValue()));
+            }
+            else {
+                sales.setMagicValue(productMarginMap.get(sales.getProduct().getId()));
+            }
 
-                if (recommendedPriceMap.get(sales.getProduct().getId()) == null) {
-                    sales.setRecommendedPrice(sales.getCalculatedPrice());
-                }
-                else {
-                    sales.setRecommendedPrice(recommendedPriceMap.get(sales.getProduct().getId()));
-                }
+            sales.setCalculatedPrice(getCalculatedPrice(sales.getWholesalePrice(), sales.getMagicValue(), exchangeRateSettings));
+
+            if (recommendedPriceMap.get(sales.getProduct().getId()) == null) {
+                sales.setRecommendedPrice(sales.getCalculatedPrice());
+            }
+            else {
+                sales.setRecommendedPrice(recommendedPriceMap.get(sales.getProduct().getId()));
+            }
+
+            if (sales.getSoldPrice() == null) {
+                int scale = uriPrefix.contains("sklad") ? 2 : 0;
+                sales.setSoldPrice(sales.getRecommendedPrice().setScale(scale, RoundingMode.HALF_UP));
             }
         }
     }
 
-    private BigDecimal getCalculatedPrice(BigDecimal wholesalePrice, Settings exchangeRateSettings, Settings magicValueSettings) {
-        if (exchangeRateSettings == null || magicValueSettings == null) {
-            throw new RuntimeException("Settings 'exchangeRate' or 'magicValue' doesn't exist. Please initialize it in the settings");
+    private BigDecimal getCalculatedPrice(BigDecimal wholesalePrice, BigDecimal margin, Settings exchangeRateSettings) {
+
+        BigDecimal result = wholesalePrice.multiply(new BigDecimal(100).add(margin).divide(new BigDecimal(100)))
+                .setScale(2, RoundingMode.HALF_UP);
+
+        if (exchangeRateSettings == null) {
+            return result;
         }
-
-        BigDecimal exchangeRate = new BigDecimal(exchangeRateSettings.getValue());
-        BigDecimal magicValue = new BigDecimal(magicValueSettings.getValue());
-
-        return wholesalePrice.multiply(new BigDecimal(100).add(magicValue).divide(new BigDecimal(100)))
-                .multiply(exchangeRate).setScale(2, RoundingMode.HALF_UP);
+        return result.multiply(new BigDecimal(exchangeRateSettings.getValue())).setScale(2, RoundingMode.HALF_UP);
     }
 
     private void updateBasketTotalSum(SalesBasket salesBasket) {
@@ -571,7 +608,7 @@ public abstract class AbstractSalesBasketsController extends AbstractTabStateMan
             for (Sales sales : salesBasket.getSalesList()) {
                 excludeProductIds.add(sales.getProduct().getId());
             }
-            List<Sales> fullSalesList = allSuppliesDAO.findAllPrestigeProductsWrappedInSales(excludeProductIds);
+            List<Sales> fullSalesList = allSuppliesDAO.findAllProductsWrappedInSales(excludeProductIds);
             setPrivateInfos(salesBasket, fullSalesList, false);
 
             salesList.addAll(fullSalesList);

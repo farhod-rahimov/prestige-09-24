@@ -32,7 +32,7 @@
             color: white;
             text-align: center;
             position: sticky;
-            top: 0;
+            top: 60px;
             z-index: 2;
         }
         td {
@@ -239,7 +239,12 @@
                 <th class="private-info">(INNER *<br>magicValue *<br>exchangeRate,<br>SMN)</th>
                 <th class="private-info">(INNER<br>RECOM<br>MENDED,<br>SMN)</th>
                 <th class="private-info">(INNER)</th>
-                <th class="private-info"></th>
+                <th class="private-info" th:if="${utils.shouldShowCheckBox(salesStep) && !salesBasket.salesList.isEmpty()}">
+                    <button th:if="${selectAllCheckBoxes}" type="submit" name="method" value="removeAllCheckBoxes">Снять все</button>
+                    <button th:unless="${selectAllCheckBoxes}"  type="submit" name="method" value="selectAllCheckBoxes">Выбрать все</button>
+                </th>
+                <th class="private-info" th:unless="${utils.shouldShowCheckBox(salesStep)}">
+                </th>
             </tr>
         </thead>
 
@@ -521,7 +526,9 @@
                 <td th:text="*{salesList[__${iterStat.index}__].wholesalePrice}"></td>
 
                 <td th:if="${utils.shouldShowCheckBox(salesStep)}">
-                    <input type="checkbox" name="selectedSalesIds" class="styled-checkbox" th:value="*{salesList[__${iterStat.index}__].id}">
+                    <input type="checkbox" name="selectedSalesIds" class="styled-checkbox"
+                           th:value="*{salesList[__${iterStat.index}__].id}"
+                           th:checked="${selectAllCheckBoxes == true}">
                 </td>
                 <td th:unless="${utils.shouldShowCheckBox(salesStep)}">
                 </td>
@@ -551,6 +558,10 @@
             <button th:if="${salesStep.value == 'PRODUCT_SELECTION_DONE'}" type="submit" name="method" value="deleteSelected"
                     onclick="return confirm('Удалить выбранные товары?')"
                     class="btn btn-red">Удалить выбранные товары</button>
+
+            <button type="submit" name="method" value="removeAllZeroQuantity"
+                    class="btn btn-purple" onclick="return confirm('Удалить все позиции с количеством 0?')"
+                    title="Удалить все позиции с количеством 0">Удалить все 0</button>
         </div>
 
         <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">

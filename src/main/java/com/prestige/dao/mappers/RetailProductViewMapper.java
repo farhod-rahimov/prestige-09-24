@@ -28,6 +28,11 @@ public class RetailProductViewMapper implements RowMapper<RetailProductView> {
             recommendedPrice = recommendedPrice.setScale(2, RoundingMode.HALF_UP);
         }
 
-        return new RetailProductView(product, priceDollar, recommendedPrice, rs.getInt(13));
+        BigDecimal magicValue = rs.getBigDecimal(17);
+        if (magicValue != null) {
+            magicValue = magicValue.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        return new RetailProductView(product, priceDollar, recommendedPrice, rs.getInt(13), magicValue);
     }
 }
